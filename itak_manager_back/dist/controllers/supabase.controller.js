@@ -76,6 +76,36 @@ let SupabaseController = class SupabaseController {
             };
         }
     }
+    async updateData(table, id, data) {
+        try {
+            const result = await this.supabaseService.updateData(table, data, { id });
+            return {
+                message: 'Données mises à jour avec succès',
+                data: result,
+            };
+        }
+        catch (error) {
+            return {
+                error: 'Erreur lors de la mise à jour',
+                details: error.message,
+            };
+        }
+    }
+    async deleteData(table, id) {
+        try {
+            const result = await this.supabaseService.deleteData(table, { id });
+            return {
+                message: 'Données supprimées avec succès',
+                result,
+            };
+        }
+        catch (error) {
+            return {
+                error: 'Erreur lors de la suppression',
+                details: error.message,
+            };
+        }
+    }
 };
 exports.SupabaseController = SupabaseController;
 __decorate([
@@ -105,8 +135,25 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], SupabaseController.prototype, "getData", null);
+__decorate([
+    (0, common_1.Put)('data/:table/:id'),
+    __param(0, (0, common_1.Param)('table')),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], SupabaseController.prototype, "updateData", null);
+__decorate([
+    (0, common_1.Delete)('data/:table/:id'),
+    __param(0, (0, common_1.Param)('table')),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], SupabaseController.prototype, "deleteData", null);
 exports.SupabaseController = SupabaseController = __decorate([
-    (0, common_1.Controller)('api/supabase'),
+    (0, common_1.Controller)('supabase'),
     __metadata("design:paramtypes", [supabase_service_1.SupabaseService])
 ], SupabaseController);
 //# sourceMappingURL=supabase.controller.js.map

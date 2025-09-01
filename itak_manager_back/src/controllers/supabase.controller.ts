@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { SupabaseService } from '../services/supabase.service';
 
-@Controller('api/supabase')
+@Controller('supabase')
 export class SupabaseController {
   constructor(private readonly supabaseService: SupabaseService) {}
 
@@ -73,6 +73,42 @@ export class SupabaseController {
     } catch (error) {
       return {
         error: 'Erreur lors de la récupération',
+        details: error.message,
+      };
+    }
+  }
+
+  @Put('data/:table/:id')
+  async updateData(
+    @Param('table') table: string,
+    @Param('id') id: string,
+    @Body() data: any,
+  ) {
+    try {
+      const result = await this.supabaseService.updateData(table, data, { id });
+      return {
+        message: 'Données mises à jour avec succès',
+        data: result,
+      };
+    } catch (error) {
+      return {
+        error: 'Erreur lors de la mise à jour',
+        details: error.message,
+      };
+    }
+  }
+
+  @Delete('data/:table/:id')
+  async deleteData(@Param('table') table: string, @Param('id') id: string) {
+    try {
+      const result = await this.supabaseService.deleteData(table, { id });
+      return {
+        message: 'Données supprimées avec succès',
+        result,
+      };
+    } catch (error) {
+      return {
+        error: 'Erreur lors de la suppression',
         details: error.message,
       };
     }
