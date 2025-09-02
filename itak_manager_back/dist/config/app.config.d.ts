@@ -1,10 +1,10 @@
 export declare const appConfig: {
     name: string;
     version: string;
-    port: string | number;
-    environment: string;
+    port: any;
+    environment: any;
     cors: {
-        origin: string;
+        origin: any;
         credentials: boolean;
     };
     rateLimit: {

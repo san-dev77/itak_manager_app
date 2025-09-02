@@ -32,6 +32,17 @@ npm run start:prod
 - `GET /api/supabase/data/:table` - Récupérer les données d'une table
 - `POST /api/supabase/data/:table` - Insérer des données dans une table
 
+### Endpoints Users
+
+- `POST /api/users` - Créer un nouvel utilisateur
+- `GET /api/users` - Récupérer tous les utilisateurs
+- `GET /api/users/:id` - Récupérer un utilisateur par ID
+- `GET /api/users/email/:email` - Récupérer un utilisateur par email
+- `PUT /api/users/:id` - Mettre à jour un utilisateur
+- `DELETE /api/users/:id` - Supprimer un utilisateur
+- `PUT /api/users/:id/activate` - Activer un utilisateur
+- `PUT /api/users/:id/deactivate` - Désactiver un utilisateur
+
 ## 🔧 Configuration
 
 ### Variables d'environnement

@@ -3,13 +3,13 @@ export declare class AppService {
         status: string;
         service: string;
         version: string;
-        timestamp: string;
-        environment: string;
+        timestamp: any;
+        environment: any;
     };
     getHealth(): {
         status: string;
-        uptime: number;
-        memory: NodeJS.MemoryUsage;
-        timestamp: string;
+        uptime: any;
+        memory: any;
+        timestamp: any;
     };
 }
