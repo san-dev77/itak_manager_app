@@ -6,13 +6,13 @@ export declare class AppController {
         status: string;
         service: string;
         version: string;
-        timestamp: any;
-        environment: any;
+        timestamp: string;
+        environment: string;
     };
     getHealth(): {
         status: string;
-        uptime: any;
-        memory: any;
-        timestamp: any;
+        uptime: number;
+        memory: NodeJS.MemoryUsage;
+        timestamp: string;
     };
 }
