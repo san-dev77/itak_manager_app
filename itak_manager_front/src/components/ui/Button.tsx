@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { type ReactNode } from "react";
 
 interface ButtonProps {
@@ -40,17 +39,14 @@ const Button = ({
   };
 
   return (
-    <motion.button
+    <button
       type={type}
       className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
       onClick={onClick}
       disabled={disabled}
-      whileHover={{ scale: disabled ? 1 : 1.02 }}
-      whileTap={{ scale: disabled ? 1 : 0.98 }}
-      transition={{ duration: 0.2 }}
     >
       {children}
-    </motion.button>
+    </button>
   );
 };
 

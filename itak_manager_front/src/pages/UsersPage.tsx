@@ -1,26 +1,64 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Edit, Trash2, Eye } from "lucide-react";
+import { Edit, EyeIcon, Plus, Search, Trash2 } from "lucide-react";
 import Layout from "../components/layout/Layout";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
-import { apiService, type User } from "../services/api";
+import {
+  apiService,
+  type User,
+  type StudentProfileData,
+  type TeacherProfileData,
+  type StaffProfileData,
+  type StudentWithUser,
+  type TeacherWithUser,
+  type StaffWithUser,
+} from "../services/api";
 import Notification, {
   type NotificationType,
 } from "../components/ui/Notification";
+import {
+  UserTabs,
+  ProfileAssignmentModal,
+  StudentDataTable,
+  TeacherDataTable,
+  StaffDataTable,
+} from "../components/users";
+import { useUserStore } from "../stores/userStore";
+import { useUserEffects } from "../hooks/useUserEffects";
+
+// Interface union pour les données de profil
+type ProfileData = StudentProfileData | TeacherProfileData | StaffProfileData;
 
 const UsersPage = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRole, setSelectedRole] = useState<string>("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showProfileAssignmentModal, setShowProfileAssignmentModal] =
+    useState(false);
+  const [selectedProfileType, setSelectedProfileType] = useState<
+    "student" | "teacher" | "staff"
+  >("student");
+
+  // Zustand store
+  const {
+    filteredUsers,
+    isLoading,
+    searchTerm,
+    selectedRole,
+    setUsers,
+    setLoading,
+    setSearchTerm,
+    setSelectedRole,
+    addUser,
+    getUserCounts,
+  } = useUserStore();
+
+  // Utiliser le hook pour les effets
+  useUserEffects();
 
   const [notification, setNotification] = useState<{
     type: NotificationType;
@@ -84,13 +122,9 @@ const UsersPage = () => {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    filterUsers();
-  }, [users, searchTerm, selectedRole]);
-
   const fetchUsers = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       const response = await apiService.getAllUsers();
       if (response.success && response.data) {
         setUsers(response.data);
@@ -105,30 +139,8 @@ const UsersPage = () => {
       console.error("Erreur lors de la récupération des utilisateurs:", error);
       showNotification("error", "Erreur", "Erreur de connexion au serveur");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
-
-  const filterUsers = () => {
-    let filtered = users;
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (user) =>
-          user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.username.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Filter by role
-    if (selectedRole !== "all") {
-      filtered = filtered.filter((user) => user.role === selectedRole);
-    }
-
-    setFilteredUsers(filtered);
   };
 
   const handleInputChange = (
@@ -164,6 +176,159 @@ const UsersPage = () => {
     return Object.keys(errors).length === 0;
   };
 
+  const handleAssignProfile = (
+    profileType: "student" | "teacher" | "staff"
+  ) => {
+    setSelectedProfileType(profileType);
+    setShowProfileAssignmentModal(true);
+  };
+
+  const handleProfileAssignment = async (
+    user: User,
+    profileData: ProfileData
+  ) => {
+    try {
+      if (
+        selectedProfileType === "student" &&
+        "enrollment_date" in profileData
+      ) {
+        // Préparer les données pour l'API
+        const studentData = {
+          user_id: user.id,
+          matricule: profileData.matricule,
+          enrollment_date: profileData.enrollment_date,
+          photo: null, // Toujours null comme demandé
+          marital_status: profileData.marital_status,
+          father_name: profileData.father_name,
+          mother_name: profileData.mother_name,
+          tutor_name: profileData.tutor_name,
+          tutor_phone: profileData.tutor_phone,
+          address: profileData.address,
+          emergency_contact: profileData.emergency_contact,
+          notes: profileData.notes,
+        };
+
+        // Appel API vers /api/students
+        const response = await apiService.createStudentProfile(studentData);
+
+        if (response.success) {
+          showNotification(
+            "success",
+            "Succès",
+            `Profil étudiant assigné avec succès à ${user.first_name} ${user.last_name}`
+          );
+
+          // Rafraîchir la liste des utilisateurs pour mettre à jour les compteurs
+          fetchUsers();
+        } else {
+          showNotification(
+            "error",
+            "Erreur",
+            response.error || "Erreur lors de l'assignation du profil étudiant"
+          );
+        }
+      } else if (
+        selectedProfileType === "teacher" &&
+        "specialty" in profileData
+      ) {
+        // Préparer les données pour l'API enseignants
+        const teacherData = {
+          user_id: user.id,
+          matricule: profileData.matricule,
+          hire_date: profileData.hire_date,
+          photo: null,
+          marital_status: profileData.marital_status,
+          specialty: profileData.specialty,
+          diplomas: profileData.diplomas,
+          address: profileData.address,
+          emergency_contact: profileData.emergency_contact,
+          notes: profileData.notes,
+        };
+
+        // Appel API vers /api/teachers
+        const response = await apiService.createTeacherProfile(teacherData);
+
+        if (response.success) {
+          showNotification(
+            "success",
+            "Succès",
+            `Profil enseignant assigné avec succès à ${user.first_name} ${user.last_name}`
+          );
+          fetchUsers();
+        } else {
+          showNotification(
+            "error",
+            "Erreur",
+            response.error ||
+              "Erreur lors de l'assignation du profil enseignant"
+          );
+        }
+      } else if (selectedProfileType === "staff" && "position" in profileData) {
+        // Préparer les données pour l'API personnel
+        const staffData = {
+          user_id: user.id,
+          matricule: profileData.matricule,
+          hire_date: profileData.hire_date,
+          position: profileData.position,
+          photo: null,
+          marital_status: profileData.marital_status,
+          address: profileData.address,
+          emergency_contact: profileData.emergency_contact,
+          notes: profileData.notes,
+        };
+
+        // Appel API vers /api/staff
+        const response = await apiService.createStaffProfile(staffData);
+
+        if (response.success) {
+          showNotification(
+            "success",
+            "Succès",
+            `Profil personnel assigné avec succès à ${user.first_name} ${user.last_name}`
+          );
+          fetchUsers();
+        } else {
+          showNotification(
+            "error",
+            "Erreur",
+            response.error || "Erreur lors de l'assignation du profil personnel"
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'assignation du profil:", error);
+      showNotification(
+        "error",
+        "Erreur",
+        "Erreur lors de l'assignation du profil"
+      );
+    }
+  };
+
+  const handleEditStudentProfile = (student: StudentWithUser) => {
+    // Ouvrir la modal d'édition avec les données existantes
+    setSelectedProfileType("student");
+    setShowProfileAssignmentModal(true);
+    // TODO: Passer les données existantes à la modal pour édition
+    console.log("Édition du profil étudiant:", student);
+  };
+
+  const handleEditTeacherProfile = (teacher: TeacherWithUser) => {
+    // Ouvrir la modal d'édition avec les données existantes
+    setSelectedProfileType("teacher");
+    setShowProfileAssignmentModal(true);
+    // TODO: Passer les données existantes à la modal pour édition
+    console.log("Édition du profil enseignant:", teacher);
+  };
+
+  const handleEditStaffProfile = (staff: StaffWithUser) => {
+    // Ouvrir la modal d'édition avec les données existantes
+    setSelectedProfileType("staff");
+    setShowProfileAssignmentModal(true);
+    // TODO: Passer les données existantes à la modal pour édition
+    console.log("Édition du profil personnel:", staff);
+  };
+
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -197,7 +362,10 @@ const UsersPage = () => {
         showNotification("success", "Succès", "Utilisateur créé avec succès !");
         setShowCreateModal(false);
         resetForm();
-        fetchUsers(); // Refresh the list
+        // Add user to store and refresh
+        if (response.data) {
+          addUser(response.data);
+        }
       } else {
         showNotification(
           "error",
@@ -307,6 +475,16 @@ const UsersPage = () => {
           </Button>
         </motion.div>
 
+        {/* User Tabs */}
+        <motion.div variants={itemVariants}>
+          <UserTabs
+            activeTab={selectedRole}
+            onTabChange={setSelectedRole}
+            userCounts={getUserCounts()}
+            onAssignProfile={handleAssignProfile}
+          />
+        </motion.div>
+
         {/* Filters and Search */}
         <motion.div
           variants={itemVariants}
@@ -350,112 +528,120 @@ const UsersPage = () => {
           </div>
         </motion.div>
 
-        {/* Users List */}
-        <motion.div
-          variants={itemVariants}
-          className="bg-white rounded-xl shadow-sm border border-blue-100 overflow-hidden"
-        >
-          {isLoading ? (
-            <div className="p-8 text-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-blue-600">Chargement des utilisateurs...</p>
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-blue-600">Aucun utilisateur trouvé</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-blue-50 border-b border-blue-100">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
-                      Utilisateur
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
-                      Rôle
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
-                      Statut
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-blue-600 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-blue-100">
-                  {filteredUsers.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="hover:bg-blue-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium">
-                            {user.first_name.charAt(0)}
-                            {user.last_name.charAt(0)}
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-blue-900">
-                              {user.first_name} {user.last_name}
-                            </div>
-                            <div className="text-sm text-blue-600">
-                              @{user.username}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(
-                            user.role
-                          )}`}
-                        >
-                          {getRoleLabel(user.role)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-blue-900">
-                          {user.email}
-                        </div>
-                        <div className="text-sm text-blue-600">
-                          {user.phone}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                          Actif
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setShowUserModal(true);
-                            }}
-                            className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
+        {/* Users List or Profile Data based on selected role */}
+        {selectedRole === "student" ? (
+          <StudentDataTable onEditProfile={handleEditStudentProfile} />
+        ) : selectedRole === "teacher" ? (
+          <TeacherDataTable onEditProfile={handleEditTeacherProfile} />
+        ) : selectedRole === "staff" ? (
+          <StaffDataTable onEditProfile={handleEditStaffProfile} />
+        ) : (
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-xl shadow-sm border border-blue-100 overflow-hidden"
+          >
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-blue-600">Chargement des utilisateurs...</p>
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-blue-600">Aucun utilisateur trouvé</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-blue-50 border-b border-blue-100">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
+                        Utilisateur
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
+                        Rôle
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
+                        Statut
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-medium text-blue-600 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </motion.div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-blue-100">
+                    {filteredUsers.map((user) => (
+                      <tr
+                        key={user.id}
+                        className="hover:bg-blue-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium">
+                              {user.first_name.charAt(0)}
+                              {user.last_name.charAt(0)}
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-blue-900">
+                                {user.first_name} {user.last_name}
+                              </div>
+                              <div className="text-sm text-blue-600">
+                                @{user.username}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(
+                              user.role
+                            )}`}
+                          >
+                            {getRoleLabel(user.role)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-blue-900">
+                            {user.email}
+                          </div>
+                          <div className="text-sm text-blue-600">
+                            {user.phone}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            Actif
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setShowUserModal(true);
+                              }}
+                              className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <EyeIcon className="w-4 h-4" />
+                            </button>
+                            <button className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors">
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Create User Modal */}
@@ -683,6 +869,17 @@ const UsersPage = () => {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Profile Assignment Modal */}
+      {showProfileAssignmentModal && (
+        <ProfileAssignmentModal
+          isOpen={showProfileAssignmentModal}
+          onClose={() => setShowProfileAssignmentModal(false)}
+          profileType={selectedProfileType}
+          onAssignProfile={handleProfileAssignment}
+          existingUsers={filteredUsers}
+        />
       )}
 
       <Notification

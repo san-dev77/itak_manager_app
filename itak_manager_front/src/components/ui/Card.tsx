@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { type ReactNode } from "react";
 
 interface CardProps {
@@ -15,15 +14,11 @@ const Card = ({
   delay = 0,
 }: CardProps) => {
   return (
-    <motion.div
-      className={`card bg-white shadow-lg hover:shadow-xl border border-slate-100 ${className}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={hover ? { y: -5, transition: { duration: 0.2 } } : {}}
+    <div
+      className={`card bg-white shadow-lg hover:shadow-xl border border-slate-100 transition-all duration-300 ${className}`}
     >
       {children}
-    </motion.div>
+    </div>
   );
 };
 

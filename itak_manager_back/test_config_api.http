@@ -1,0 +1,171 @@
+### Test de l'API de Configuration ITAK Manager
+
+### ========================================
+### ENDPOINTS POUR CLASS_SUBJECTS
+### ========================================
+
+### 1. Créer une association classe-matière
+POST http://localhost:3000/api/config/class-subjects
+Content-Type: application/json
+
+{
+  "class_id": 1,
+  "subject_id": 5,
+  "coefficient": 3,
+  "weekly_hours": 4,
+  "is_optional": false
+}
+
+### 2. Récupérer toutes les associations classe-matière
+GET http://localhost:3000/api/config/class-subjects
+
+### 3. Récupérer une association par ID
+GET http://localhost:3000/api/config/class-subjects/1
+
+### 4. Récupérer les matières d'une classe
+GET http://localhost:3000/api/config/class-subjects/class/1
+
+### 5. Récupérer les classes d'une matière
+GET http://localhost:3000/api/config/class-subjects/subject/1
+
+### 6. Mettre à jour une association
+PUT http://localhost:3000/api/config/class-subjects/1
+Content-Type: application/json
+
+{
+  "coefficient": 5,
+  "weekly_hours": 6
+}
+
+### 7. Supprimer une association
+DELETE http://localhost:3000/api/config/class-subjects/1
+
+### ========================================
+### ENDPOINTS POUR STUDENT_CLASSES
+### ========================================
+
+### 8. Créer une inscription étudiant-classe
+POST http://localhost:3000/api/config/student-classes
+Content-Type: application/json
+
+{
+  "student_id": 9,
+  "class_id": 1,
+  "start_date": "2024-09-01",
+  "end_date": null
+}
+
+### 9. Récupérer toutes les inscriptions
+GET http://localhost:3000/api/config/student-classes
+
+### 10. Récupérer une inscription par ID
+GET http://localhost:3000/api/config/student-classes/1
+
+### 11. Récupérer les inscriptions d'un étudiant
+GET http://localhost:3000/api/config/student-classes/student/1
+
+### 12. Récupérer les étudiants d'une classe
+GET http://localhost:3000/api/config/student-classes/class/1
+
+### 13. Mettre à jour une inscription
+PUT http://localhost:3000/api/config/student-classes/1
+Content-Type: application/json
+
+{
+  "end_date": "2025-06-30"
+}
+
+### 14. Supprimer une inscription
+DELETE http://localhost:3000/api/config/student-classes/1
+
+### ========================================
+### ENDPOINTS POUR TEACHING_ASSIGNMENTS
+### ========================================
+
+### 15. Créer une assignation professeur
+POST http://localhost:3000/api/config/teaching-assignments
+Content-Type: application/json
+
+{
+  "teacher_id": 6,
+  "class_subject_id": 9,
+  "start_date": "2024-09-01",
+  "end_date": null
+}
+
+### 16. Récupérer toutes les assignations
+GET http://localhost:3000/api/config/teaching-assignments
+
+### 17. Récupérer une assignation par ID
+GET http://localhost:3000/api/config/teaching-assignments/1
+
+### 18. Récupérer les assignations d'un professeur
+GET http://localhost:3000/api/config/teaching-assignments/teacher/1
+
+### 19. Récupérer les assignations d'une classe-matière
+GET http://localhost:3000/api/config/teaching-assignments/class-subject/1
+
+### 20. Mettre à jour une assignation
+PUT http://localhost:3000/api/config/teaching-assignments/1
+Content-Type: application/json
+
+{
+  "end_date": "2025-06-30"
+}
+
+### 21. Supprimer une assignation
+DELETE http://localhost:3000/api/config/teaching-assignments/1
+
+### ========================================
+### TESTS D'ERREUR
+### ========================================
+
+### 22. Test d'erreur - Classe inexistante
+POST http://localhost:3000/api/config/class-subjects
+Content-Type: application/json
+
+{
+  "class_id": 999,
+  "subject_id": 1,
+  "coefficient": 3
+}
+
+### 23. Test d'erreur - Matière inexistante
+POST http://localhost:3000/api/config/class-subjects
+Content-Type: application/json
+
+{
+  "class_id": 1,
+  "subject_id": 999,
+  "coefficient": 3
+}
+
+### 24. Test d'erreur - Étudiant inexistant
+POST http://localhost:3000/api/config/student-classes
+Content-Type: application/json
+
+{
+  "student_id": 999,
+  "class_id": 1,
+  "start_date": "2024-09-01"
+}
+
+### 25. Test d'erreur - Professeur inexistant
+POST http://localhost:3000/api/config/teaching-assignments
+Content-Type: application/json
+
+{
+  "teacher_id": 999,
+  "class_subject_id": 1,
+  "start_date": "2024-09-01"
+}
+
+### 26. Test d'erreur - Association classe-matière inexistante
+POST http://localhost:3000/api/config/teaching-assignments
+Content-Type: application/json
+
+{
+  "teacher_id": 1,
+  "class_subject_id": 999,
+  "start_date": "2024-09-01"
+}

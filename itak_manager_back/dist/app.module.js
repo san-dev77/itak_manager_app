@@ -13,12 +13,30 @@ const app_service_1 = require("./app.service");
 const supabase_module_1 = require("./modules/supabase.module");
 const user_module_1 = require("./modules/user.module");
 const auth_module_1 = require("./modules/auth.module");
+const student_module_1 = require("./modules/student.module");
+const teacher_module_1 = require("./modules/teacher.module");
+const staff_module_1 = require("./modules/staff.module");
+const class_category_module_1 = require("./modules/class-category.module");
+const class_module_1 = require("./modules/class.module");
+const subject_module_1 = require("./modules/subject.module");
+const config_module_1 = require("./modules/config.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [supabase_module_1.SupabaseModule, user_module_1.UserModule, auth_module_1.AuthModule],
+        imports: [
+            supabase_module_1.SupabaseModule,
+            user_module_1.UserModule,
+            auth_module_1.AuthModule,
+            student_module_1.StudentModule,
+            teacher_module_1.TeacherModule,
+            staff_module_1.StaffModule,
+            class_category_module_1.ClassCategoryModule,
+            class_module_1.ClassModule,
+            subject_module_1.SubjectModule,
+            config_module_1.ConfigModule,
+        ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
     })

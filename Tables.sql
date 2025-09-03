@@ -89,6 +89,15 @@ CREATE TABLE classes (
     name VARCHAR(50) NOT NULL,
     level VARCHAR(20) NOT NULL,
     capacity INT,
+    categorie_id INT REFERENCES class_category(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--classe categorie pour savoir si c'est la fac ou le college
+create table class_category (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -96,7 +105,9 @@ CREATE TABLE classes (
 CREATE TABLE subjects (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
-    code VARCHAR(10) UNIQUE NOT NULL
+    code VARCHAR(10) UNIQUE NOT NULL,
+    categorie_id INT REFERENCES class_category(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- TABLE : class_subjects

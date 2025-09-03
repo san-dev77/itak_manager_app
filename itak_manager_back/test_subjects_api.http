@@ -1,0 +1,81 @@
+### Test de l'API des Matières avec Catégories
+
+### 1. Créer une matière de mathématiques
+POST http://localhost:3000/api/subjects
+Content-Type: application/json
+
+{
+  "name": "Algèbre",
+  "code": "ALG",
+  "categorie_id": 1
+}
+
+### 2. Créer une matière d'histoire
+POST http://localhost:3000/api/subjects
+Content-Type: application/json
+
+{
+  "name": "Histoire Moderne",
+  "code": "HIST_MOD",
+  "categorie_id": 2
+}
+
+### 3. Créer une matière de sciences
+POST http://localhost:3000/api/subjects
+Content-Type: application/json
+
+{
+  "name": "Chimie Organique",
+  "code": "CHIM_ORG",
+  "categorie_id": 3
+}
+
+### 4. Récupérer toutes les matières
+GET http://localhost:3000/api/subjects
+
+### 5. Récupérer les matières par catégorie (Mathématiques)
+GET http://localhost:3000/api/subjects/category/1
+
+### 6. Récupérer les matières par catégorie (Histoire)
+GET http://localhost:3000/api/subjects/category/2
+
+### 7. Récupérer les matières par catégorie (Sciences)
+GET http://localhost:3000/api/subjects/category/3
+
+### 8. Récupérer une matière par code
+GET http://localhost:3000/api/subjects/code/ALG
+
+### 9. Récupérer une matière par nom
+GET http://localhost:3000/api/subjects/name/Algèbre
+
+### 10. Mettre à jour une matière
+PUT http://localhost:3000/api/subjects/1
+Content-Type: application/json
+
+{
+  "name": "Algèbre Avancée",
+  "categorie_id": 1
+}
+
+### 11. Supprimer une matière
+DELETE http://localhost:3000/api/subjects/1
+
+### 12. Test d'erreur - Catégorie inexistante
+POST http://localhost:3000/api/subjects
+Content-Type: application/json
+
+{
+  "name": "Test Erreur",
+  "code": "TEST_ERR",
+  "categorie_id": 999
+}
+
+### 13. Test d'erreur - Code dupliqué
+POST http://localhost:3000/api/subjects
+Content-Type: application/json
+
+{
+  "name": "Test Dupliqué",
+  "code": "ALG",
+  "categorie_id": 1
+}

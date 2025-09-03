@@ -26,13 +26,17 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             className={`
-              input input-bordered w-full bg-white text-slate-800 border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200
-              transition-all duration-200 placeholder:text-slate-400
+              input input-bordered w-full transition-all duration-200 placeholder:text-slate-400
               ${icon ? "pl-10" : ""}
               ${
                 error
                   ? "border-red-400 focus:border-red-500 focus:ring-red-200"
                   : ""
+              }
+              ${
+                props.type === "date"
+                  ? "bg-gray-700 text-white border-gray-600 focus:border-gray-500 focus:ring-2 focus:ring-gray-500"
+                  : "bg-white text-slate-800 border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               }
               ${className}
             `}

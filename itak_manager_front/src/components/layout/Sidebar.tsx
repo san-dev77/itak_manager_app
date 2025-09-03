@@ -1,18 +1,18 @@
-import { motion } from "framer-motion";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Home,
   Users,
   BookOpen,
-  Calendar,
   Settings,
   BarChart3,
-  FileText,
-  GraduationCap,
   Building,
   ChevronLeft,
   ChevronRight,
+  DollarSign,
+  TrendingUp,
+  CreditCard,
+  Receipt,
 } from "lucide-react";
 import logoItak from "../../assets/logo itak.png";
 
@@ -26,11 +26,13 @@ interface MenuItem {
   path: string;
   icon: React.ReactNode;
   badge?: number;
+  children?: MenuItem[];
 }
 
 const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
   const location = useLocation();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
   const menuItems: MenuItem[] = [
     {
@@ -45,25 +47,31 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
       badge: 1247,
     },
     {
-      title: "Cours",
-      path: "/courses",
+      title: "Classes & Matières",
+      path: "/classes-subjects",
       icon: <BookOpen className="w-5 h-5" />,
-      badge: 89,
     },
     {
-      title: "Calendrier",
-      path: "/calendar",
-      icon: <Calendar className="w-5 h-5" />,
-    },
-    {
-      title: "Notes",
-      path: "/grades",
-      icon: <FileText className="w-5 h-5" />,
-    },
-    {
-      title: "Classes",
-      path: "/classes",
-      icon: <GraduationCap className="w-5 h-5" />,
+      title: "Finances",
+      path: "/finances",
+      icon: <DollarSign className="w-5 h-5" />,
+      children: [
+        {
+          title: "Vue d'ensemble",
+          path: "/finances/overview",
+          icon: <TrendingUp className="w-4 h-4" />,
+        },
+        {
+          title: "Paiements",
+          path: "/finances/payments",
+          icon: <CreditCard className="w-4 h-4" />,
+        },
+        {
+          title: "Factures",
+          path: "/finances/invoices",
+          icon: <Receipt className="w-4 h-4" />,
+        },
+      ],
     },
     {
       title: "Établissements",
@@ -83,35 +91,119 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
   ];
 
   const isActive = (path: string) => {
-    return location.pathname === path;
+    return (
+      location.pathname === path || location.pathname.startsWith(path + "/")
+    );
+  };
+
+  const toggleMenu = (title: string) => {
+    setExpandedMenus((prev) =>
+      prev.includes(title)
+        ? prev.filter((item) => item !== title)
+        : [...prev, title]
+    );
+  };
+
+  const renderMenuItem = (item: MenuItem, level: number = 0) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedMenus.includes(item.title);
+    const isActiveItem = isActive(item.path);
+
+    return (
+      <div key={item.path}>
+        <div className="relative">
+          <Link
+            to={item.path}
+            className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative ${
+              isActiveItem
+                ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-600/25"
+                : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+            } ${level > 0 ? "ml-4" : ""}`}
+            onMouseEnter={() => setHoveredItem(item.path)}
+            onMouseLeave={() => setHoveredItem(null)}
+          >
+            <div
+              className={`flex-shrink-0 ${
+                isActiveItem
+                  ? "text-white"
+                  : "text-gray-500 group-hover:text-blue-600"
+              }`}
+            >
+              {item.icon}
+            </div>
+
+            {!isCollapsed && (
+              <div className="flex-1 flex items-center justify-between">
+                <span className="font-medium text-sm">{item.title}</span>
+                {item.badge && (
+                  <span
+                    className={`text-xs font-medium px-2 py-1 rounded-full ${
+                      isActiveItem
+                        ? "bg-white/20 text-white"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+                {hasChildren && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleMenu(item.title);
+                    }}
+                    className={`p-1 rounded transition-transform duration-200 ${
+                      isExpanded ? "rotate-90" : ""
+                    }`}
+                  >
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Tooltip pour sidebar collapsed */}
+            {isCollapsed && hoveredItem === item.path && (
+              <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap z-50 shadow-xl">
+                {item.title}
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-4 border-l-gray-900 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+              </div>
+            )}
+          </Link>
+        </div>
+
+        {/* Sous-menus */}
+        {hasChildren && !isCollapsed && isExpanded && (
+          <div className="mt-1 space-y-1">
+            {item.children!.map((child) => renderMenuItem(child, level + 1))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
-    <motion.div
-      className={`bg-white border-r border-blue-100 h-screen flex flex-col transition-all duration-300 ease-in-out ${
+    <div
+      className={`bg-white border-r border-gray-200 h-screen flex flex-col transition-all duration-300 ease-in-out shadow-sm ${
         isCollapsed ? "w-16" : "w-64"
       }`}
-      initial={{ x: -100, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.3 }}
     >
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-blue-100">
+      <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
         {!isCollapsed && (
-          <motion.div
-            className="flex items-center gap-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-          >
-            <img src={logoItak} alt="ITAK Manager" className="w-8 h-8" />
-            <span className="text-lg font-bold text-blue-900">ITAK</span>
-          </motion.div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-sm">
+              <img src={logoItak} alt="ITAK Manager" className="w-6 h-6" />
+            </div>
+            <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              ITAK
+            </span>
+          </div>
         )}
 
         <button
           onClick={onToggle}
-          className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 hover:text-blue-700 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-all duration-200 hover:shadow-sm"
         >
           {isCollapsed ? (
             <ChevronRight className="w-4 h-4" />
@@ -123,72 +215,22 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
 
       {/* Navigation Menu - Scrollable if needed */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {menuItems.map((item) => (
-          <motion.div
-            key={item.path}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Link
-              to={item.path}
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group relative ${
-                isActive(item.path)
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-blue-700 hover:bg-blue-50 hover:text-blue-800"
-              }`}
-              onMouseEnter={() => setHoveredItem(item.path)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="flex-shrink-0">{item.icon}</div>
-
-              {!isCollapsed && (
-                <motion.div
-                  className="flex-1 flex items-center justify-between"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <span className="font-medium">{item.title}</span>
-                  {item.badge && (
-                    <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-1 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </motion.div>
-              )}
-
-              {/* Tooltip pour sidebar collapsed */}
-              {isCollapsed && hoveredItem === item.path && (
-                <motion.div
-                  className="absolute left-full ml-2 px-3 py-2 bg-blue-900 text-white text-sm rounded-lg whitespace-nowrap z-50"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {item.title}
-                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-4 border-l-blue-900 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
-                </motion.div>
-              )}
-            </Link>
-          </motion.div>
-        ))}
+        {menuItems.map((item) => renderMenuItem(item))}
       </nav>
 
       {/* Footer */}
       {!isCollapsed && (
-        <motion.div
-          className="flex-shrink-0 p-4 border-t border-blue-100"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3">
-            <div className="text-xs text-blue-600 mb-1">Version</div>
-            <div className="text-sm font-medium text-blue-800">1.0.0</div>
+        <div className="flex-shrink-0 p-4 border-t border-gray-200">
+          <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-200">
+            <div className="text-xs text-gray-500 mb-1 font-medium">
+              Version
+            </div>
+            <div className="text-sm font-semibold text-gray-700">1.0.0</div>
+            <div className="text-xs text-gray-400 mt-1">ITAK Manager</div>
           </div>
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 };
 
