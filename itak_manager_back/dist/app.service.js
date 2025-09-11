@@ -9,22 +9,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppService = void 0;
 const common_1 = require("@nestjs/common");
 let AppService = class AppService {
-    getStatus() {
-        return {
-            status: 'running',
-            service: 'ITAK Manager Backend',
-            version: '1.0.0',
-            timestamp: new Date().toISOString(),
-            environment: process.env.NODE_ENV || 'development',
-        };
-    }
-    getHealth() {
-        return {
-            status: 'healthy',
-            uptime: process.uptime(),
-            memory: process.memoryUsage(),
-            timestamp: new Date().toISOString(),
-        };
+    getHello() {
+        return 'Hello World!';
     }
 };
 exports.AppService = AppService;

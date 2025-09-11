@@ -1,14 +1,32 @@
-export declare const appConfig: {
+declare const _default: (() => {
     name: string;
-    version: string;
-    port: string | number;
+    port: number;
+    url: string;
+    frontendUrl: string;
+    loginUrl: string;
+    supportEmail: string;
+    smtpUser: string | undefined;
+    smtpPass: string | undefined;
+    smtpHost: string;
+    smtpPort: number;
+    smtpFrom: string;
     environment: string;
-    cors: {
-        origin: string;
-        credentials: boolean;
-    };
-    rateLimit: {
-        windowMs: number;
-        max: number;
-    };
-};
+    apiPrefix: string;
+    apiVersion: string;
+}) & import("@nestjs/config").ConfigFactoryKeyHost<{
+    name: string;
+    port: number;
+    url: string;
+    frontendUrl: string;
+    loginUrl: string;
+    supportEmail: string;
+    smtpUser: string | undefined;
+    smtpPass: string | undefined;
+    smtpHost: string;
+    smtpPort: number;
+    smtpFrom: string;
+    environment: string;
+    apiPrefix: string;
+    apiVersion: string;
+}>;
+export default _default;
