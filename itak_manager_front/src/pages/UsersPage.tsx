@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit, EyeIcon, Plus, Search, Trash2 } from "lucide-react";
 import Layout from "../components/layout/Layout";
@@ -8,9 +8,6 @@ import Input from "../components/ui/Input";
 import {
   apiService,
   type User,
-  type StudentProfileData,
-  type TeacherProfileData,
-  type StaffProfileData,
   type StudentWithUser,
   type TeacherWithUser,
   type StaffWithUser,
@@ -29,7 +26,7 @@ import { useUserStore } from "../stores/userStore";
 import { useUserEffects } from "../hooks/useUserEffects";
 
 // Interface union pour les données de profil
-type ProfileData = StudentProfileData | TeacherProfileData | StaffProfileData;
+// Supprimer cette ligne car elle entre en conflit avec les types importés
 
 const UsersPage = () => {
   const navigate = useNavigate();
@@ -42,6 +39,7 @@ const UsersPage = () => {
   const [selectedProfileType, setSelectedProfileType] = useState<
     "student" | "teacher" | "staff"
   >("student");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Zustand store
   const {
@@ -72,13 +70,12 @@ const UsersPage = () => {
     isVisible: false,
   });
 
-  const showNotification = (
-    type: NotificationType,
-    title: string,
-    message: string
-  ) => {
-    setNotification({ type, title, message, isVisible: true });
-  };
+  const showNotification = useCallback(
+    (type: NotificationType, title: string, message: string) => {
+      setNotification({ type, title, message, isVisible: true });
+    },
+    []
+  );
 
   const hideNotification = () => {
     setNotification((prev) => ({ ...prev, isVisible: false }));
@@ -90,39 +87,17 @@ const UsersPage = () => {
     email: "",
     password: "",
     role: "student",
-    first_name: "",
-    last_name: "",
+    firstName: "",
+    lastName: "",
     gender: "male",
-    birth_date: "",
+    birthDate: "",
     phone: "",
   });
 
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    // Vérifier l'authentification
-    const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
-    const token =
-      localStorage.getItem("itak_token") ||
-      sessionStorage.getItem("itak_token");
-
-    if (!userData || !token) {
-      navigate("/login");
-      return;
-    }
-
-    try {
-      setCurrentUser(JSON.parse(userData));
-      fetchUsers();
-    } catch (error) {
-      console.error("Erreur lors du parsing des données utilisateur:", error);
-      navigate("/login");
-    }
-  }, [navigate]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiService.getAllUsers();
@@ -141,7 +116,29 @@ const UsersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setUsers, setLoading, showNotification]);
+
+  useEffect(() => {
+    // Vérifier l'authentification
+    const userData =
+      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
+    const token =
+      localStorage.getItem("itak_access_token") ||
+      sessionStorage.getItem("itak_access_token");
+
+    if (!userData || !token) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      setCurrentUser(JSON.parse(userData));
+      fetchUsers();
+    } catch (error) {
+      console.error("Erreur lors du parsing des données utilisateur:", error);
+      navigate("/login");
+    }
+  }, [navigate, fetchUsers]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -163,9 +160,9 @@ const UsersPage = () => {
     if (!formData.email.trim()) errors.email = "L'email est requis";
     if (!formData.password.trim())
       errors.password = "Le mot de passe est requis";
-    if (!formData.first_name.trim()) errors.first_name = "Le prénom est requis";
-    if (!formData.last_name.trim())
-      errors.last_name = "Le nom de famille est requis";
+    if (!formData.firstName.trim()) errors.firstName = "Le prénom est requis";
+    if (!formData.lastName.trim())
+      errors.lastName = "Le nom de famille est requis";
     if (!formData.phone.trim()) errors.phone = "Le téléphone est requis";
 
     if (formData.password.length < 6) {
@@ -185,27 +182,27 @@ const UsersPage = () => {
 
   const handleProfileAssignment = async (
     user: User,
-    profileData: ProfileData
+    profileData: Record<string, unknown>
   ) => {
     try {
       if (
         selectedProfileType === "student" &&
-        "enrollment_date" in profileData
+        "enrollmentDate" in profileData
       ) {
-        // Préparer les données pour l'API
+        // Préparer les données pour l'API (nouveau format)
         const studentData = {
-          user_id: user.id,
-          matricule: profileData.matricule,
-          enrollment_date: profileData.enrollment_date,
-          photo: null, // Toujours null comme demandé
-          marital_status: profileData.marital_status,
-          father_name: profileData.father_name,
-          mother_name: profileData.mother_name,
-          tutor_name: profileData.tutor_name,
-          tutor_phone: profileData.tutor_phone,
-          address: profileData.address,
-          emergency_contact: profileData.emergency_contact,
-          notes: profileData.notes,
+          userId: user.id, // ID de l'utilisateur sélectionné
+          matricule: String(profileData.matricule || ""),
+          enrollmentDate: String(profileData.enrollmentDate || ""),
+          photo: undefined, // Optionnel
+          maritalStatus: String(profileData.maritalStatus || ""),
+          fatherName: String(profileData.fatherName || ""),
+          motherName: String(profileData.motherName || ""),
+          tutorName: String(profileData.tutorName || ""),
+          tutorPhone: String(profileData.tutorPhone || ""),
+          address: String(profileData.address || ""),
+          emergencyContact: String(profileData.emergencyContact || ""),
+          notes: String(profileData.notes || ""),
         };
 
         // Appel API vers /api/students
@@ -215,11 +212,15 @@ const UsersPage = () => {
           showNotification(
             "success",
             "Succès",
-            `Profil étudiant assigné avec succès à ${user.first_name} ${user.last_name}`
+            `Profil étudiant assigné avec succès à ${user.firstName} ${user.lastName}`
           );
 
           // Rafraîchir la liste des utilisateurs pour mettre à jour les compteurs
           fetchUsers();
+          // Déclencher le rechargement des tables
+          setRefreshTrigger((prev) => prev + 1);
+          // Déclencher le rechargement des tables
+          setRefreshTrigger((prev) => prev + 1);
         } else {
           showNotification(
             "error",
@@ -229,20 +230,19 @@ const UsersPage = () => {
         }
       } else if (
         selectedProfileType === "teacher" &&
-        "specialty" in profileData
+        "hireDate" in profileData
       ) {
-        // Préparer les données pour l'API enseignants
+        // Préparer les données pour l'API enseignants (nouveau format)
         const teacherData = {
-          user_id: user.id,
-          matricule: profileData.matricule,
-          hire_date: profileData.hire_date,
-          photo: null,
-          marital_status: profileData.marital_status,
-          specialty: profileData.specialty,
-          diplomas: profileData.diplomas,
-          address: profileData.address,
-          emergency_contact: profileData.emergency_contact,
-          notes: profileData.notes,
+          userId: user.id, // ID de l'utilisateur sélectionné
+          matricule: String(profileData.matricule || ""),
+          hireDate: String(profileData.hireDate || ""),
+          photo: undefined, // Optionnel
+          maritalStatus: String(profileData.maritalStatus || ""),
+          diplomas: String(profileData.diplomas || ""),
+          address: String(profileData.address || ""),
+          emergencyContact: String(profileData.emergencyContact || ""),
+          notes: String(profileData.notes || ""),
         };
 
         // Appel API vers /api/teachers
@@ -252,9 +252,11 @@ const UsersPage = () => {
           showNotification(
             "success",
             "Succès",
-            `Profil enseignant assigné avec succès à ${user.first_name} ${user.last_name}`
+            `Profil enseignant assigné avec succès à ${user.firstName} ${user.lastName}`
           );
           fetchUsers();
+          // Déclencher le rechargement des tables
+          setRefreshTrigger((prev) => prev + 1);
         } else {
           showNotification(
             "error",
@@ -263,18 +265,18 @@ const UsersPage = () => {
               "Erreur lors de l'assignation du profil enseignant"
           );
         }
-      } else if (selectedProfileType === "staff" && "position" in profileData) {
-        // Préparer les données pour l'API personnel
+      } else if (selectedProfileType === "staff" && "hireDate" in profileData) {
+        // Préparer les données pour l'API personnel (nouveau format)
         const staffData = {
-          user_id: user.id,
-          matricule: profileData.matricule,
-          hire_date: profileData.hire_date,
-          position: profileData.position,
-          photo: null,
-          marital_status: profileData.marital_status,
-          address: profileData.address,
-          emergency_contact: profileData.emergency_contact,
-          notes: profileData.notes,
+          userId: user.id, // ID de l'utilisateur sélectionné
+          matricule: String(profileData.matricule || ""),
+          hireDate: String(profileData.hireDate || ""),
+          position: String(profileData.position || ""),
+          photo: undefined, // Optionnel
+          maritalStatus: String(profileData.maritalStatus || ""),
+          address: String(profileData.address || ""),
+          emergencyContact: String(profileData.emergencyContact || ""),
+          notes: String(profileData.notes || ""),
         };
 
         // Appel API vers /api/staff
@@ -284,9 +286,11 @@ const UsersPage = () => {
           showNotification(
             "success",
             "Succès",
-            `Profil personnel assigné avec succès à ${user.first_name} ${user.last_name}`
+            `Profil personnel assigné avec succès à ${user.firstName} ${user.lastName}`
           );
           fetchUsers();
+          // Déclencher le rechargement des tables
+          setRefreshTrigger((prev) => prev + 1);
         } else {
           showNotification(
             "error",
@@ -335,7 +339,7 @@ const UsersPage = () => {
 
     setIsSubmitting(true);
     try {
-      const birthDate = formData.birth_date;
+      const birthDate = formData.birthDate;
       //   if (birthDate) {
       //     const date = new Date(birthDate);
       //     if (isNaN(date.getTime())) {
@@ -348,11 +352,16 @@ const UsersPage = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role: formData.role,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
+        role: formData.role as
+          | "student"
+          | "teacher"
+          | "staff"
+          | "parent"
+          | "admin",
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         gender: formData.gender,
-        birth_date: birthDate,
+        birthDate: birthDate,
         phone: formData.phone,
       };
 
@@ -387,10 +396,10 @@ const UsersPage = () => {
       email: "",
       password: "",
       role: "student",
-      first_name: "",
-      last_name: "",
+      firstName: "",
+      lastName: "",
       gender: "male",
-      birth_date: "",
+      birthDate: "",
       phone: "",
     });
     setFormErrors({});
@@ -446,7 +455,14 @@ const UsersPage = () => {
   }
 
   return (
-    <Layout user={currentUser}>
+    <Layout
+      user={{
+        firstName: currentUser?.firstName || "Utilisateur",
+        lastName: currentUser?.lastName || "Anonyme",
+        role: currentUser?.role || "user",
+        email: currentUser?.email || "",
+      }}
+    >
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -530,11 +546,23 @@ const UsersPage = () => {
 
         {/* Users List or Profile Data based on selected role */}
         {selectedRole === "student" ? (
-          <StudentDataTable onEditProfile={handleEditStudentProfile} />
+          <StudentDataTable
+            onEditProfile={handleEditStudentProfile}
+            refreshTrigger={refreshTrigger}
+            users={filteredUsers}
+          />
         ) : selectedRole === "teacher" ? (
-          <TeacherDataTable onEditProfile={handleEditTeacherProfile} />
+          <TeacherDataTable
+            onEditProfile={handleEditTeacherProfile}
+            refreshTrigger={refreshTrigger}
+            users={filteredUsers}
+          />
         ) : selectedRole === "staff" ? (
-          <StaffDataTable onEditProfile={handleEditStaffProfile} />
+          <StaffDataTable
+            onEditProfile={handleEditStaffProfile}
+            refreshTrigger={refreshTrigger}
+            users={filteredUsers}
+          />
         ) : (
           <motion.div
             variants={itemVariants}
@@ -580,12 +608,12 @@ const UsersPage = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium">
-                              {user.first_name.charAt(0)}
-                              {user.last_name.charAt(0)}
+                              {user.firstName?.charAt(0) || "U"}
+                              {user.lastName?.charAt(0) || "U"}
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-blue-900">
-                                {user.first_name} {user.last_name}
+                                {user.firstName} {user.lastName}
                               </div>
                               <div className="text-sm text-blue-600">
                                 @{user.username}
@@ -643,7 +671,6 @@ const UsersPage = () => {
           </motion.div>
         )}
       </motion.div>
-
       {/* Create User Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -717,19 +744,19 @@ const UsersPage = () => {
 
                 <Input
                   label="Prénom"
-                  name="first_name"
-                  value={formData.first_name}
+                  name="firstName"
+                  value={formData.firstName}
                   onChange={handleInputChange}
-                  error={formErrors.first_name}
+                  error={formErrors.firstName}
                   required
                 />
 
                 <Input
                   label="Nom de famille"
-                  name="last_name"
-                  value={formData.last_name}
+                  name="lastName"
+                  value={formData.lastName}
                   onChange={handleInputChange}
-                  error={formErrors.last_name}
+                  error={formErrors.lastName}
                   required
                 />
 
@@ -753,9 +780,9 @@ const UsersPage = () => {
 
                 <Input
                   label="Date de naissance"
-                  name="birth_date"
+                  name="birthDate"
                   type="date"
-                  value={formData.birth_date}
+                  value={formData.birthDate}
                   onChange={handleInputChange}
                 />
 
@@ -792,7 +819,6 @@ const UsersPage = () => {
           </motion.div>
         </div>
       )}
-
       {/* User Details Modal */}
       {showUserModal && selectedUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -805,12 +831,12 @@ const UsersPage = () => {
             <div className="p-6 border-b border-blue-100">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium text-xl">
-                  {selectedUser.first_name.charAt(0)}
-                  {selectedUser.last_name.charAt(0)}
+                  {selectedUser.firstName?.charAt(0) || "U"}
+                  {selectedUser.lastName?.charAt(0) || "U"}
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-blue-900">
-                    {selectedUser.first_name} {selectedUser.last_name}
+                    {selectedUser.firstName} {selectedUser.lastName}
                   </h2>
                   <p className="text-blue-600">@{selectedUser.username}</p>
                 </div>
@@ -847,13 +873,13 @@ const UsersPage = () => {
                     {selectedUser.phone}
                   </span>
                 </div>
-                {selectedUser.birth_date && (
+                {selectedUser.birthDate && (
                   <div className="col-span-2">
                     <span className="font-medium text-blue-600">
                       Date de naissance:
                     </span>
                     <span className="ml-2 text-blue-900">
-                      {new Date(selectedUser.birth_date).toLocaleDateString(
+                      {new Date(selectedUser.birthDate).toLocaleDateString(
                         "fr-FR"
                       )}
                     </span>
@@ -870,7 +896,6 @@ const UsersPage = () => {
           </motion.div>
         </div>
       )}
-
       {/* Profile Assignment Modal */}
       {showProfileAssignmentModal && (
         <ProfileAssignmentModal
@@ -880,8 +905,7 @@ const UsersPage = () => {
           onAssignProfile={handleProfileAssignment}
           existingUsers={filteredUsers}
         />
-      )}
-
+      )}{" "}
       <Notification
         type={notification.type}
         title={notification.title}

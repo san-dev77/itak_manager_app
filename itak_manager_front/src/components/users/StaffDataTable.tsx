@@ -1,50 +1,93 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Edit, UserCheck, AlertTriangle } from "lucide-react";
-import { apiService, type StaffWithUser } from "../../services/api";
+import { apiService, type StaffWithUser, type User } from "../../services/api";
 import Button from "../ui/Button";
 
 interface StaffDataTableProps {
   onEditProfile: (staff: StaffWithUser) => void;
+  refreshTrigger?: number;
+  users?: User[];
 }
 
-const StaffDataTable = ({ onEditProfile }: StaffDataTableProps) => {
+const StaffDataTable = ({
+  onEditProfile,
+  refreshTrigger,
+  users = [],
+}: StaffDataTableProps) => {
   const [staffMembers, setStaffMembers] = useState<StaffWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
-
-  const fetchStaff = async () => {
+  const fetchStaff = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await apiService.getAllStaff();
 
-      if (response.success && response.data) {
-        setStaffMembers(response.data);
-      } else {
-        setError(
-          response.error || "Erreur lors de la récupération du personnel"
+      // Récupérer les profils staff existants
+      const response = await apiService.getAllStaff();
+      const existingProfiles =
+        response.success && response.data ? response.data : [];
+
+      // Filtrer les utilisateurs avec le rôle "staff"
+      const staffUsers = users.filter((user) => user.role === "staff");
+
+      // Combiner les utilisateurs avec leurs profils (s'ils existent)
+      const combinedStaff: StaffWithUser[] = staffUsers.map((user) => {
+        const existingProfile = existingProfiles.find(
+          (profile) => profile.userId === user.id
         );
-      }
+
+        if (existingProfile) {
+          return existingProfile;
+        } else {
+          // Créer un profil vide pour l'utilisateur sans profil
+          return {
+            id: "0",
+            userId: user.id,
+            matricule: "",
+            hireDate: "",
+            position: "",
+            photo: undefined,
+            maritalStatus: "",
+            address: "",
+            emergencyContact: "",
+            notes: "",
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              role: user.role,
+            },
+          };
+        }
+      });
+
+      setStaffMembers(combinedStaff);
     } catch (error) {
       console.error("Erreur lors de la récupération du personnel:", error);
       setError("Erreur de connexion au serveur");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [users]);
+
+  useEffect(() => {
+    fetchStaff();
+  }, [refreshTrigger, fetchStaff]);
 
   const isProfileComplete = (staff: StaffWithUser): boolean => {
-    return !!(
-      staff.matricule &&
-      staff.hire_date &&
-      staff.position &&
-      staff.address &&
-      staff.emergency_contact
+    return (
+      staff.id > 0 &&
+      !!(
+        staff.matricule &&
+        staff.hire_date &&
+        staff.position &&
+        staff.address &&
+        staff.emergency_contact
+      )
     );
   };
 
@@ -63,6 +106,9 @@ const StaffDataTable = ({ onEditProfile }: StaffDataTableProps) => {
   };
 
   const getProfileStatusText = (staff: StaffWithUser) => {
+    if (staff.id === 0) {
+      return "Profil manquant";
+    }
     return isProfileComplete(staff) ? "Complet" : "Incomplet";
   };
 
@@ -150,16 +196,28 @@ const StaffDataTable = ({ onEditProfile }: StaffDataTableProps) => {
           </thead>
           <tbody className="bg-white divide-y divide-blue-100">
             {staffMembers.map((staff) => (
-              <tr key={staff.id} className="hover:bg-blue-50 transition-colors">
+              <tr
+                key={staff.id}
+                className={`hover:bg-blue-50 transition-colors ${
+                  staff.id === 0 ? "bg-red-50" : ""
+                }`}
+              >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-                      {staff.user.first_name.charAt(0)}
-                      {staff.user.last_name.charAt(0)}
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium ${
+                        staff.id === 0
+                          ? "bg-gradient-to-br from-red-500 to-red-600"
+                          : "bg-gradient-to-br from-purple-500 to-purple-600"
+                      }`}
+                    >
+                      {staff.user.firstName?.charAt(0) || "?"}
+                      {staff.user.lastName?.charAt(0) || "?"}
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-blue-900">
-                        {staff.user.first_name} {staff.user.last_name}
+                        {staff.user.firstName || "?"}{" "}
+                        {staff.user.lastName || "?"}
                       </div>
                       <div className="text-sm text-blue-600">
                         @{staff.user.username}
@@ -202,12 +260,16 @@ const StaffDataTable = ({ onEditProfile }: StaffDataTableProps) => {
                     <button
                       onClick={() => onEditProfile(staff)}
                       className={`p-2 rounded-lg transition-colors ${
-                        isProfileComplete(staff)
+                        staff.id === 0
+                          ? "text-white bg-red-600 hover:bg-red-700"
+                          : isProfileComplete(staff)
                           ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                           : "text-red-600 hover:text-red-700 hover:bg-red-50"
                       }`}
                       title={
-                        isProfileComplete(staff)
+                        staff.id === 0
+                          ? "Créer le profil"
+                          : isProfileComplete(staff)
                           ? "Modifier le profil"
                           : "Compléter le profil"
                       }

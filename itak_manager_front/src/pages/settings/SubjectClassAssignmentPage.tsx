@@ -237,7 +237,7 @@ const SubjectClassAssignmentPage: React.FC = () => {
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(Number(e.target.value))}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value={0}>Sélectionner une matière</option>
                   {subjects.map((subject) => (
@@ -256,7 +256,7 @@ const SubjectClassAssignmentPage: React.FC = () => {
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(Number(e.target.value))}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value={0}>Sélectionner une classe</option>
                   {classes.map((cls) => (

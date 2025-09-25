@@ -5,8 +5,8 @@ import Topbar from "./Topbar";
 
 interface LayoutProps {
   user: {
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: string;
     email: string;
   };

@@ -1,52 +1,116 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Edit, UserCheck, AlertTriangle } from "lucide-react";
-import { apiService, type TeacherWithUser } from "../../services/api";
+import {
+  apiService,
+  type TeacherWithUser,
+  type User,
+} from "../../services/api";
 import Button from "../ui/Button";
 
 interface TeacherDataTableProps {
   onEditProfile: (teacher: TeacherWithUser) => void;
+  refreshTrigger?: number;
+  users?: User[];
 }
 
-const TeacherDataTable = ({ onEditProfile }: TeacherDataTableProps) => {
+const TeacherDataTable = ({
+  onEditProfile,
+  refreshTrigger,
+  users = [],
+}: TeacherDataTableProps) => {
   const [teachers, setTeachers] = useState<TeacherWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchTeachers();
-  }, []);
-
-  const fetchTeachers = async () => {
+  const fetchTeachers = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await apiService.getAllTeachers();
 
-      if (response.success && response.data) {
-        setTeachers(response.data);
-      } else {
-        setError(
-          response.error || "Erreur lors de la récupération des enseignants"
+      // Récupérer les profils enseignants existants
+      const response = await apiService.getAllTeachers();
+      console.log("🔍 Réponse getAllTeachers:", response);
+      const existingProfiles =
+        response.success && response.data ? response.data : [];
+      console.log("📋 Profils enseignants existants:", existingProfiles);
+
+      // Filtrer les utilisateurs avec le rôle "teacher"
+      const teacherUsers = users.filter((user) => user.role === "teacher");
+
+      // Combiner les utilisateurs avec leurs profils (s'ils existent)
+      const combinedTeachers: TeacherWithUser[] = teacherUsers.map((user) => {
+        console.log(`🔍 Recherche profil pour user ${user.id}:`, {
+          userId: user.id,
+          existingProfiles: existingProfiles.map((p) => ({
+            id: p.id,
+            userId: p.user?.id,
+          })),
+        });
+        const existingProfile = existingProfiles.find(
+          (profile) => profile.user.id === user.id
         );
-      }
+
+        if (existingProfile) {
+          return existingProfile;
+        } else {
+          // Créer un profil vide pour l'utilisateur sans profil
+          return {
+            id: "0",
+            userId: user.id,
+            matricule: "",
+            hireDate: "",
+            photo: undefined,
+            maritalStatus: "",
+            diplomas: "",
+            address: "",
+            emergencyContact: "",
+            notes: "",
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              role: user.role,
+            },
+          };
+        }
+      });
+
+      setTeachers(combinedTeachers);
     } catch (error) {
       console.error("Erreur lors de la récupération des enseignants:", error);
       setError("Erreur de connexion au serveur");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [users]);
+
+  useEffect(() => {
+    fetchTeachers();
+  }, [refreshTrigger, fetchTeachers]);
 
   const isProfileComplete = (teacher: TeacherWithUser): boolean => {
-    return !!(
-      teacher.matricule &&
-      teacher.hire_date &&
-      teacher.specialty &&
-      teacher.diplomas &&
-      teacher.address &&
-      teacher.emergency_contact
-    );
+    const isComplete =
+      teacher.id !== "0" &&
+      !!(
+        teacher.matricule &&
+        teacher.hireDate &&
+        teacher.diplomas &&
+        teacher.address &&
+        teacher.emergencyContact
+      );
+    console.log(`🔍 Teacher ${teacher.id} complete check:`, {
+      id: teacher.id,
+      matricule: teacher.matricule,
+      hireDate: teacher.hireDate,
+      diplomas: teacher.diplomas,
+      address: teacher.address,
+      emergencyContact: teacher.emergencyContact,
+      isComplete,
+    });
+    return isComplete;
   };
 
   const getProfileStatusColor = (teacher: TeacherWithUser) => {
@@ -64,6 +128,9 @@ const TeacherDataTable = ({ onEditProfile }: TeacherDataTableProps) => {
   };
 
   const getProfileStatusText = (teacher: TeacherWithUser) => {
+    if (teacher.id === "0") {
+      return "Profil manquant";
+    }
     return isProfileComplete(teacher) ? "Complet" : "Incomplet";
   };
 
@@ -138,9 +205,7 @@ const TeacherDataTable = ({ onEditProfile }: TeacherDataTableProps) => {
               <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
                 Date d'embauche
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
-                Spécialité
-              </th>
+
               <th className="px-6 py-4 text-left text-xs font-medium text-blue-600 uppercase tracking-wider">
                 Statut Profil
               </th>
@@ -153,17 +218,26 @@ const TeacherDataTable = ({ onEditProfile }: TeacherDataTableProps) => {
             {teachers.map((teacher) => (
               <tr
                 key={teacher.id}
-                className="hover:bg-blue-50 transition-colors"
+                className={`hover:bg-blue-50 transition-colors ${
+                  teacher.id === "0" ? "bg-red-50" : ""
+                }`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-medium">
-                      {teacher.user.first_name.charAt(0)}
-                      {teacher.user.last_name.charAt(0)}
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium ${
+                        teacher.id === "0"
+                          ? "bg-gradient-to-br from-red-500 to-red-600"
+                          : "bg-gradient-to-br from-green-500 to-green-600"
+                      }`}
+                    >
+                      {teacher.user.firstName?.charAt(0) || "?"}
+                      {teacher.user.lastName?.charAt(0) || "?"}
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-blue-900">
-                        {teacher.user.first_name} {teacher.user.last_name}
+                        {teacher.user.firstName || "?"}{" "}
+                        {teacher.user.lastName || "?"}
                       </div>
                       <div className="text-sm text-blue-600">
                         @{teacher.user.username}
@@ -181,15 +255,12 @@ const TeacherDataTable = ({ onEditProfile }: TeacherDataTableProps) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-blue-900">
-                    {teacher.hire_date
-                      ? new Date(teacher.hire_date).toLocaleDateString("fr-FR")
+                    {teacher.hireDate
+                      ? new Date(teacher.hireDate).toLocaleDateString("fr-FR")
                       : "—"}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-blue-900">
-                    {teacher.specialty || "—"}
-                  </div>
                   <div className="text-xs text-blue-600">
                     {teacher.diplomas || "—"}
                   </div>
@@ -209,12 +280,16 @@ const TeacherDataTable = ({ onEditProfile }: TeacherDataTableProps) => {
                     <button
                       onClick={() => onEditProfile(teacher)}
                       className={`p-2 rounded-lg transition-colors ${
-                        isProfileComplete(teacher)
+                        teacher.id === "0"
+                          ? "text-white bg-red-600 hover:bg-red-700"
+                          : isProfileComplete(teacher)
                           ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                           : "text-red-600 hover:text-red-700 hover:bg-red-50"
                       }`}
                       title={
-                        isProfileComplete(teacher)
+                        teacher.id === "0"
+                          ? "Créer le profil"
+                          : isProfileComplete(teacher)
                           ? "Modifier le profil"
                           : "Compléter le profil"
                       }

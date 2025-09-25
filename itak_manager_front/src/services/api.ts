@@ -7,135 +7,173 @@ interface ApiResponse<T> {
   error?: string;
 }
 
+// Type union pour les rôles utilisateur correspondant au backend
+export type UserRole = "student" | "teacher" | "staff" | "parent" | "admin";
+
+// Constantes pour les rôles
+export const USER_ROLES = {
+  STUDENT: "student" as const,
+  TEACHER: "teacher" as const,
+  STAFF: "staff" as const,
+  PARENT: "parent" as const,
+  ADMIN: "admin" as const,
+} as const;
+
 interface UserRegistrationData {
-  username: string;
+  username?: string;
   email: string;
   password: string;
-  role: string;
-  first_name: string;
-  last_name: string;
-  gender: string;
-  birth_date: string;
-  phone: string;
+  firstName: string;
+  lastName: string;
+  gender?: string;
+  birthDate?: string;
+  phone?: string;
+  role?: UserRole;
+  isActive?: boolean;
 }
 
 interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
-  role: string;
-  first_name: string;
-  last_name: string;
-  gender: string;
-  birth_date: string;
-  phone: string;
-  created_at: string;
-  updated_at: string;
+  firstName: string;
+  lastName: string;
+  gender?: string;
+  birthDate?: string;
+  phone?: string;
+  role: UserRole;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Interface pour la réponse de connexion
+interface LoginResponse {
+  message: string;
+  user: User;
+  access_token: string;
+  refresh_token: string;
 }
 
 interface StudentProfileData {
-  user_id: number;
+  id?: string;
+  userId: string;
   matricule: string;
-  enrollment_date: string;
-  photo: string | null;
-  marital_status: string;
-  father_name: string;
-  mother_name: string;
-  tutor_name: string;
-  tutor_phone: string;
-  address: string;
-  emergency_contact: string;
-  notes: string;
+  enrollmentDate: string | Date;
+  photo?: string;
+  maritalStatus?: string;
+  fatherName?: string;
+  motherName?: string;
+  tutorName?: string;
+  tutorPhone?: string;
+  address?: string;
+  emergencyContact?: string;
+  notes?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  user?: User;
 }
 
 interface StudentWithUser {
-  id: number;
-  user_id: number;
+  id: string;
+  userId: string;
   matricule: string;
-  enrollment_date: string;
-  photo: string | null;
-  marital_status: string;
-  father_name: string;
-  mother_name: string;
-  tutor_name: string;
-  tutor_phone: string;
-  address: string;
-  emergency_contact: string;
-  notes: string;
+  enrollmentDate: string | Date;
+  photo?: string;
+  maritalStatus?: string;
+  fatherName?: string;
+  motherName?: string;
+  tutorName?: string;
+  tutorPhone?: string;
+  address?: string;
+  emergencyContact?: string;
+  notes?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
   user: {
-    id: number;
+    id: string;
     username: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: string;
   };
 }
 
 interface TeacherProfileData {
-  user_id: number;
+  id?: string;
+  userId: string;
   matricule: string;
-  hire_date: string;
-  photo: string | null;
-  marital_status: string;
-  specialty: string;
-  diplomas: string;
-  address: string;
-  emergency_contact: string;
-  notes: string;
+  hireDate: string | Date;
+  photo?: string;
+  maritalStatus?: string;
+  diplomas?: string;
+  address?: string;
+  emergencyContact?: string;
+  notes?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  user?: User;
 }
 
 interface TeacherWithUser {
-  id: number;
-  user_id: number;
+  id: string;
+  userId: string;
   matricule: string;
-  hire_date: string;
-  photo: string | null;
-  marital_status: string;
-  specialty: string;
-  diplomas: string;
-  address: string;
-  emergency_contact: string;
-  notes: string;
+  hireDate: string | Date;
+  photo?: string;
+  maritalStatus?: string;
+  diplomas?: string;
+  address?: string;
+  emergencyContact?: string;
+  notes?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
   user: {
-    id: number;
+    id: string;
     username: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: string;
   };
 }
 
 interface StaffProfileData {
-  user_id: number;
+  id?: string;
+  userId: string;
   matricule: string;
-  hire_date: string;
-  position: string;
-  photo: string | null;
-  marital_status: string;
-  address: string;
-  emergency_contact: string;
-  notes: string;
+  hireDate: string | Date;
+  position?: string;
+  photo?: string;
+  maritalStatus?: string;
+  address?: string;
+  emergencyContact?: string;
+  notes?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  user?: User;
 }
 
 interface StaffWithUser {
-  id: number;
-  user_id: number;
+  id: string;
+  userId: string;
   matricule: string;
-  hire_date: string;
-  position: string;
-  photo: string | null;
-  marital_status: string;
-  address: string;
-  emergency_contact: string;
-  notes: string;
+  hireDate: string | Date;
+  position?: string;
+  photo?: string;
+  maritalStatus?: string;
+  address?: string;
+  emergencyContact?: string;
+  notes?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
   user: {
-    id: number;
+    id: string;
     username: string;
     email: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     role: string;
   };
 }
@@ -151,7 +189,7 @@ interface ClassData {
   name: string;
   level: string;
   capacity: number;
-  categorie_id: number | null;
+  categorieId: number | null;
 }
 
 interface Class {
@@ -159,7 +197,7 @@ interface Class {
   name: string;
   level: string;
   capacity: number;
-  categorie_id: number;
+  categorieId: number;
   category: ClassCategory;
   created_at: string;
 }
@@ -167,14 +205,14 @@ interface Class {
 interface SubjectData {
   name: string;
   code: string;
-  categorie_id: number | null;
+  categorieId: number | null;
 }
 
 interface Subject {
   id: number;
   name: string;
   code: string;
-  categorie_id: number | null;
+  categorieId: number | null;
   category?: ClassCategory;
   created_at: string;
   updated_at: string;
@@ -185,17 +223,17 @@ interface ClassSubjectData {
   class_id: number;
   subject_id: number;
   coefficient: number;
-  weekly_hours: number;
+  weeklyHours: number;
   is_optional: boolean;
 }
 
 interface ClassSubject {
   id: number;
-  class_id: number;
-  subject_id: number;
+  classId: number;
+  subjectId: number;
   coefficient: number;
-  weekly_hours: number;
-  is_optional: boolean;
+  weeklyHours: number;
+  isOptional: boolean;
   created_at: string;
   updated_at: string;
   class: {
@@ -211,18 +249,18 @@ interface ClassSubject {
 }
 
 interface StudentClassData {
-  student_id: number;
-  class_id: number;
-  start_date: string;
-  end_date?: string;
+  studentId: number;
+  classId: number;
+  startDate: string;
+  endDate?: string;
 }
 
 interface StudentClass {
   id: number;
-  student_id: number;
-  class_id: number;
-  start_date: string;
-  end_date?: string;
+  studentId: number;
+  classId: number;
+  startDate: string;
+  endDate?: string;
   created_at: string;
   updated_at: string;
   student: StudentWithUser;
@@ -230,22 +268,22 @@ interface StudentClass {
 }
 
 interface TeachingAssignmentData {
-  teacher_id: number;
-  class_subject_id: number;
-  start_date: string;
-  end_date?: string;
+  teacherId: number;
+  classSubjectId: number;
+  startDate: string;
+  endDate?: string;
 }
 
 interface TeachingAssignment {
   id: number;
-  teacher_id: number;
-  class_subject_id: number;
-  start_date: string;
-  end_date?: string;
+  teacherId: number;
+  classSubjectId: number;
+  startDate: string;
+  endDate?: string;
   created_at: string;
   updated_at: string;
   teacher: TeacherWithUser;
-  class_subject: ClassSubject;
+  classSubject: ClassSubject;
 }
 
 class ApiService {
@@ -361,14 +399,34 @@ class ApiService {
     });
   }
 
-  // Méthode pour la connexion (pour plus tard)
+  // Méthode pour la connexion
   async login(credentials: {
     email: string;
     password: string;
-  }): Promise<ApiResponse<{ user: User; token: string }>> {
-    return this.makeRequest<{ user: User; token: string }>("/auth/login", {
+  }): Promise<ApiResponse<LoginResponse>> {
+    return this.makeRequest<LoginResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
+    });
+  }
+
+  // Méthode pour rafraîchir le token
+  async refreshToken(
+    refreshToken: string
+  ): Promise<ApiResponse<{ access_token: string; refresh_token: string }>> {
+    return this.makeRequest<{ access_token: string; refresh_token: string }>(
+      "/auth/refresh",
+      {
+        method: "POST",
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      }
+    );
+  }
+
+  // Méthode pour se déconnecter
+  async logout(): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>("/auth/logout", {
+      method: "POST",
     });
   }
 
@@ -626,6 +684,7 @@ export const apiService = new ApiService();
 export type {
   UserRegistrationData,
   User,
+  LoginResponse,
   StudentProfileData,
   StudentWithUser,
   TeacherProfileData,

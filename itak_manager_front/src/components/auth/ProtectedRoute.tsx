@@ -17,8 +17,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         localStorage.getItem("itak_user") ||
         sessionStorage.getItem("itak_user");
       const token =
-        localStorage.getItem("itak_token") ||
-        sessionStorage.getItem("itak_token");
+        localStorage.getItem("itak_access_token") ||
+        sessionStorage.getItem("itak_access_token");
 
       if (userData && token) {
         try {

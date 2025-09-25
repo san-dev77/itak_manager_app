@@ -1,53 +1,104 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Edit, UserCheck, AlertTriangle } from "lucide-react";
-import { apiService, type StudentWithUser } from "../../services/api";
+import {
+  apiService,
+  type StudentWithUser,
+  type User,
+} from "../../services/api";
 import Button from "../ui/Button";
 
 interface StudentDataTableProps {
   onEditProfile: (student: StudentWithUser) => void;
+  refreshTrigger?: number; // Pour forcer le rechargement
+  users?: User[]; // Liste des utilisateurs à afficher
 }
 
-const StudentDataTable = ({ onEditProfile }: StudentDataTableProps) => {
+const StudentDataTable = ({
+  onEditProfile,
+  refreshTrigger,
+  users = [],
+}: StudentDataTableProps) => {
   const [students, setStudents] = useState<StudentWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await apiService.getAllStudents();
 
-      if (response.success && response.data) {
-        setStudents(response.data);
-      } else {
-        setError(
-          response.error || "Erreur lors de la récupération des étudiants"
+      // Récupérer les profils étudiants existants
+      const response = await apiService.getAllStudents();
+      const existingProfiles =
+        response.success && response.data ? response.data : [];
+
+      // Filtrer les utilisateurs avec le rôle "student"
+      const studentUsers = users.filter((user) => user.role === "student");
+
+      // Combiner les utilisateurs avec leurs profils (s'ils existent)
+      const combinedStudents: StudentWithUser[] = studentUsers.map((user) => {
+        const existingProfile = existingProfiles.find(
+          (profile) => profile.userId === user.id
         );
-      }
+
+        if (existingProfile) {
+          return existingProfile;
+        } else {
+          // Créer un profil vide pour l'utilisateur sans profil
+          return {
+            id: 0,
+            userId: user.id,
+            matricule: "",
+            enrollment_date: "",
+            photo: null,
+            marital_status: "",
+            father_name: "",
+            mother_name: "",
+            tutor_name: "",
+            tutor_phone: "",
+            address: "",
+            emergency_contact: "",
+            notes: "",
+            user: {
+              id: parseInt(user.id),
+              username: user.username,
+              email: user.email,
+              first_name: user.firstName,
+              last_name: user.lastName,
+              role: user.role,
+            },
+          };
+        }
+      });
+
+      setStudents(combinedStudents);
     } catch (error) {
       console.error("Erreur lors de la récupération des étudiants:", error);
       setError("Erreur de connexion au serveur");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [users]);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [refreshTrigger, fetchStudents]);
 
   const isProfileComplete = (student: StudentWithUser): boolean => {
-    return !!(
-      student.matricule &&
-      student.enrollment_date &&
-      student.father_name &&
-      student.mother_name &&
-      student.tutor_name &&
-      student.tutor_phone &&
-      student.address &&
-      student.emergency_contact
+    // Un profil est complet si l'utilisateur a un ID de profil (id > 0) et les champs essentiels
+    return (
+      student.id !== "0" &&
+      !!(
+        student.matricule &&
+        student.enrollmentDate &&
+        student.fatherName &&
+        student.motherName &&
+        student.tutorName &&
+        student.tutorPhone &&
+        student.address &&
+        student.emergencyContact
+      )
     );
   };
 
@@ -66,6 +117,9 @@ const StudentDataTable = ({ onEditProfile }: StudentDataTableProps) => {
   };
 
   const getProfileStatusText = (student: StudentWithUser) => {
+    if (student.id === "0") {
+      return "Profil manquant";
+    }
     return isProfileComplete(student) ? "Complet" : "Incomplet";
   };
 
@@ -155,17 +209,25 @@ const StudentDataTable = ({ onEditProfile }: StudentDataTableProps) => {
             {students.map((student) => (
               <tr
                 key={student.id}
-                className="hover:bg-blue-50 transition-colors"
+                className={`hover:bg-blue-50 transition-colors ${
+                  student.id === "0" ? "bg-red-50" : ""
+                }`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium">
-                      {student.user.first_name.charAt(0)}
-                      {student.user.last_name.charAt(0)}
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium ${
+                        student.id === "0"
+                          ? "bg-gradient-to-br from-red-500 to-red-600"
+                          : "bg-gradient-to-br from-blue-500 to-blue-600"
+                      }`}
+                    >
+                      {student.user.firstName.charAt(0)}
+                      {student.user.lastName.charAt(0)}
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-blue-900">
-                        {student.user.first_name} {student.user.last_name}
+                        {student.user.firstName} {student.user.lastName}
                       </div>
                       <div className="text-sm text-blue-600">
                         @{student.user.username}
@@ -183,8 +245,8 @@ const StudentDataTable = ({ onEditProfile }: StudentDataTableProps) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-blue-900">
-                    {student.enrollment_date
-                      ? new Date(student.enrollment_date).toLocaleDateString(
+                    {student.enrollmentDate
+                      ? new Date(student.enrollmentDate).toLocaleDateString(
                           "fr-FR"
                         )
                       : "—"}
@@ -192,10 +254,10 @@ const StudentDataTable = ({ onEditProfile }: StudentDataTableProps) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-blue-900">
-                    {student.tutor_name || "—"}
+                    {student.tutorName || "—"}
                   </div>
                   <div className="text-xs text-blue-600">
-                    {student.tutor_phone || "—"}
+                    {student.tutorPhone || "—"}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -213,12 +275,16 @@ const StudentDataTable = ({ onEditProfile }: StudentDataTableProps) => {
                     <button
                       onClick={() => onEditProfile(student)}
                       className={`p-2 rounded-lg transition-colors ${
-                        isProfileComplete(student)
+                        student.id === "0"
+                          ? "text-white bg-red-600 hover:bg-red-700"
+                          : isProfileComplete(student)
                           ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                           : "text-red-600 hover:text-red-700 hover:bg-red-50"
                       }`}
                       title={
-                        isProfileComplete(student)
+                        student.id === "0"
+                          ? "Créer le profil"
+                          : isProfileComplete(student)
                           ? "Modifier le profil"
                           : "Compléter le profil"
                       }

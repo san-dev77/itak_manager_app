@@ -17,17 +17,22 @@ interface ProfileAssignmentModalProps {
 }
 
 interface StudentProfileData {
+  id?: string;
+  userId: string;
   matricule: string;
-  enrollment_date: string;
-  photo: string | null;
-  marital_status: string;
-  father_name: string;
-  mother_name: string;
-  tutor_name: string;
-  tutor_phone: string;
-  address: string;
-  emergency_contact: string;
-  notes: string;
+  enrollmentDate: string | Date;
+  photo?: string;
+  maritalStatus?: string;
+  fatherName?: string;
+  motherName?: string;
+  tutorName?: string;
+  tutorPhone?: string;
+  address?: string;
+  emergencyContact?: string;
+  notes?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  user?: User; // UserResponseDto
 }
 
 interface TeacherProfileData {
@@ -66,17 +71,19 @@ const ProfileAssignmentModal = ({
   const [showProfileForm, setShowProfileForm] = useState(false);
 
   // Form data for student profile
-  const [studentProfile, setStudentProfile] = useState<StudentProfileData>({
+  const [studentProfile, setStudentProfile] = useState<
+    Partial<StudentProfileData>
+  >({
     matricule: "",
-    enrollment_date: "",
-    photo: null,
-    marital_status: "single",
-    father_name: "",
-    mother_name: "",
-    tutor_name: "",
-    tutor_phone: "",
+    enrollmentDate: "",
+    photo: undefined,
+    maritalStatus: "single",
+    fatherName: "",
+    motherName: "",
+    tutorName: "",
+    tutorPhone: "",
     address: "",
-    emergency_contact: "",
+    emergencyContact: "",
     notes: "",
   });
 
@@ -109,10 +116,10 @@ const ProfileAssignmentModal = ({
     if (searchTerm) {
       const filtered = existingUsers.filter(
         (user) =>
-          user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.username.toLowerCase().includes(searchTerm.toLowerCase())
+          user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.username?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredUsers(filtered);
     } else {
@@ -126,11 +133,11 @@ const ProfileAssignmentModal = ({
     setShowProfileForm(true);
   };
 
-  const handleBackToSelection = () => {
-    setShowProfileForm(false);
-    setSelectedUser(null);
-    // Ne pas réinitialiser les formulaires ici, juste revenir à la sélection
-  };
+  // const handleBackToSelection = () => {
+  //   setShowProfileForm(false);
+  //   setSelectedUser(null);
+  //   // Ne pas réinitialiser les formulaires ici, juste revenir à la sélection
+  // };
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +149,28 @@ const ProfileAssignmentModal = ({
 
       switch (profileType) {
         case "student":
-          profileData = studentProfile;
+          profileData = {
+            id: undefined,
+            userId: selectedUser.id,
+            matricule: studentProfile.matricule || "",
+            enrollmentDate: studentProfile.enrollmentDate
+              ? typeof studentProfile.enrollmentDate === "string"
+                ? studentProfile.enrollmentDate
+                : studentProfile.enrollmentDate.toISOString()
+              : "",
+            photo: studentProfile.photo,
+            maritalStatus: studentProfile.maritalStatus,
+            fatherName: studentProfile.fatherName,
+            motherName: studentProfile.motherName,
+            tutorName: studentProfile.tutorName,
+            tutorPhone: studentProfile.tutorPhone,
+            address: studentProfile.address,
+            emergencyContact: studentProfile.emergencyContact,
+            notes: studentProfile.notes,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            user: selectedUser,
+          };
           break;
         case "teacher":
           profileData = teacherProfile;
@@ -151,7 +179,28 @@ const ProfileAssignmentModal = ({
           profileData = staffProfile;
           break;
         default:
-          profileData = studentProfile;
+          profileData = {
+            id: undefined,
+            userId: selectedUser.id,
+            matricule: studentProfile.matricule || "",
+            enrollmentDate: studentProfile.enrollmentDate
+              ? typeof studentProfile.enrollmentDate === "string"
+                ? studentProfile.enrollmentDate
+                : studentProfile.enrollmentDate.toISOString()
+              : "",
+            photo: studentProfile.photo,
+            maritalStatus: studentProfile.maritalStatus,
+            fatherName: studentProfile.fatherName,
+            motherName: studentProfile.motherName,
+            tutorName: studentProfile.tutorName,
+            tutorPhone: studentProfile.tutorPhone,
+            address: studentProfile.address,
+            emergencyContact: studentProfile.emergencyContact,
+            notes: studentProfile.notes,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            user: selectedUser,
+          };
       }
 
       onAssignProfile(selectedUser, profileData);
@@ -162,15 +211,15 @@ const ProfileAssignmentModal = ({
   const resetForm = () => {
     setStudentProfile({
       matricule: "",
-      enrollment_date: "",
-      photo: null,
-      marital_status: "single",
-      father_name: "",
-      mother_name: "",
-      tutor_name: "",
-      tutor_phone: "",
+      enrollmentDate: "",
+      photo: undefined,
+      maritalStatus: "single",
+      fatherName: "",
+      motherName: "",
+      tutorName: "",
+      tutorPhone: "",
       address: "",
-      emergency_contact: "",
+      emergencyContact: "",
       notes: "",
     });
     setTeacherProfile({
@@ -228,12 +277,12 @@ const ProfileAssignmentModal = ({
         className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="p-6 border-b border-blue-100 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-blue-900">
+            <h2 className="text-2xl font-bold text-slate-900">
               Assigner un profil {getProfileTypeLabel()}
             </h2>
-            <p className="text-blue-600 mt-2">
+            <p className="text-slate-600 mt-2">
               Sélectionnez un utilisateur et configurez son profil
             </p>
           </div>
@@ -250,11 +299,11 @@ const ProfileAssignmentModal = ({
             /* User Selection Step */
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-blue-900 mb-4">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">
                   Étape 1: Sélectionner un utilisateur
                 </h3>
                 <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                   <Input
                     type="text"
                     placeholder="Rechercher un utilisateur par nom, email ou nom d'utilisateur..."
@@ -265,13 +314,13 @@ const ProfileAssignmentModal = ({
                 </div>
 
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-md font-medium text-blue-800">
+                  <h4 className="text-md font-medium text-slate-800">
                     {searchTerm
                       ? `Résultats de recherche (${filteredUsers.length})`
                       : `Tous les utilisateurs (${filteredUsers.length})`}
                   </h4>
                   {!searchTerm && (
-                    <span className="text-sm text-blue-600">
+                    <span className="text-sm text-slate-600">
                       Commencez à taper pour filtrer
                     </span>
                   )}
@@ -288,19 +337,20 @@ const ProfileAssignmentModal = ({
                   filteredUsers.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer"
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
                       onClick={() => handleUserSelect(user)}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium">
-                          {user.first_name.charAt(0)}
-                          {user.last_name.charAt(0)}
+                        <div className="w-12 h-12 bg-gradient-to-br from-slate-500 to-slate-600 rounded-full flex items-center justify-center text-white font-medium">
+                          {user.firstName?.charAt(0) || "?"}
+                          {user.lastName?.charAt(0) || "?"}
                         </div>
                         <div>
-                          <div className="font-medium text-blue-900">
-                            {user.first_name} {user.last_name}
+                          <div className="font-medium text-slate-900">
+                            {user.firstName || "Prénom"}{" "}
+                            {user.lastName || "Nom"}
                           </div>
-                          <div className="text-sm text-blue-600">
+                          <div className="text-sm text-slate-600">
                             @{user.username} • {user.email}
                           </div>
                           <div className="text-xs text-gray-500">
@@ -308,7 +358,7 @@ const ProfileAssignmentModal = ({
                           </div>
                         </div>
                       </div>
-                      <UserPlus className="w-5 h-5 text-blue-500" />
+                      <UserPlus className="w-5 h-5 text-slate-500" />
                     </div>
                   ))
                 )}
@@ -321,27 +371,21 @@ const ProfileAssignmentModal = ({
                 <h3 className="text-lg font-semibold text-blue-900">
                   Étape 2: Configurer le profil {getProfileTypeLabel()}
                 </h3>
-                <Button
-                  variant="outline"
-                  onClick={handleBackToSelection}
-                  className="text-sm"
-                >
-                  ← Retour à la sélection
-                </Button>
               </div>
 
               {selectedUser && (
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="bg-slate-50 p-4 rounded-lg">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium text-xl">
-                      {selectedUser.first_name.charAt(0)}
-                      {selectedUser.last_name.charAt(0)}
+                    <div className="w-16 h-16 bg-gradient-to-br from-slate-500 to-slate-600 rounded-full flex items-center justify-center text-white font-medium text-xl">
+                      {selectedUser.firstName?.charAt(0) || "?"}
+                      {selectedUser.lastName?.charAt(0) || "?"}
                     </div>
                     <div>
-                      <div className="font-semibold text-blue-900 text-lg">
-                        {selectedUser.first_name} {selectedUser.last_name}
+                      <div className="font-semibold text-slate-900 text-lg">
+                        {selectedUser.firstName || "Prénom"}{" "}
+                        {selectedUser.lastName || "Nom"}
                       </div>
-                      <div className="text-blue-600">
+                      <div className="text-slate-600">
                         @{selectedUser.username} • {selectedUser.email}
                       </div>
                     </div>
@@ -367,13 +411,21 @@ const ProfileAssignmentModal = ({
 
                     <Input
                       label="Date d'inscription"
-                      name="enrollment_date"
+                      name="enrollmentDate"
                       type="date"
-                      value={studentProfile.enrollment_date}
+                      value={
+                        typeof studentProfile.enrollmentDate === "string"
+                          ? studentProfile.enrollmentDate
+                          : studentProfile.enrollmentDate instanceof Date
+                          ? studentProfile.enrollmentDate
+                              .toISOString()
+                              .split("T")[0]
+                          : ""
+                      }
                       onChange={(e) =>
                         setStudentProfile({
                           ...studentProfile,
-                          enrollment_date: e.target.value,
+                          enrollmentDate: e.target.value,
                         })
                       }
                       required
@@ -386,11 +438,11 @@ const ProfileAssignmentModal = ({
                         </span>
                       </label>
                       <select
-                        value={studentProfile.marital_status}
+                        value={studentProfile.maritalStatus}
                         onChange={(e) =>
                           setStudentProfile({
                             ...studentProfile,
-                            marital_status: e.target.value,
+                            maritalStatus: e.target.value,
                           })
                         }
                         className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 bg-white"
@@ -404,48 +456,48 @@ const ProfileAssignmentModal = ({
 
                     <Input
                       label="Nom du père"
-                      name="father_name"
-                      value={studentProfile.father_name}
+                      name="fatherName"
+                      value={studentProfile.fatherName}
                       onChange={(e) =>
                         setStudentProfile({
                           ...studentProfile,
-                          father_name: e.target.value,
+                          fatherName: e.target.value,
                         })
                       }
                     />
 
                     <Input
                       label="Nom de la mère"
-                      name="mother_name"
-                      value={studentProfile.mother_name}
+                      name="motherName"
+                      value={studentProfile.motherName}
                       onChange={(e) =>
                         setStudentProfile({
                           ...studentProfile,
-                          mother_name: e.target.value,
+                          motherName: e.target.value,
                         })
                       }
                     />
 
                     <Input
                       label="Nom du tuteur"
-                      name="tutor_name"
-                      value={studentProfile.tutor_name}
+                      name="tutorName"
+                      value={studentProfile.tutorName}
                       onChange={(e) =>
                         setStudentProfile({
                           ...studentProfile,
-                          tutor_name: e.target.value,
+                          tutorName: e.target.value,
                         })
                       }
                     />
 
                     <Input
                       label="Téléphone du tuteur"
-                      name="tutor_phone"
-                      value={studentProfile.tutor_phone}
+                      name="tutorPhone"
+                      value={studentProfile.tutorPhone}
                       onChange={(e) =>
                         setStudentProfile({
                           ...studentProfile,
-                          tutor_phone: e.target.value,
+                          tutorPhone: e.target.value,
                         })
                       }
                     />
@@ -466,12 +518,12 @@ const ProfileAssignmentModal = ({
 
                     <Input
                       label="Contact d'urgence"
-                      name="emergency_contact"
-                      value={studentProfile.emergency_contact}
+                      name="emergencyContact"
+                      value={studentProfile.emergencyContact}
                       onChange={(e) =>
                         setStudentProfile({
                           ...studentProfile,
-                          emergency_contact: e.target.value,
+                          emergencyContact: e.target.value,
                         })
                       }
                     />

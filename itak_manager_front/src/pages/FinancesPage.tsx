@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import Button from "../components/ui/Button";
 
 const FinancesPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {

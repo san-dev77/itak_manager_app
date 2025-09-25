@@ -282,7 +282,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                   value={selectedTeacher}
                   onChange={(e) => setSelectedTeacher(Number(e.target.value))}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value={0}>Sélectionner un enseignant</option>
                   {teachers.map((teacher) => (
@@ -305,7 +305,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                     setSelectedClassSubject(Number(e.target.value))
                   }
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value={0}>Sélectionner une matière en classe</option>
                   {classSubjects.map((cs) => (

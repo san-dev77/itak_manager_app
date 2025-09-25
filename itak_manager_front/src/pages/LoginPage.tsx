@@ -107,21 +107,23 @@ const LoginPage = () => {
 
         if (response.success && response.data) {
           // Stockage du token et des informations utilisateur
-          const { user, token } = response.data;
+          const { user, access_token, refresh_token } = response.data;
 
           // Stockage local (vous pouvez utiliser localStorage ou sessionStorage)
           if (formData.rememberMe) {
-            localStorage.setItem("itak_token", token);
+            localStorage.setItem("itak_access_token", access_token);
+            localStorage.setItem("itak_refresh_token", refresh_token);
             localStorage.setItem("itak_user", JSON.stringify(user));
           } else {
-            sessionStorage.setItem("itak_token", token);
+            sessionStorage.setItem("itak_access_token", access_token);
+            sessionStorage.setItem("itak_refresh_token", refresh_token);
             sessionStorage.setItem("itak_user", JSON.stringify(user));
           }
 
           showNotification(
             "success",
             "Connexion réussie !",
-            `Bienvenue ${user.first_name} ${user.last_name} !`
+            `Bienvenue ${user.firstName} ${user.lastName} !`
           );
 
           // Redirection vers le tableau de bord après 2 secondes
@@ -207,7 +209,7 @@ const LoginPage = () => {
             <div className="flex items-center justify-center gap-3 mb-6">
               <img src={logoItak} alt="ITAK Manager" className="w-12 h-12" />
               <span className="text-2xl font-bold text-blue-900">
-                ITAK Manager
+                School Manager
               </span>
             </div>
 
@@ -323,13 +325,13 @@ const LoginPage = () => {
               </div>
               <div className="text-xs text-blue-700 space-y-1">
                 <div>
-                  <strong>Admin:</strong> admin@itak.com / admin123
+                  <strong>Admin:</strong> admin@school.com / admin123
                 </div>
                 <div>
-                  <strong>Enseignant:</strong> teacher@itak.com / teacher123
+                  <strong>Enseignant:</strong> teacher@school.com / teacher123
                 </div>
                 <div>
-                  <strong>Élève:</strong> student@itak.com / student123
+                  <strong>Élève:</strong> student@school.com / student123
                 </div>
               </div>
             </motion.div>
@@ -360,7 +362,7 @@ const LoginPage = () => {
             className="mb-12"
           >
             <h2 className="text-4xl font-bold mb-4">
-              Bienvenue sur ITAK Manager
+              Bienvenue sur School Manager
             </h2>
             <p className="text-xl text-blue-100 leading-relaxed">
               La plateforme moderne qui révolutionne la gestion scolaire.

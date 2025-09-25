@@ -18,8 +18,11 @@ import {
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { Link, useNavigate } from "react-router-dom";
-import logoItak from "../assets/logo itak.png";
-import { apiService, type UserRegistrationData } from "../services/api";
+import {
+  apiService,
+  type UserRegistrationData,
+  USER_ROLES,
+} from "../services/api";
 import Notification, {
   type NotificationType,
 } from "../components/ui/Notification";
@@ -33,11 +36,11 @@ const RegisterPage = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "student", // student, teacher, staff, parent, admin
-    first_name: "",
-    last_name: "",
+    role: USER_ROLES.STUDENT,
+    firstName: "",
+    lastName: "",
     gender: "",
-    birth_date: "",
+    birthDate: "",
     phone: "",
     acceptTerms: false,
   });
@@ -94,9 +97,12 @@ const RegisterPage = () => {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.username.trim()) {
-      newErrors.username = "Le nom d'utilisateur est requis";
-    } else if (formData.username.length < 3) {
+    // Le nom d'utilisateur est optionnel selon le DTO
+    if (
+      formData.username &&
+      formData.username.length > 0 &&
+      formData.username.length < 3
+    ) {
       newErrors.username =
         "Le nom d'utilisateur doit contenir au moins 3 caractères";
     }
@@ -120,25 +126,26 @@ const RegisterPage = () => {
       newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
     }
 
-    if (!formData.first_name.trim()) {
-      newErrors.first_name = "Le prénom est requis";
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "Le prénom est requis";
     }
 
-    if (!formData.last_name.trim()) {
-      newErrors.last_name = "Le nom de famille est requis";
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Le nom de famille est requis";
     }
 
-    if (!formData.gender) {
-      newErrors.gender = "Le genre est requis";
-    }
+    // Les champs suivants sont optionnels selon le DTO
+    // if (!formData.gender) {
+    //   newErrors.gender = "Le genre est requis";
+    // }
 
-    if (!formData.birth_date) {
-      newErrors.birth_date = "La date de naissance est requise";
-    }
+    // if (!formData.birthDate) {
+    //   newErrors.birthDate = "La date de naissance est requise";
+    // }
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Le numéro de téléphone est requis";
-    }
+    // if (!formData.phone.trim()) {
+    //   newErrors.phone = "Le numéro de téléphone est requis";
+    // }
 
     if (!formData.acceptTerms) {
       newErrors.acceptTerms =
@@ -157,15 +164,16 @@ const RegisterPage = () => {
       try {
         // Prepare data for API (remove confirmPassword and acceptTerms)
         const userData: UserRegistrationData = {
-          username: formData.username,
+          username: formData.username || undefined,
           email: formData.email,
-          password: formData.password, // This will be hashed on the backend
+          password: formData.password, // Le mot de passe sera hashé côté backend
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          gender: formData.gender || undefined,
+          birthDate: formData.birthDate || undefined,
+          phone: formData.phone || undefined,
           role: formData.role,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          gender: formData.gender,
-          birth_date: formData.birth_date,
-          phone: formData.phone,
+          isActive: true, // Par défaut, les nouveaux utilisateurs sont actifs
         };
 
         // Appel à l'API via le service
@@ -238,11 +246,11 @@ const RegisterPage = () => {
   ];
 
   const roleOptions = [
-    { value: "student", label: "Élève" },
-    { value: "teacher", label: "Enseignant/Enseignante" },
-    { value: "staff", label: "Personnel administratif" },
-    { value: "parent", label: "Parent" },
-    { value: "admin", label: "Administrateur/Administratrice" },
+    { value: USER_ROLES.STUDENT, label: "Élève" },
+    { value: USER_ROLES.TEACHER, label: "Enseignant/Enseignante" },
+    { value: USER_ROLES.STAFF, label: "Personnel administratif" },
+    { value: USER_ROLES.PARENT, label: "Parent" },
+    { value: USER_ROLES.ADMIN, label: "Administrateur/Administratrice" },
   ];
 
   const genderOptions = [
@@ -282,9 +290,9 @@ const RegisterPage = () => {
             </Link>
 
             <div className="flex items-center justify-center gap-3 mb-6">
-              <img src={logoItak} alt="ITAK Manager" className="w-12 h-12" />
+              {/* <img src={logoItak} alt="ITAK Manager" className="w-12 h-12" /> */}
               <span className="text-2xl font-bold text-blue-900">
-                ITAK Manager
+                School Manager
               </span>
             </div>
 
@@ -292,7 +300,7 @@ const RegisterPage = () => {
               Créer un compte
             </h1>
             <p className="text-blue-700">
-              Rejoignez ITAK Manager et accédez à votre espace
+              Rejoignez School Manager et accédez à votre espace
             </p>
           </motion.div>
 
@@ -310,7 +318,7 @@ const RegisterPage = () => {
 
                 <motion.div variants={itemVariants}>
                   <Input
-                    label="Nom d'utilisateur"
+                    label="Nom d'utilisateur (optionnel)"
                     type="text"
                     name="username"
                     placeholder="Votre nom d'utilisateur"
@@ -402,11 +410,11 @@ const RegisterPage = () => {
                     <Input
                       label="Prénom"
                       type="text"
-                      name="first_name"
+                      name="firstName"
                       placeholder="Votre prénom"
-                      value={formData.first_name}
+                      value={formData.firstName}
                       onChange={handleInputChange}
-                      error={errors.first_name}
+                      error={errors.firstName}
                       icon={<User className="w-5 h-5" />}
                     />
                   </motion.div>
@@ -415,11 +423,11 @@ const RegisterPage = () => {
                     <Input
                       label="Nom de famille"
                       type="text"
-                      name="last_name"
+                      name="lastName"
                       placeholder="Votre nom"
-                      value={formData.last_name}
+                      value={formData.lastName}
                       onChange={handleInputChange}
-                      error={errors.last_name}
+                      error={errors.lastName}
                       icon={<User className="w-5 h-5" />}
                     />
                   </motion.div>
@@ -428,7 +436,7 @@ const RegisterPage = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <motion.div variants={itemVariants}>
                     <label className="block text-sm font-medium text-blue-700 mb-2">
-                      Genre
+                      Genre (optionnel)
                     </label>
                     <select
                       name="gender"
@@ -458,12 +466,12 @@ const RegisterPage = () => {
 
                   <motion.div variants={itemVariants}>
                     <Input
-                      label="Date de naissance"
+                      label="Date de naissance (optionnel)"
                       type="date"
-                      name="birth_date"
-                      value={formData.birth_date}
+                      name="birthDate"
+                      value={formData.birthDate}
                       onChange={handleInputChange}
-                      error={errors.birth_date}
+                      error={errors.birthDate}
                       icon={<Calendar className="w-5 h-5 " />}
                     />
                   </motion.div>
@@ -471,7 +479,7 @@ const RegisterPage = () => {
 
                 <motion.div variants={itemVariants}>
                   <Input
-                    label="Numéro de téléphone"
+                    label="Numéro de téléphone (optionnel)"
                     type="tel"
                     name="phone"
                     placeholder="+33 6 12 34 56 78"
@@ -589,7 +597,7 @@ const RegisterPage = () => {
               Rejoignez la révolution scolaire
             </h2>
             <p className="text-xl text-blue-100 leading-relaxed">
-              Des centaines d'écoles font déjà confiance à ITAK Manager.
+              Des centaines d'écoles font déjà confiance à School Manager.
               Simplifiez votre administration et améliorez l'expérience de tous.
             </p>
           </motion.div>
@@ -626,7 +634,7 @@ const RegisterPage = () => {
             className="mt-12 pt-8 border-t border-white/20"
           >
             <h3 className="text-xl font-semibold mb-4">
-              Pourquoi choisir ITAK Manager ?
+              Pourquoi choisir School Manager ?
             </h3>
             <div className="space-y-3">
               <div className="flex items-center gap-2">

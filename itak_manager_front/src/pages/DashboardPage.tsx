@@ -2,14 +2,15 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  User,
-  Shield,
   Users,
   BookOpen,
   Calendar,
   Settings,
   TrendingUp,
   Activity,
+  ArrowRight,
+  BarChart3,
+  Clock,
 } from "lucide-react";
 import Layout from "../components/layout/Layout";
 
@@ -34,8 +35,8 @@ const DashboardPage = () => {
     const userData =
       localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
     const token =
-      localStorage.getItem("itak_token") ||
-      sessionStorage.getItem("itak_token");
+      localStorage.getItem("itak_access_token") ||
+      sessionStorage.getItem("itak_access_token");
 
     if (!userData || !token) {
       // Rediriger vers la connexion si pas d'authentification
@@ -69,17 +70,28 @@ const DashboardPage = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-blue-600">Chargement...</p>
+          <motion.div
+            className="w-16 h-16 border-4 border-slate-300 border-t-slate-600 rounded-full mx-auto mb-4"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <p className="text-slate-600 font-medium">Chargement...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <Layout user={user}>
+    <Layout
+      user={{
+        firstName: (user as any)?.firstName || "Utilisateur",
+        lastName: (user as any)?.lastName || "Anonyme",
+        role: user?.role || "user",
+        email: user?.email || "",
+      }}
+    >
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -87,12 +99,31 @@ const DashboardPage = () => {
       >
         {/* Welcome Section */}
         <motion.div className="mb-8" variants={itemVariants}>
-          <h1 className="text-3xl font-bold text-blue-900 mb-2">
-            Bienvenue, {user.first_name} ! 👋
-          </h1>
-          <p className="text-blue-600">
-            Voici votre tableau de bord ITAK Manager
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                Bonjour, {user.first_name} ! 👋
+              </h1>
+              <p className="text-slate-600">
+                Voici un aperçu de votre tableau de bord
+              </p>
+            </div>
+            <motion.div
+              className="text-right"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <p className="text-sm text-slate-500">Aujourd'hui</p>
+              <p className="text-lg font-semibold text-slate-700">
+                {new Date().toLocaleDateString("fr-FR", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+              </p>
+            </motion.div>
+          </div>
         </motion.div>
 
         {/* Quick Stats */}
@@ -100,161 +131,232 @@ const DashboardPage = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
           variants={itemVariants}
         >
-          <div className="bg-white rounded-xl shadow-sm border border-blue-100 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
+          <motion.div
+            className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-lg transition-all duration-300 group"
+            whileHover={{ y: -2 }}
+          >
+            <div className="flex items-center gap-4">
+              <motion.div
+                className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"
+                whileHover={{ rotate: 5, scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <Users className="w-7 h-7 text-white" />
+              </motion.div>
               <div>
-                <p className="text-sm font-medium text-blue-600">
-                  Total Utilisateurs
+                <p className="text-sm font-medium text-slate-600">
+                  Utilisateurs
                 </p>
-                <p className="text-2xl font-bold text-blue-900">1,247</p>
-                <p className="text-xs text-green-600 flex items-center gap-1">
+                <p className="text-2xl font-bold text-slate-900">1,247</p>
+                <p className="text-xs text-emerald-600 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
                   +12% ce mois
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-blue-100 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-green-600" />
-              </div>
+          <motion.div
+            className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-lg transition-all duration-300 group"
+            whileHover={{ y: -2 }}
+          >
+            <div className="flex items-center gap-4">
+              <motion.div
+                className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg"
+                whileHover={{ rotate: 5, scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <BookOpen className="w-7 h-7 text-white" />
+              </motion.div>
               <div>
-                <p className="text-sm font-medium text-green-600">
+                <p className="text-sm font-medium text-slate-600">
                   Cours Actifs
                 </p>
-                <p className="text-2xl font-bold text-green-900">89</p>
-                <p className="text-xs text-green-600 flex items-center gap-1">
+                <p className="text-2xl font-bold text-slate-900">89</p>
+                <p className="text-xs text-emerald-600 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
                   +5% ce mois
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-blue-100 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-purple-600" />
-              </div>
+          <motion.div
+            className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-lg transition-all duration-300 group"
+            whileHover={{ y: -2 }}
+          >
+            <div className="flex items-center gap-4">
+              <motion.div
+                className="w-14 h-14 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg"
+                whileHover={{ rotate: 5, scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <Calendar className="w-7 h-7 text-white" />
+              </motion.div>
               <div>
-                <p className="text-sm font-medium text-purple-600">
-                  Événements
-                </p>
-                <p className="text-2xl font-bold text-purple-900">12</p>
-                <p className="text-xs text-blue-600 flex items-center gap-1">
-                  <Activity className="w-3 h-3" />
+                <p className="text-sm font-medium text-slate-600">Événements</p>
+                <p className="text-2xl font-bold text-slate-900">12</p>
+                <p className="text-xs text-slate-500 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
                   Ce mois
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-blue-100 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-orange-600" />
-              </div>
+          <motion.div
+            className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-lg transition-all duration-300 group"
+            whileHover={{ y: -2 }}
+          >
+            <div className="flex items-center gap-4">
+              <motion.div
+                className="w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg"
+                whileHover={{ rotate: 5, scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <BarChart3 className="w-7 h-7 text-white" />
+              </motion.div>
               <div>
-                <p className="text-sm font-medium text-orange-600">Sécurité</p>
-                <p className="text-2xl font-bold text-orange-900">100%</p>
-                <p className="text-xs text-green-600 flex items-center gap-1">
-                  <Shield className="w-3 h-3" />
-                  Système sécurisé
+                <p className="text-sm font-medium text-slate-600">
+                  Performance
+                </p>
+                <p className="text-2xl font-bold text-slate-900">98%</p>
+                <p className="text-xs text-emerald-600 flex items-center gap-1">
+                  <Activity className="w-3 h-3" />
+                  Excellent
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Recent Activity & Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Activity */}
           <motion.div
-            className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-blue-100 p-6"
+            className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6"
             variants={itemVariants}
           >
-            <h2 className="text-xl font-semibold text-blue-900 mb-4 flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              Activité Récente
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-blue-600" />
+                Activité Récente
+              </h2>
+              <motion.button
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                whileHover={{ x: 2 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                Voir tout
+                <ArrowRight className="w-3 h-3" />
+              </motion.button>
+            </div>
 
             <div className="space-y-4">
               {[
                 {
                   action: "Nouveau cours créé",
-                  details: "Mathématiques Avancées par Prof. Martin",
-                  time: "Il y a 2 heures",
+                  details: "Mathématiques Avancées",
+                  time: "Il y a 2h",
                   type: "course",
+                  color: "emerald",
                 },
                 {
                   action: "Utilisateur inscrit",
                   details: "Marie Dubois - Élève",
-                  time: "Il y a 4 heures",
+                  time: "Il y a 4h",
                   type: "user",
+                  color: "blue",
                 },
                 {
                   action: "Rapport généré",
-                  details: "Rapport mensuel des performances",
-                  time: "Il y a 6 heures",
+                  details: "Rapport mensuel",
+                  time: "Il y a 6h",
                   type: "report",
-                },
-                {
-                  action: "Mise à jour système",
-                  details: "Version 1.2.0 déployée",
-                  time: "Il y a 1 jour",
-                  type: "system",
+                  color: "violet",
                 },
               ].map((activity, index) => (
-                <div
+                <motion.div
                   key={index}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors"
+                  className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-all duration-200 group"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ x: 5 }}
                 >
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <motion.div
+                    className={`w-3 h-3 rounded-full mt-2 bg-${activity.color}-500`}
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      delay: index * 0.5,
+                    }}
+                  />
                   <div className="flex-1">
-                    <p className="font-medium text-blue-900">
+                    <p className="font-semibold text-slate-900 group-hover:text-slate-700">
                       {activity.action}
                     </p>
-                    <p className="text-sm text-blue-600">{activity.details}</p>
-                    <p className="text-xs text-blue-400 mt-1">
+                    <p className="text-sm text-slate-600">{activity.details}</p>
+                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
                       {activity.time}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
 
           {/* Quick Actions */}
           <motion.div
-            className="bg-white rounded-xl shadow-sm border border-blue-100 p-6"
+            className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6"
             variants={itemVariants}
           >
-            <h2 className="text-xl font-semibold text-blue-900 mb-4">
+            <h2 className="text-xl font-semibold text-slate-900 mb-6">
               Actions Rapides
             </h2>
 
             <div className="space-y-3">
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition-colors flex items-center gap-2">
-                <Users className="w-4 h-4" />
+              <motion.button
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Users className="w-5 h-5" />
                 Gérer les Utilisateurs
-              </button>
-              <button className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg transition-colors flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 ml-auto" />
+              </motion.button>
+
+              <motion.button
+                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <BookOpen className="w-5 h-5" />
                 Créer un Cours
-              </button>
-              <button className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg transition-colors flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 ml-auto" />
+              </motion.button>
+
+              <motion.button
+                className="w-full bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Calendar className="w-5 h-5" />
                 Planifier un Événement
-              </button>
-              <button className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-lg transition-colors flex items-center gap-2">
-                <Settings className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 ml-auto" />
+              </motion.button>
+
+              <motion.button
+                className="w-full bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white px-4 py-3 rounded-xl transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Settings className="w-5 h-5" />
                 Paramètres
-              </button>
+                <ArrowRight className="w-4 h-4 ml-auto" />
+              </motion.button>
             </div>
           </motion.div>
         </div>
