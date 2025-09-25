@@ -37,24 +37,23 @@ interface StudentProfileData {
 
 interface TeacherProfileData {
   matricule: string;
-  hire_date: string;
+  hireDate: string;
   photo: string | null;
-  marital_status: string;
-  specialty: string;
+  maritalStatus: string;
   diplomas: string;
   address: string;
-  emergency_contact: string;
+  emergencyContact: string;
   notes: string;
 }
 
 interface StaffProfileData {
   matricule: string;
-  hire_date: string;
+  hireDate: string;
   position: string;
   photo: string | null;
-  marital_status: string;
+  maritalStatus: string;
   address: string;
-  emergency_contact: string;
+  emergencyContact: string;
   notes: string;
 }
 
@@ -90,25 +89,24 @@ const ProfileAssignmentModal = ({
   // Form data for teacher profile
   const [teacherProfile, setTeacherProfile] = useState<TeacherProfileData>({
     matricule: "",
-    hire_date: "",
+    hireDate: "",
     photo: null,
-    marital_status: "single",
-    specialty: "",
+    maritalStatus: "single",
     diplomas: "",
     address: "",
-    emergency_contact: "",
+    emergencyContact: "",
     notes: "",
   });
 
   // Form data for staff profile
   const [staffProfile, setStaffProfile] = useState<StaffProfileData>({
     matricule: "",
-    hire_date: "",
+    hireDate: "",
     photo: null,
-    marital_status: "single",
+    maritalStatus: "single",
     position: "",
     address: "",
-    emergency_contact: "",
+    emergencyContact: "",
     notes: "",
   });
 
@@ -224,23 +222,22 @@ const ProfileAssignmentModal = ({
     });
     setTeacherProfile({
       matricule: "",
-      hire_date: "",
+      hireDate: "",
       photo: null,
-      marital_status: "single",
-      specialty: "",
+      maritalStatus: "single",
       diplomas: "",
       address: "",
-      emergency_contact: "",
+      emergencyContact: "",
       notes: "",
     });
     setStaffProfile({
       matricule: "",
-      hire_date: "",
+      hireDate: "",
       photo: null,
-      marital_status: "single",
+      maritalStatus: "single",
       position: "",
       address: "",
-      emergency_contact: "",
+      emergencyContact: "",
       notes: "",
     });
     setSelectedUser(null);
@@ -579,13 +576,13 @@ const ProfileAssignmentModal = ({
 
                     <Input
                       label="Date d'embauche"
-                      name="hire_date"
+                      name="hireDate"
                       type="date"
-                      value={teacherProfile.hire_date}
+                      value={teacherProfile.hireDate}
                       onChange={(e) =>
                         setTeacherProfile({
                           ...teacherProfile,
-                          hire_date: e.target.value,
+                          hireDate: e.target.value,
                         })
                       }
                       required
@@ -598,11 +595,11 @@ const ProfileAssignmentModal = ({
                         </span>
                       </label>
                       <select
-                        value={teacherProfile.marital_status}
+                        value={teacherProfile.maritalStatus}
                         onChange={(e) =>
                           setTeacherProfile({
                             ...teacherProfile,
-                            marital_status: e.target.value,
+                            maritalStatus: e.target.value,
                           })
                         }
                         className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 bg-white"
@@ -613,19 +610,6 @@ const ProfileAssignmentModal = ({
                         <option value="widowed">Veuf/Veuve</option>
                       </select>
                     </div>
-
-                    <Input
-                      label="Spécialité"
-                      name="specialty"
-                      value={teacherProfile.specialty}
-                      onChange={(e) =>
-                        setTeacherProfile({
-                          ...teacherProfile,
-                          specialty: e.target.value,
-                        })
-                      }
-                      required
-                    />
 
                     <Input
                       label="Diplômes"
@@ -656,12 +640,12 @@ const ProfileAssignmentModal = ({
 
                     <Input
                       label="Contact d'urgence"
-                      name="emergency_contact"
-                      value={teacherProfile.emergency_contact}
+                      name="emergencyContact"
+                      value={teacherProfile.emergencyContact}
                       onChange={(e) =>
                         setTeacherProfile({
                           ...teacherProfile,
-                          emergency_contact: e.target.value,
+                          emergencyContact: e.target.value,
                         })
                       }
                     />
@@ -717,13 +701,13 @@ const ProfileAssignmentModal = ({
 
                     <Input
                       label="Date d'embauche"
-                      name="hire_date"
+                      name="hireDate"
                       type="date"
-                      value={staffProfile.hire_date}
+                      value={staffProfile.hireDate}
                       onChange={(e) =>
                         setStaffProfile({
                           ...staffProfile,
-                          hire_date: e.target.value,
+                          hireDate: e.target.value,
                         })
                       }
                       required
@@ -749,11 +733,11 @@ const ProfileAssignmentModal = ({
                         </span>
                       </label>
                       <select
-                        value={staffProfile.marital_status}
+                        value={staffProfile.maritalStatus}
                         onChange={(e) =>
                           setStaffProfile({
                             ...staffProfile,
-                            marital_status: e.target.value,
+                            maritalStatus: e.target.value,
                           })
                         }
                         className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 bg-white"
@@ -781,12 +765,12 @@ const ProfileAssignmentModal = ({
 
                     <Input
                       label="Contact d'urgence"
-                      name="emergency_contact"
-                      value={staffProfile.emergency_contact}
+                      name="emergencyContact"
+                      value={staffProfile.emergencyContact}
                       onChange={(e) =>
                         setStaffProfile({
                           ...staffProfile,
-                          emergency_contact: e.target.value,
+                          emergencyContact: e.target.value,
                         })
                       }
                     />

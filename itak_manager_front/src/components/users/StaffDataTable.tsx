@@ -80,13 +80,13 @@ const StaffDataTable = ({
 
   const isProfileComplete = (staff: StaffWithUser): boolean => {
     return (
-      staff.id > 0 &&
+      staff.id !== "0" &&
       !!(
         staff.matricule &&
-        staff.hire_date &&
+        staff.hireDate &&
         staff.position &&
         staff.address &&
-        staff.emergency_contact
+        staff.emergencyContact
       )
     );
   };
@@ -106,7 +106,7 @@ const StaffDataTable = ({
   };
 
   const getProfileStatusText = (staff: StaffWithUser) => {
-    if (staff.id === 0) {
+    if (staff.id === "0") {
       return "Profil manquant";
     }
     return isProfileComplete(staff) ? "Complet" : "Incomplet";
