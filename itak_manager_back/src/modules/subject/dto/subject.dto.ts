@@ -1,6 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsString, MinLength, IsUUID } from 'class-validator';
-import { ClassCategoryResponseDto } from 'src/modules/class-category/dto/class-category.dto';
+import { IsString, MinLength } from 'class-validator';
 
 export class CreateSubjectDto {
   @IsString({ message: 'Le nom de la matière doit être une chaîne' })
@@ -12,9 +11,6 @@ export class CreateSubjectDto {
   @IsString({ message: 'Le code doit être une chaîne' })
   @MinLength(2, { message: 'Le code doit contenir au moins 2 caractères' })
   code: string;
-
-  @IsUUID('4', { message: "L'ID de la catégorie doit être un UUID valide" })
-  categoryId: string;
 }
 
 export class UpdateSubjectDto extends PartialType(CreateSubjectDto) {}

@@ -1,20 +1,6 @@
 import { registerAs } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import {
-  User,
-  Student,
-  Teacher,
-  Staff,
-  ClassCategory,
-  Subject,
-  Class,
-  ClassSubject,
-  StudentClass,
-  TeachingAssignment,
-  Parent,
-  StudentParent,
-} from '../entities';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { Assessment } from '../entities/assessment.entity';
 import { AssessmentResult } from '../entities/assessment-result.entity';
@@ -28,6 +14,28 @@ import { Term } from '../entities/term.entity';
 import { AssessmentSubject } from '../entities/assessment-subject.entity';
 import { AssessmentVersion } from '../entities/assessment-version.entity';
 import { GradeFreezePeriod } from '../entities/grade-freeze-period.entity';
+import { StudentFee } from '../entities/student-fee.entity';
+import { FeeType } from '../entities/fee-type.entity';
+import { Payment } from '../entities/payment.entity';
+import { Refund } from '../entities/refund.entity';
+import { Discount } from '../entities/discount.entity';
+import { Invoice } from '../entities/invoice.entity';
+import { InvoiceItem } from '../entities/invoice-item.entity';
+import { ClassCategory } from '../entities/class-category.entity';
+import { ClassSubject } from '../entities/class-subject.entity';
+import { Parent } from '../entities/parent.entity';
+import { Staff } from '../entities/staff.entity';
+import { Student } from '../entities/student.entity';
+import { StudentClass } from '../entities/student-class.entity';
+import { StudentParent } from '../entities/student-parent.entity';
+import { Timetable } from '../entities/timetable.entity';
+import { Event } from '../entities/event.entity';
+import { EventParticipant } from '../entities/event-participant.entity';
+import { Teacher } from '../entities/teacher.entity';
+import { TeachingAssignment } from '../entities/teaching-assignment.entity';
+import { User } from '../entities/user.entity';
+import { Subject } from '../entities/subject.entity';
+import { Class } from '../entities/class.entity';
 
 export default registerAs(
   'database',
@@ -49,6 +57,7 @@ export default registerAs(
       ClassCategory,
       ClassSubject,
       Class,
+      FeeType,
       GradeComplaint,
       GradeComplaintHistory,
       Parent,
@@ -63,6 +72,12 @@ export default registerAs(
       AssessmentVersion,
       GradeFreezePeriod,
       Subject,
+      StudentFee,
+      Payment,
+      Refund,
+      Discount,
+      Invoice,
+      InvoiceItem,
       Teacher,
       TeachingAssignment,
       Term,
@@ -93,20 +108,30 @@ export const AppDataSource = new DataSource({
     ClassCategory,
     ClassSubject,
     Class,
-    GradeComplaintHistory,
+    FeeType,
     GradeComplaint,
+    GradeComplaintHistory,
     Parent,
     SchoolYear,
     Staff,
+    Student,
     StudentClass,
     StudentParent,
     StudentPromotion,
     StudentTransfer,
-    Student,
     AssessmentAttendance,
     AssessmentVersion,
     GradeFreezePeriod,
     Subject,
+    StudentFee,
+    Payment,
+    Refund,
+    Discount,
+    Invoice,
+    InvoiceItem,
+    Timetable,
+    Event,
+    EventParticipant,
     Teacher,
     TeachingAssignment,
     Term,

@@ -6,8 +6,8 @@ import {
   IsEnum,
   MinLength,
 } from 'class-validator';
-import { UserResponseDto } from 'src/modules/user/dto/user.dto';
-import { RelationshipType } from 'src/entities/student-parent.entity';
+import { UserResponseDto } from '../../user/dto/user.dto';
+import { RelationshipType } from '../../../entities/student-parent.entity';
 
 export class CreateParentDto {
   @IsUUID('4', { message: 'userId doit être un UUID valide' })

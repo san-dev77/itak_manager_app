@@ -20,11 +20,11 @@ export enum AttendanceStatus {
 
 @Entity('assessment_attendance')
 export class AssessmentAttendance {
-  @PrimaryColumn({ name: 'assessment_id', type: 'uuid' })
+  @PrimaryColumn({ type: 'uuid' })
   @Index()
   assessmentId: string;
 
-  @PrimaryColumn({ name: 'student_id', type: 'uuid' })
+  @PrimaryColumn({ type: 'uuid' })
   @Index()
   studentId: string;
 
@@ -39,16 +39,16 @@ export class AssessmentAttendance {
   @Column({ type: 'text', nullable: true })
   reason: string;
 
-  @Column({ name: 'marked_by', type: 'uuid', nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   markedBy: string;
 
-  @Column({ name: 'marked_at', type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   markedAt: Date;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn()
   updatedAt: Date;
 
   // Relations

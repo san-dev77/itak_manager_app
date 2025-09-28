@@ -2,6 +2,12 @@
 
 # dependencies
 /node_modules
+*/node_modules
+*/.env
+*/.env.local
+*/.env.development
+*/.env.production
+*/.env.test
 /.pnp
 .pnp.*
 .yarn/*

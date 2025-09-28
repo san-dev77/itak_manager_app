@@ -8,7 +8,7 @@ import {
   Length,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ComplaintStatus } from 'src/entities/grade-complaint.entity';
+import { ComplaintStatus } from '../../../entities/grade-complaint.entity';
 
 export class CreateGradeComplaintDto {
   @ApiProperty({ description: "ID de l'étudiant" })

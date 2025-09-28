@@ -13,6 +13,9 @@ import { Staff } from './staff.entity';
 import { Parent } from './parent.entity';
 import { GradeComplaintHistory } from './grade-complaint-history.entity';
 import { AssessmentSubject } from './assessment-subject.entity';
+import { Payment } from './payment.entity';
+import { Refund } from './refund.entity';
+import { Discount } from './discount.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -90,4 +93,13 @@ export class User {
 
   @OneToMany(() => AssessmentSubject, (subject) => subject.uploadedByUser)
   assessmentSubjects: AssessmentSubject[];
+
+  @OneToMany(() => Payment, (payment) => payment.receivedByUser)
+  receivedPayments: Payment[];
+
+  @OneToMany(() => Refund, (refund) => refund.processedByUser)
+  processedRefunds: Refund[];
+
+  @OneToMany(() => Discount, (discount) => discount.approvedByUser)
+  approvedDiscounts: Discount[];
 }

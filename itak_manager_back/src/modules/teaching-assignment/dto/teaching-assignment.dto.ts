@@ -1,9 +1,9 @@
 import { IsOptional, IsDateString, IsUUID } from 'class-validator';
 import { PartialType } from '@nestjs/swagger';
-import { ClassResponseDto } from 'src/modules/class/dto/class.dto';
-import { SubjectResponseDto } from 'src/modules/subject/dto/subject.dto';
-import { ClassSubjectResponseDto } from 'src/modules/class-subject/dto/class-subject.dto';
-import { TeacherResponseDto } from 'src/modules/teacher/dto/teacher.dto';
+import { ClassResponseDto } from '../../class/dto/class.dto';
+import { SubjectResponseDto } from '../../subject/dto/subject.dto';
+import { ClassSubjectResponseDto } from '../../class-subject/dto/class-subject.dto';
+import { TeacherResponseDto } from '../../teacher/dto/teacher.dto';
 
 export class CreateTeachingAssignmentDto {
   @IsUUID('4', {

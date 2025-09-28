@@ -17,6 +17,8 @@ import { AssessmentResult } from './assessment-result.entity';
 import { GradeComplaint } from './grade-complaint.entity';
 import { StudentTransfer } from './student-transfer.entity';
 import { AssessmentAttendance } from './assessment-attendance.entity';
+import { StudentFee } from './student-fee.entity';
+import { Invoice } from './invoice.entity';
 
 @Entity('students')
 export class Student {
@@ -95,4 +97,10 @@ export class Student {
 
   @OneToMany(() => AssessmentAttendance, (attendance) => attendance.student)
   assessmentAttendances: AssessmentAttendance[];
+
+  @OneToMany(() => StudentFee, (studentFee) => studentFee.student)
+  studentFees: StudentFee[];
+
+  @OneToMany(() => Invoice, (invoice) => invoice.student)
+  invoices: Invoice[];
 }

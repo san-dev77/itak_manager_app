@@ -3,9 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
   AssessmentVersion,
+  AssessmentVersionType,
   VersionAction,
 } from '../../entities/assessment-version.entity';
-import { Assessment } from '../../entities/assessment.entity';
+import { Assessment, AssessmentType } from '../../entities/assessment.entity';
+import { VersionResponseDto } from './dto/version-response.dto';
 
 @Injectable()
 export class AssessmentVersionService {
@@ -25,7 +27,7 @@ export class AssessmentVersionService {
     changedBy: string,
     changeReason?: string,
     changedFields?: string[],
-  ): Promise<AssessmentVersion> {
+  ): Promise<VersionResponseDto> {
     // Get the current assessment data
     const assessment = await this.assessmentRepository.findOne({
       where: { id: assessmentId },
@@ -53,7 +55,7 @@ export class AssessmentVersionService {
       termId: assessment.termId,
       classSubjectId: assessment.classSubjectId,
       schoolYearId: assessment.schoolYearId,
-      type: assessment.type,
+      type: assessment.type as unknown as AssessmentVersionType,
       title: assessment.title,
       description: assessment.description,
       startDate: assessment.startDate,
@@ -65,7 +67,8 @@ export class AssessmentVersionService {
       changedFields,
     });
 
-    return await this.assessmentVersionRepository.save(version);
+    const savedVersion = await this.assessmentVersionRepository.save(version);
+    return this.toVersionResponseDto(savedVersion);
   }
 
   /**
@@ -73,12 +76,13 @@ export class AssessmentVersionService {
    */
   async getAssessmentVersions(
     assessmentId: string,
-  ): Promise<AssessmentVersion[]> {
-    return await this.assessmentVersionRepository.find({
+  ): Promise<VersionResponseDto[]> {
+    const versions = await this.assessmentVersionRepository.find({
       where: { assessmentId },
       order: { versionNumber: 'DESC' },
       relations: ['user'],
     });
+    return versions.map((version) => this.toVersionResponseDto(version));
   }
 
   /**
@@ -87,7 +91,7 @@ export class AssessmentVersionService {
   async getVersion(
     assessmentId: string,
     versionNumber: number,
-  ): Promise<AssessmentVersion> {
+  ): Promise<VersionResponseDto> {
     const version = await this.assessmentVersionRepository.findOne({
       where: { assessmentId, versionNumber },
       relations: ['user'],
@@ -99,13 +103,13 @@ export class AssessmentVersionService {
       );
     }
 
-    return version;
+    return this.toVersionResponseDto(version);
   }
 
   /**
    * Get the latest version of an assessment
    */
-  async getLatestVersion(assessmentId: string): Promise<AssessmentVersion> {
+  async getLatestVersion(assessmentId: string): Promise<VersionResponseDto> {
     const version = await this.assessmentVersionRepository.findOne({
       where: { assessmentId },
       order: { versionNumber: 'DESC' },
@@ -118,7 +122,7 @@ export class AssessmentVersionService {
       );
     }
 
-    return version;
+    return this.toVersionResponseDto(version);
   }
 
   /**
@@ -129,8 +133,8 @@ export class AssessmentVersionService {
     fromVersion: number,
     toVersion: number,
   ): Promise<{
-    from: AssessmentVersion;
-    to: AssessmentVersion;
+    from: VersionResponseDto;
+    to: VersionResponseDto;
     differences: Array<{
       field: string;
       fromValue: any;
@@ -200,7 +204,7 @@ export class AssessmentVersionService {
     assessment.termId = version.termId;
     assessment.classSubjectId = version.classSubjectId;
     assessment.schoolYearId = version.schoolYearId;
-    assessment.type = version.type;
+    assessment.type = version.type as unknown as AssessmentType;
     assessment.title = version.title;
     assessment.description = version.description;
     assessment.startDate = version.startDate;
@@ -287,5 +291,34 @@ export class AssessmentVersionService {
     await this.assessmentVersionRepository.delete(versionIds);
 
     return versionsToDelete.length;
+  }
+
+  private toVersionResponseDto(version: AssessmentVersion): VersionResponseDto {
+    return {
+      id: version.id,
+      assessmentId: version.assessmentId,
+      versionNumber: version.versionNumber,
+      versionAction: version.versionAction,
+      termId: version.termId,
+      classSubjectId: version.classSubjectId,
+      schoolYearId: version.schoolYearId,
+      type: version.type as unknown as AssessmentType,
+      title: version.title,
+      description: version.description,
+      startDate: version.startDate,
+      endDate: version.endDate,
+      maxScore: version.maxScore,
+      weight: version.weight,
+      changedBy: version.changedBy,
+      changeReason: version.changeReason,
+      changedFields: version.changedFields,
+      createdAt: version.createdAt,
+      user: {
+        id: version.user.id,
+        firstName: version.user.firstName,
+        lastName: version.user.lastName,
+        email: version.user.email,
+      },
+    };
   }
 }

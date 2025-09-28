@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { Student } from './student.entity';
 import { Assessment } from './assessment.entity';
+import { GradeComplaintHistory } from './grade-complaint-history.entity';
 // Forward declaration to avoid circular dependency
 // import { GradeComplaintHistory } from './grade-complaint-history.entity';
 
@@ -26,11 +27,11 @@ export class GradeComplaint {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'student_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   studentId: string;
 
-  @Column({ name: 'assessment_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   assessmentId: string;
 
@@ -45,10 +46,10 @@ export class GradeComplaint {
   @Column({ type: 'text' })
   reason: string;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn()
   updatedAt: Date;
 
   // Relations
@@ -64,6 +65,6 @@ export class GradeComplaint {
   @JoinColumn({ name: 'assessment_id' })
   assessment: Assessment;
 
-  @OneToMany('GradeComplaintHistory', 'complaint')
-  history: any[];
+  @OneToMany(() => GradeComplaintHistory, (history) => history.complaint)
+  history: GradeComplaintHistory[];
 }

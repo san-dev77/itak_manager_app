@@ -23,28 +23,27 @@ export class AssessmentSubject {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'assessment_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   assessmentId: string;
 
-  @Column({ name: 'file_url', type: 'text' })
+  @Column({ type: 'text' })
   fileUrl: string;
 
   @Column({
-    name: 'file_type',
     type: 'enum',
     enum: FileType,
   })
   fileType: FileType;
 
-  @Column({ name: 'uploaded_by', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   uploadedBy: string;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn()
   updatedAt: Date;
 
   // Relations

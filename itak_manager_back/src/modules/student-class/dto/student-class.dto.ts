@@ -1,8 +1,8 @@
 import { IsOptional, IsDateString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/swagger';
-import { StudentResponseDto } from 'src/modules/student/dto/student.dto';
-import { ClassResponseDto } from 'src/modules/class/dto/class.dto';
+import { StudentResponseDto } from '../../student/dto/student.dto';
+import { ClassResponseDto } from '../../class/dto/class.dto';
 
 export class CreateStudentClassDto {
   @IsUUID('4', { message: "L'ID de l'étudiant doit être un UUID" })

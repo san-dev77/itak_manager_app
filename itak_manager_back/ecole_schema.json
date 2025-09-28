@@ -930,5 +930,151 @@
         "constraints": "DEFAULT NOW()"
       }
     ]
+  },
+
+  {
+    "name": "fee_types",
+    "description": "Liste des types de frais applicables aux élèves (scolarité, session, cantine, bibliothèque, etc.)",
+    "columns": {
+      "id": "uuid primary key",
+      "name": "string not null unique",
+      "description": "text nullable",
+      "amount_default": "decimal(12,2) not null",
+      "is_recurring": "boolean default false",
+      "frequency": "enum('once','monthly','quarterly','yearly') nullable",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "student_fees",
+    "description": "Les frais assignés individuellement aux élèves (permet des montants personnalisés, exemptions ou arriérés)",
+    "columns": {
+      "id": "uuid primary key",
+      "student_id": "uuid foreign key -> students.id",
+      "fee_type_id": "uuid foreign key -> fee_types.id",
+      "academic_year_id": "uuid foreign key -> school_years.id",
+      "amount_assigned": "decimal(12,2) not null",
+      "due_date": "date nullable",
+      "status": "enum('pending','partial','paid','overdue') default 'pending'",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "payments",
+    "description": "Historique des paiements effectués par les élèves ou leurs parents",
+    "columns": {
+      "id": "uuid primary key",
+      "student_fee_id": "uuid foreign key -> student_fees.id",
+      "payment_date": "timestamp not null",
+      "amount": "decimal(12,2) not null",
+      "method": "enum('cash','bank_transfer','mobile_money','card') not null",
+      "provider": "string(50) nullable",
+      "transaction_ref": "string(100) nullable",
+      "received_by": "uuid foreign key -> users.id (ex: secrétaire)",
+      "status": "enum('successful','failed','pending') default 'successful'",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "refunds",
+    "description": "Enregistre les remboursements liés à des paiements",
+    "columns": {
+      "id": "uuid primary key",
+      "payment_id": "uuid foreign key -> payments.id",
+      "amount": "decimal(12,2) not null",
+      "reason": "text",
+      "processed_by": "uuid foreign key -> users.id",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "discounts",
+    "description": "Réductions, bourses ou exonérations appliquées aux frais d’un élève",
+    "columns": {
+      "id": "uuid primary key",
+      "student_fee_id": "uuid foreign key -> student_fees.id",
+      "type": "enum('scholarship','sibling_discount','exemption','other') not null",
+      "description": "text nullable",
+      "amount": "decimal(12,2) not null",
+      "approved_by": "uuid foreign key -> users.id",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "invoices",
+    "description": "Factures générées pour officialiser la dette ou les paiements d’un élève",
+    "columns": {
+      "id": "uuid primary key",
+      "student_id": "uuid foreign key -> students.id",
+      "invoice_number": "string(50) unique not null",
+      "total_amount": "decimal(12,2) not null",
+      "status": "enum('unpaid','partial','paid','cancelled') default 'unpaid'",
+      "issued_date": "date not null",
+      "due_date": "date nullable",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "invoice_items",
+    "description": "Détails des lignes de facture (liées aux frais ou paiements)",
+    "columns": {
+      "id": "uuid primary key",
+      "invoice_id": "uuid foreign key -> invoices.id",
+      "student_fee_id": "uuid foreign key -> student_fees.id",
+      "description": "string not null",
+      "amount": "decimal(12,2) not null"
+    }
+  },
+  {
+    "name": "timetables",
+    "description": "Emplois du temps réguliers des classes ou enseignants, variant selon l'année scolaire.",
+    "columns": {
+      "id": "uuid primary key",
+      "class_id": "uuid foreign key -> classes.id",
+      "teacher_id": "uuid foreign key -> users.id",
+      "subject_id": "uuid foreign key -> subjects.id",
+      "academic_year_id": "uuid foreign key -> school_years.id",
+      "day_of_week": "enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') not null",
+      "start_time": "time not null",
+      "end_time": "time not null",
+      "room": "string(50) nullable",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "events",
+    "description": "Événements ponctuels (globaux ou relatifs à une classe, un groupe, ou tout le personnel).",
+    "columns": {
+      "id": "uuid primary key",
+      "title": "string(100) not null",
+      "description": "text nullable",
+      "event_type": "enum('exam','homework','cultural_day','health_day','ball','other') not null",
+      "start_date": "date not null",
+      "end_date": "date nullable",
+      "all_day": "boolean default true",
+      "class_id": "uuid foreign key -> classes.id nullable",
+      "created_by": "uuid foreign key -> users.id",
+      "academic_year_id": "uuid foreign key -> school_years.id",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "event_participants",
+    "description": "Lien entre les événements et les participants (élèves ou enseignants).",
+    "columns": {
+      "id": "uuid primary key",
+      "event_id": "uuid foreign key -> events.id",
+      "user_id": "uuid foreign key -> users.id",
+      "role": "enum('student','teacher','staff','other')",
+      "status": "enum('invited','confirmed','declined','absent') default 'invited'"
+    }
   }
 ]

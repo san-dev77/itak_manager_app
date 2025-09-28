@@ -41,7 +41,7 @@ export class Assessment {
   @Index()
   classSubjectId: string;
 
-  @Column({ name: 'school_year_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   schoolYearId: string;
 
@@ -84,13 +84,13 @@ export class Assessment {
   @ManyToOne(() => Term, (term) => term.assessments, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'termId' })
+  @JoinColumn({ name: 'term_id' })
   term: Term;
 
   @ManyToOne(() => ClassSubject, (classSubject) => classSubject.assessments, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'classSubjectId' })
+  @JoinColumn({ name: 'class_subject_id' })
   classSubject: ClassSubject;
 
   @ManyToOne(() => SchoolYear, (schoolYear) => schoolYear.assessments, {

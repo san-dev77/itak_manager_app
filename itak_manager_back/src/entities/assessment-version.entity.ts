@@ -9,7 +9,16 @@ import {
 } from 'typeorm';
 import { Assessment } from './assessment.entity';
 import { User } from './user.entity';
-import { AssessmentType } from './assessment.entity';
+
+export enum AssessmentVersionType {
+  EXAM = 'exam', // Examens finaux
+  HOMEWORK = 'homework', // Devoirs à la maison
+  SUPERVISED_HOMEWORK = 'supervised_homework', // Devoirs surveillés (DS)
+  TEST = 'test', // Tests courts
+  QUIZ = 'quiz', // Quiz rapides
+  MONTHLY_COMPOSITION = 'monthly_composition', // Compositions mensuelles
+  CONTINUOUS_ASSESSMENT = 'continuous_assessment', // Contrôle continu
+}
 
 export enum VersionAction {
   CREATED = 'created',
@@ -25,15 +34,14 @@ export class AssessmentVersion {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'assessment_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   assessmentId: string;
 
-  @Column({ name: 'version_number', type: 'integer' })
+  @Column({ type: 'integer' })
   versionNumber: number;
 
   @Column({
-    name: 'version_action',
     type: 'enum',
     enum: VersionAction,
   })
@@ -46,15 +54,14 @@ export class AssessmentVersion {
   @Column({ type: 'uuid' })
   classSubjectId: string;
 
-  @Column({ name: 'school_year_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   schoolYearId: string;
 
   @Column({
     type: 'enum',
-    enum: AssessmentType,
-    enumName: 'assessment_type_enum',
+    enum: AssessmentVersionType,
   })
-  type: AssessmentType;
+  type: AssessmentVersionType;
 
   @Column({ type: 'varchar', length: 100 })
   title: string;
@@ -75,7 +82,7 @@ export class AssessmentVersion {
   weight: number;
 
   // Version metadata
-  @Column({ name: 'changed_by', type: 'uuid' })
+  @Column({ type: 'uuid' })
   changedBy: string;
 
   @Column({ type: 'text', nullable: true })
@@ -84,7 +91,7 @@ export class AssessmentVersion {
   @Column({ type: 'json', nullable: true })
   changedFields: string[];
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn()
   createdAt: Date;
 
   // Relations

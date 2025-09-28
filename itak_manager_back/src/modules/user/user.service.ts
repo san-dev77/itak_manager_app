@@ -10,7 +10,7 @@ import { Repository } from 'typeorm';
 import { User, UserRole } from '../../entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto, UserResponseDto } from './dto/user.dto';
-import { Utils } from 'src/utils/utils';
+import { Utils } from '../../utils/utils';
 import { EmailService } from '../email/email.service';
 import { ConfigService } from '@nestjs/config';
 

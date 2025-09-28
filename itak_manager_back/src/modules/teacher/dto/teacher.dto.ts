@@ -7,8 +7,8 @@ import {
   IsArray,
   MinLength,
 } from 'class-validator';
-import { UserResponseDto } from 'src/modules/user/dto/user.dto';
-import { Subject } from 'src/entities/subject.entity';
+import { UserResponseDto } from '../../user/dto/user.dto';
+import { Subject } from '../../../entities/subject.entity';
 
 export class CreateTeacherDto {
   @IsUUID('4', { message: 'userId doit être un UUID valide' })

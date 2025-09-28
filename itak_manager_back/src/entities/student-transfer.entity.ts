@@ -28,19 +28,19 @@ export class StudentTransfer {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'student_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   studentId: string;
 
-  @Column({ name: 'from_class_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   fromClassId: string;
 
-  @Column({ name: 'to_class_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   toClassId: string;
 
-  @Column({ name: 'transfer_date', type: 'date' })
+  @Column({ type: 'date' })
   @Index()
   transferDate: Date;
 
@@ -58,16 +58,16 @@ export class StudentTransfer {
   @Index()
   year: string; // ex: "2025-2026"
 
-  @Column({ name: 'approved_by', type: 'uuid', nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   approvedBy: string;
 
-  @Column({ name: 'approval_date', type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   approvalDate: Date;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn()
   updatedAt: Date;
 
   // Relations

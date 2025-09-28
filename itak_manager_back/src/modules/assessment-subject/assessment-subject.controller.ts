@@ -41,17 +41,17 @@ export class AssessmentSubjectController {
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
-  @ApiOperation({ summary: 'Créer un nouveau sujet d\'évaluation avec fichier' })
+  @ApiOperation({ summary: "Créer un nouveau sujet d'évaluation avec fichier" })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Sujet d\'évaluation avec fichier',
+    description: "Sujet d'évaluation avec fichier",
     schema: {
       type: 'object',
       properties: {
         assessmentId: {
           type: 'string',
           format: 'uuid',
-          description: 'ID de l\'évaluation',
+          description: "ID de l'évaluation",
         },
         fileType: {
           type: 'string',
@@ -86,20 +86,24 @@ export class AssessmentSubjectController {
     @Request() req: any,
   ): Promise<AssessmentSubjectResponseDto> {
     const uploadedByUserId = req.user?.id || req.user?.sub;
-    return this.assessmentSubjectService.create(createDto, file, uploadedByUserId);
+    return this.assessmentSubjectService.create(
+      createDto,
+      file,
+      uploadedByUserId,
+    );
   }
 
   @Get()
-  @ApiOperation({ summary: 'Récupérer tous les sujets d\'évaluation' })
+  @ApiOperation({ summary: "Récupérer tous les sujets d'évaluation" })
   @ApiQuery({
     name: 'assessmentId',
     required: false,
-    description: 'Filtrer par ID de l\'évaluation',
+    description: "Filtrer par ID de l'évaluation",
   })
   @ApiQuery({
     name: 'userId',
     required: false,
-    description: 'Filtrer par ID de l\'utilisateur',
+    description: "Filtrer par ID de l'utilisateur",
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -143,16 +147,16 @@ export class AssessmentSubjectController {
   }
 
   @Get('assessment/:assessmentId')
-  @ApiOperation({ summary: 'Récupérer les sujets d\'une évaluation' })
+  @ApiOperation({ summary: "Récupérer les sujets d'une évaluation" })
   @ApiParam({
     name: 'assessmentId',
-    description: 'ID de l\'évaluation',
+    description: "ID de l'évaluation",
     type: 'string',
     format: 'uuid',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Sujets de l\'évaluation récupérés avec succès',
+    description: "Sujets de l'évaluation récupérés avec succès",
     type: [AssessmentSubjectResponseDto],
   })
   @ApiResponse({
@@ -169,13 +173,13 @@ export class AssessmentSubjectController {
   @ApiOperation({ summary: 'Récupérer les sujets uploadés par un utilisateur' })
   @ApiParam({
     name: 'userId',
-    description: 'ID de l\'utilisateur',
+    description: "ID de l'utilisateur",
     type: 'string',
     format: 'uuid',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Sujets de l\'utilisateur récupérés avec succès',
+    description: "Sujets de l'utilisateur récupérés avec succès",
     type: [AssessmentSubjectResponseDto],
   })
   @ApiResponse({
@@ -190,7 +194,7 @@ export class AssessmentSubjectController {
 
   @Patch(':id')
   @UseInterceptors(FileInterceptor('file'))
-  @ApiOperation({ summary: 'Mettre à jour un sujet d\'évaluation' })
+  @ApiOperation({ summary: "Mettre à jour un sujet d'évaluation" })
   @ApiConsumes('multipart/form-data')
   @ApiParam({
     name: 'id',
@@ -231,7 +235,7 @@ export class AssessmentSubjectController {
   })
   @ApiResponse({
     status: HttpStatus.FORBIDDEN,
-    description: 'Seul l\'uploadeur peut modifier le fichier',
+    description: "Seul l'uploadeur peut modifier le fichier",
   })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -244,7 +248,7 @@ export class AssessmentSubjectController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Supprimer un sujet d\'évaluation' })
+  @ApiOperation({ summary: "Supprimer un sujet d'évaluation" })
   @ApiParam({
     name: 'id',
     description: 'ID du sujet',
@@ -261,7 +265,7 @@ export class AssessmentSubjectController {
   })
   @ApiResponse({
     status: HttpStatus.FORBIDDEN,
-    description: 'Seul l\'uploadeur peut supprimer le fichier',
+    description: "Seul l'uploadeur peut supprimer le fichier",
   })
   async remove(
     @Param('id', ParseUUIDPipe) id: string,

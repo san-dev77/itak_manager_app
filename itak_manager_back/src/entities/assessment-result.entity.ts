@@ -24,10 +24,10 @@ export class AssessmentResult {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'assessment_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   assessmentId: string;
 
-  @Column({ name: 'student_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   studentId: string;
 
   @Column({ type: 'decimal', precision: 5, scale: 2 })
@@ -43,10 +43,10 @@ export class AssessmentResult {
   })
   status: AssessmentResultStatus;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn()
   updatedAt: Date;
 
   // Relations

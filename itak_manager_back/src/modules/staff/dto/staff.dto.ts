@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, MinLength } from 'class-validator';
-import { UserResponseDto } from 'src/modules/user/dto/user.dto';
+import { UserResponseDto } from '../../user/dto/user.dto';
 
 export class CreateStaffDto {
   @IsString({ message: 'userId doit être une chaîne' })

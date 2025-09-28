@@ -6,8 +6,7 @@ import * as ejs from 'ejs';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
-import { User } from 'src/entities';
-import { Utils } from 'src/utils/utils';
+import { Utils } from '../../utils/utils';
 import { UserService } from '../user/user.service';
 import { UserResponseDto } from '../user/dto/user.dto';
 

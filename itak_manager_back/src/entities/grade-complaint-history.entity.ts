@@ -15,12 +15,11 @@ export class GradeComplaintHistory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'complaint_id', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   complaintId: string;
 
   @Column({
-    name: 'old_score',
     type: 'decimal',
     precision: 5,
     scale: 2,
@@ -29,7 +28,6 @@ export class GradeComplaintHistory {
   oldScore: number;
 
   @Column({
-    name: 'new_score',
     type: 'decimal',
     precision: 5,
     scale: 2,
@@ -37,11 +35,11 @@ export class GradeComplaintHistory {
   })
   newScore: number;
 
-  @Column({ name: 'changed_by', type: 'uuid' })
+  @Column({ type: 'uuid' })
   @Index()
   changedBy: string;
 
-  @CreateDateColumn({ name: 'changed_at' })
+  @CreateDateColumn()
   changedAt: Date;
 
   @Column({ type: 'text', nullable: true })

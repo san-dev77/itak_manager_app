@@ -6,7 +6,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Subject } from '../../entities/subject.entity';
-import { ClassCategory } from '../../entities/class-category.entity';
 import {
   CreateSubjectDto,
   UpdateSubjectDto,
@@ -18,23 +17,12 @@ export class SubjectService {
   constructor(
     @InjectRepository(Subject)
     private readonly subjectRepository: Repository<Subject>,
-    @InjectRepository(ClassCategory)
-    private readonly classCategoryRepository: Repository<ClassCategory>,
   ) {}
 
   async createSubject(
     createSubjectDto: CreateSubjectDto,
   ): Promise<SubjectResponseDto> {
     try {
-      // Vérifier si la catégorie existe
-      const category = await this.classCategoryRepository.findOne({
-        where: { id: createSubjectDto.categoryId },
-      });
-
-      if (!category) {
-        throw new NotFoundException('Catégorie non trouvée');
-      }
-
       // Vérifier si le code existe déjà
       const existingSubject = await this.subjectRepository.findOne({
         where: { code: createSubjectDto.code },
@@ -73,7 +61,6 @@ export class SubjectService {
   async getAllSubjects(): Promise<SubjectResponseDto[]> {
     try {
       const subjects = await this.subjectRepository.find({
-        relations: ['category'],
         order: { createdAt: 'DESC' },
       });
 
@@ -91,7 +78,6 @@ export class SubjectService {
     try {
       const subject = await this.subjectRepository.findOne({
         where: { id },
-        relations: ['category'],
       });
 
       if (!subject) {
@@ -115,7 +101,6 @@ export class SubjectService {
     try {
       const subject = await this.subjectRepository.findOne({
         where: { code },
-        relations: ['category'],
       });
 
       if (!subject) {
@@ -139,7 +124,6 @@ export class SubjectService {
     try {
       const subjects = await this.subjectRepository.find({
         where: { name: name },
-        relations: ['category'],
         order: { name: 'ASC' },
       });
 
@@ -160,17 +144,6 @@ export class SubjectService {
     try {
       // Vérifier que la matière existe
       await this.getSubjectById(id);
-
-      // Si la catégorie est modifiée, vérifier qu'elle existe
-      if (updateSubjectDto.categoryId) {
-        const category = await this.classCategoryRepository.findOne({
-          where: { id: updateSubjectDto.categoryId },
-        });
-
-        if (!category) {
-          throw new NotFoundException('Catégorie non trouvée');
-        }
-      }
 
       // Si le code est modifié, vérifier qu'il n'existe pas déjà
       if (updateSubjectDto.code) {
@@ -198,7 +171,6 @@ export class SubjectService {
 
       const updatedSubject = await this.subjectRepository.findOne({
         where: { id },
-        relations: ['category'],
       });
 
       if (!updatedSubject) {

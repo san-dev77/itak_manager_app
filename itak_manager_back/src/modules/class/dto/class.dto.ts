@@ -7,9 +7,9 @@ import {
   IsInt,
   Min,
 } from 'class-validator';
-import { ClassCategoryResponseDto } from 'src/modules/class-category/dto/class-category.dto';
-import { ClassSubjectResponseDto } from 'src/modules/class-subject/dto/class-subject.dto';
-import { StudentClassResponseDto } from 'src/modules/student-class/dto/student-class.dto';
+import { ClassCategoryResponseDto } from '../../class-category/dto/class-category.dto';
+import { ClassSubjectResponseDto } from '../../class-subject/dto/class-subject.dto';
+import { StudentClassResponseDto } from '../../student-class/dto/student-class.dto';
 
 export class CreateClassDto {
   @IsString({ message: 'Le nom de la classe doit être une chaîne' })

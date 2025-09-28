@@ -6,7 +6,7 @@ import {
   IsBoolean,
   IsDateString,
 } from 'class-validator';
-import { UserRole } from 'src/entities';
+import { UserRole } from '../../../entities/user.entity';
 
 export class CreateUserDto {
   @IsOptional()

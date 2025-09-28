@@ -25,6 +25,16 @@ import { AssessmentAttendanceModule } from './modules/assessment-attendance/asse
 import { GradeCalculationModule } from './modules/grade-calculation/grade-calculation.module';
 import { AssessmentVersionModule } from './modules/assessment-version/assessment-version.module';
 import { GradeFreezeModule } from './modules/grade-freeze/grade-freeze.module';
+import { FeeTypeModule } from './modules/fee-type/fee-type.module';
+import { StudentFeeModule } from './modules/student-fee/student-fee.module';
+import { PaymentModule } from './modules/payment/payment.module';
+import { RefundModule } from './modules/refund/refund.module';
+import { DiscountModule } from './modules/discount/discount.module';
+import { InvoiceModule } from './modules/invoice/invoice.module';
+import { InvoiceItemModule } from './modules/invoice-item/invoice-item.module';
+import { TimetableModule } from './modules/timetable/timetable.module';
+import { EventModule } from './modules/event/event.module';
+import { EventParticipantModule } from './modules/event-participant/event-participant.module';
 
 @Module({
   imports: [
@@ -55,6 +65,16 @@ import { GradeFreezeModule } from './modules/grade-freeze/grade-freeze.module';
     GradeCalculationModule,
     AssessmentVersionModule,
     GradeFreezeModule,
+    FeeTypeModule,
+    StudentFeeModule,
+    PaymentModule,
+    RefundModule,
+    DiscountModule,
+    InvoiceModule,
+    InvoiceItemModule,
+    TimetableModule,
+    EventModule,
+    EventParticipantModule,
   ],
   controllers: [AppController],
   providers: [AppService],

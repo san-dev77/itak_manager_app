@@ -6,7 +6,7 @@ import {
   IsDateString,
   MinLength,
 } from 'class-validator';
-import { UserResponseDto } from 'src/modules/user/dto/user.dto';
+import { UserResponseDto } from '../../user/dto/user.dto';
 
 export class CreateStudentDto {
   @IsUUID('4', { message: 'userId doit être un UUID valide' })

@@ -37,6 +37,16 @@ const assessment_attendance_module_1 = require("./modules/assessment-attendance/
 const grade_calculation_module_1 = require("./modules/grade-calculation/grade-calculation.module");
 const assessment_version_module_1 = require("./modules/assessment-version/assessment-version.module");
 const grade_freeze_module_1 = require("./modules/grade-freeze/grade-freeze.module");
+const fee_type_module_1 = require("./modules/fee-type/fee-type.module");
+const student_fee_module_1 = require("./modules/student-fee/student-fee.module");
+const payment_module_1 = require("./modules/payment/payment.module");
+const refund_module_1 = require("./modules/refund/refund.module");
+const discount_module_1 = require("./modules/discount/discount.module");
+const invoice_module_1 = require("./modules/invoice/invoice.module");
+const invoice_item_module_1 = require("./modules/invoice-item/invoice-item.module");
+const timetable_module_1 = require("./modules/timetable/timetable.module");
+const event_module_1 = require("./modules/event/event.module");
+const event_participant_module_1 = require("./modules/event-participant/event-participant.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -70,6 +80,16 @@ exports.AppModule = AppModule = __decorate([
             grade_calculation_module_1.GradeCalculationModule,
             assessment_version_module_1.AssessmentVersionModule,
             grade_freeze_module_1.GradeFreezeModule,
+            fee_type_module_1.FeeTypeModule,
+            student_fee_module_1.StudentFeeModule,
+            payment_module_1.PaymentModule,
+            refund_module_1.RefundModule,
+            discount_module_1.DiscountModule,
+            invoice_module_1.InvoiceModule,
+            invoice_item_module_1.InvoiceItemModule,
+            timetable_module_1.TimetableModule,
+            event_module_1.EventModule,
+            event_participant_module_1.EventParticipantModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
