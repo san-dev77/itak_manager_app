@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class CreateInitialSchema1759017642796 implements MigrationInterface {
-    name = 'CreateInitialSchema1759017642796'
+export class CreateInitialSchema1759023035441 implements MigrationInterface {
+    name = 'CreateInitialSchema1759023035441'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "school_years" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(20) NOT NULL, "start_date" date NOT NULL, "end_date" date NOT NULL, "is_active" boolean NOT NULL DEFAULT false, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_687611dadc1a5966e0365e4f492" UNIQUE ("name"), CONSTRAINT "PK_3fe99d570a61178cb99065783cf" PRIMARY KEY ("id"))`);
@@ -156,6 +156,35 @@ export class CreateInitialSchema1759017642796 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_a34d3bba841b20d7eded27dd88" ON "grade_freeze_periods" ("end_date") `);
         await queryRunner.query(`CREATE INDEX "IDX_b5bdacce0ad3e8beb4b9b7b688" ON "grade_freeze_periods" ("status", "scope") `);
         await queryRunner.query(`CREATE INDEX "IDX_4fa390b8f47deea93efa22a435" ON "grade_freeze_periods" ("school_year_id", "start_date", "end_date") `);
+        await queryRunner.query(`CREATE TYPE "public"."timetables_day_of_week_enum" AS ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday')`);
+        await queryRunner.query(`CREATE TABLE "timetables" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "class_id" uuid NOT NULL, "teacher_id" uuid NOT NULL, "subject_id" uuid NOT NULL, "academic_year_id" uuid NOT NULL, "day_of_week" "public"."timetables_day_of_week_enum" NOT NULL, "start_time" TIME NOT NULL, "end_time" TIME NOT NULL, "room" character varying(50), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_9dd7e50645bff59e9ac5b4725c0" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_54d3ddcc757a7639a1ca4ea159" ON "timetables" ("class_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_82b11ba087125514207fa541c3" ON "timetables" ("teacher_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_6f592a24e991c80fabe3f3b844" ON "timetables" ("subject_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_bc47153018268d8a0903fc3f05" ON "timetables" ("academic_year_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_54e3a5ad25a60e1dd7ca8f0991" ON "timetables" ("day_of_week") `);
+        await queryRunner.query(`CREATE INDEX "IDX_d9b15cab5293a8ef52771c3a40" ON "timetables" ("teacher_id", "academic_year_id", "day_of_week", "start_time") `);
+        await queryRunner.query(`CREATE INDEX "IDX_9dacd47ded63b88095e262feec" ON "timetables" ("class_id", "teacher_id", "academic_year_id", "day_of_week", "start_time") `);
+        await queryRunner.query(`CREATE TYPE "public"."events_event_type_enum" AS ENUM('exam', 'homework', 'cultural_day', 'health_day', 'ball', 'other')`);
+        await queryRunner.query(`CREATE TABLE "events" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "title" character varying(100) NOT NULL, "description" text, "event_type" "public"."events_event_type_enum" NOT NULL, "start_date" date NOT NULL, "end_date" date, "all_day" boolean NOT NULL DEFAULT true, "class_id" uuid, "created_by" uuid NOT NULL, "academic_year_id" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_40731c7151fe4be3116e45ddf73" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_2411ea245f7bb91d20d940793f" ON "events" ("event_type") `);
+        await queryRunner.query(`CREATE INDEX "IDX_ce5225c17497c5adddc1819c69" ON "events" ("start_date") `);
+        await queryRunner.query(`CREATE INDEX "IDX_fa8af7a830b5923f72cb6cd64c" ON "events" ("class_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_1a259861a2ce114f074b366eed" ON "events" ("created_by") `);
+        await queryRunner.query(`CREATE INDEX "IDX_778965e321e262f254d5f93366" ON "events" ("academic_year_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_8b64033006237a624458e5123a" ON "events" ("academic_year_id", "start_date") `);
+        await queryRunner.query(`CREATE INDEX "IDX_2779d8be750d7cec26b119ea80" ON "events" ("class_id", "start_date") `);
+        await queryRunner.query(`CREATE INDEX "IDX_025ced9578ae03010d9f514d0a" ON "events" ("start_date", "event_type") `);
+        await queryRunner.query(`CREATE TYPE "public"."event_participants_role_enum" AS ENUM('student', 'teacher', 'staff', 'other')`);
+        await queryRunner.query(`CREATE TYPE "public"."event_participants_status_enum" AS ENUM('invited', 'confirmed', 'declined', 'absent')`);
+        await queryRunner.query(`CREATE TABLE "event_participants" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "event_id" uuid NOT NULL, "user_id" uuid NOT NULL, "role" "public"."event_participants_role_enum" NOT NULL, "status" "public"."event_participants_status_enum" NOT NULL DEFAULT 'invited', CONSTRAINT "PK_b65ffd558d76fd51baffe81d42b" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_b5349807aae71193d0cc0f52e3" ON "event_participants" ("event_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_ce3f433e47fdd8f072964293c8" ON "event_participants" ("user_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_2571db93a0db49ff99d74209c5" ON "event_participants" ("role") `);
+        await queryRunner.query(`CREATE INDEX "IDX_bd617cd8b316446a126b3bf4bd" ON "event_participants" ("status") `);
+        await queryRunner.query(`CREATE INDEX "IDX_8d7506ab698a814d61dfe76deb" ON "event_participants" ("event_id", "status") `);
+        await queryRunner.query(`CREATE INDEX "IDX_3b07adacd173ba71adf8f298f2" ON "event_participants" ("event_id", "role") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_badb99ed7e07532bba1315a8af" ON "event_participants" ("event_id", "user_id") `);
         await queryRunner.query(`CREATE TABLE "teacher_subjects" ("teacher_id" uuid NOT NULL, "subject_id" uuid NOT NULL, CONSTRAINT "PK_9e05964fe6f2598b643470c2067" PRIMARY KEY ("teacher_id", "subject_id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_6675136306b9111126bbdbbaba" ON "teacher_subjects" ("teacher_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_f35ef96bfb3a84b712722d6db7" ON "teacher_subjects" ("subject_id") `);
@@ -212,6 +241,15 @@ export class CreateInitialSchema1759017642796 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "grade_freeze_periods" ADD CONSTRAINT "FK_ddb8531408608c26e263858709e" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "grade_freeze_periods" ADD CONSTRAINT "FK_b64079f1886e71d88e9c85a0fbb" FOREIGN KEY ("approved_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "grade_freeze_periods" ADD CONSTRAINT "FK_d34d445832013a2e0451e313b44" FOREIGN KEY ("cancelled_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "timetables" ADD CONSTRAINT "FK_54d3ddcc757a7639a1ca4ea159c" FOREIGN KEY ("class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "timetables" ADD CONSTRAINT "FK_82b11ba087125514207fa541c3c" FOREIGN KEY ("teacher_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "timetables" ADD CONSTRAINT "FK_6f592a24e991c80fabe3f3b8447" FOREIGN KEY ("subject_id") REFERENCES "subjects"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "timetables" ADD CONSTRAINT "FK_bc47153018268d8a0903fc3f050" FOREIGN KEY ("academic_year_id") REFERENCES "school_years"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "events" ADD CONSTRAINT "FK_fa8af7a830b5923f72cb6cd64c3" FOREIGN KEY ("class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "events" ADD CONSTRAINT "FK_1a259861a2ce114f074b366eed2" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "events" ADD CONSTRAINT "FK_778965e321e262f254d5f933663" FOREIGN KEY ("academic_year_id") REFERENCES "school_years"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "event_participants" ADD CONSTRAINT "FK_b5349807aae71193d0cc0f52e35" FOREIGN KEY ("event_id") REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "event_participants" ADD CONSTRAINT "FK_ce3f433e47fdd8f072964293c8d" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "teacher_subjects" ADD CONSTRAINT "FK_6675136306b9111126bbdbbaba7" FOREIGN KEY ("teacher_id") REFERENCES "teachers"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "teacher_subjects" ADD CONSTRAINT "FK_f35ef96bfb3a84b712722d6db70" FOREIGN KEY ("subject_id") REFERENCES "subjects"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
@@ -219,6 +257,15 @@ export class CreateInitialSchema1759017642796 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "teacher_subjects" DROP CONSTRAINT "FK_f35ef96bfb3a84b712722d6db70"`);
         await queryRunner.query(`ALTER TABLE "teacher_subjects" DROP CONSTRAINT "FK_6675136306b9111126bbdbbaba7"`);
+        await queryRunner.query(`ALTER TABLE "event_participants" DROP CONSTRAINT "FK_ce3f433e47fdd8f072964293c8d"`);
+        await queryRunner.query(`ALTER TABLE "event_participants" DROP CONSTRAINT "FK_b5349807aae71193d0cc0f52e35"`);
+        await queryRunner.query(`ALTER TABLE "events" DROP CONSTRAINT "FK_778965e321e262f254d5f933663"`);
+        await queryRunner.query(`ALTER TABLE "events" DROP CONSTRAINT "FK_1a259861a2ce114f074b366eed2"`);
+        await queryRunner.query(`ALTER TABLE "events" DROP CONSTRAINT "FK_fa8af7a830b5923f72cb6cd64c3"`);
+        await queryRunner.query(`ALTER TABLE "timetables" DROP CONSTRAINT "FK_bc47153018268d8a0903fc3f050"`);
+        await queryRunner.query(`ALTER TABLE "timetables" DROP CONSTRAINT "FK_6f592a24e991c80fabe3f3b8447"`);
+        await queryRunner.query(`ALTER TABLE "timetables" DROP CONSTRAINT "FK_82b11ba087125514207fa541c3c"`);
+        await queryRunner.query(`ALTER TABLE "timetables" DROP CONSTRAINT "FK_54d3ddcc757a7639a1ca4ea159c"`);
         await queryRunner.query(`ALTER TABLE "grade_freeze_periods" DROP CONSTRAINT "FK_d34d445832013a2e0451e313b44"`);
         await queryRunner.query(`ALTER TABLE "grade_freeze_periods" DROP CONSTRAINT "FK_b64079f1886e71d88e9c85a0fbb"`);
         await queryRunner.query(`ALTER TABLE "grade_freeze_periods" DROP CONSTRAINT "FK_ddb8531408608c26e263858709e"`);
@@ -275,6 +322,35 @@ export class CreateInitialSchema1759017642796 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."IDX_f35ef96bfb3a84b712722d6db7"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_6675136306b9111126bbdbbaba"`);
         await queryRunner.query(`DROP TABLE "teacher_subjects"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_badb99ed7e07532bba1315a8af"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_3b07adacd173ba71adf8f298f2"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_8d7506ab698a814d61dfe76deb"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_bd617cd8b316446a126b3bf4bd"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_2571db93a0db49ff99d74209c5"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_ce3f433e47fdd8f072964293c8"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_b5349807aae71193d0cc0f52e3"`);
+        await queryRunner.query(`DROP TABLE "event_participants"`);
+        await queryRunner.query(`DROP TYPE "public"."event_participants_status_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."event_participants_role_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_025ced9578ae03010d9f514d0a"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_2779d8be750d7cec26b119ea80"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_8b64033006237a624458e5123a"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_778965e321e262f254d5f93366"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_1a259861a2ce114f074b366eed"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_fa8af7a830b5923f72cb6cd64c"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_ce5225c17497c5adddc1819c69"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_2411ea245f7bb91d20d940793f"`);
+        await queryRunner.query(`DROP TABLE "events"`);
+        await queryRunner.query(`DROP TYPE "public"."events_event_type_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_9dacd47ded63b88095e262feec"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_d9b15cab5293a8ef52771c3a40"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_54e3a5ad25a60e1dd7ca8f0991"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_bc47153018268d8a0903fc3f05"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_6f592a24e991c80fabe3f3b844"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_82b11ba087125514207fa541c3"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_54d3ddcc757a7639a1ca4ea159"`);
+        await queryRunner.query(`DROP TABLE "timetables"`);
+        await queryRunner.query(`DROP TYPE "public"."timetables_day_of_week_enum"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_4fa390b8f47deea93efa22a435"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_b5bdacce0ad3e8beb4b9b7b688"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_a34d3bba841b20d7eded27dd88"`);
