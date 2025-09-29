@@ -12,12 +12,14 @@ interface StudentDataTableProps {
   onEditProfile: (student: StudentWithUser) => void;
   refreshTrigger?: number; // Pour forcer le rechargement
   users?: User[]; // Liste des utilisateurs à afficher
+  isProfileTypeCompatible?: (userRole: string, profileType: string) => boolean;
 }
 
 const StudentDataTable = ({
   onEditProfile,
   refreshTrigger,
   users = [],
+  isProfileTypeCompatible,
 }: StudentDataTableProps) => {
   const [students, setStudents] = useState<StudentWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,8 +35,12 @@ const StudentDataTable = ({
       const existingProfiles =
         response.success && response.data ? response.data : [];
 
-      // Filtrer les utilisateurs avec le rôle "student"
-      const studentUsers = users.filter((user) => user.role === "student");
+      // Inclure tous les utilisateurs qui ont des profils étudiants OU qui ont le rôle "student"
+      const studentUsers = users.filter(
+        (user) =>
+          user.role === "student" ||
+          existingProfiles.some((profile) => profile.userId === user.id)
+      );
 
       // Combiner les utilisateurs avec leurs profils (s'ils existent)
       const combinedStudents: StudentWithUser[] = studentUsers.map((user) => {
@@ -273,7 +279,19 @@ const StudentDataTable = ({
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
                     <button
-                      onClick={() => onEditProfile(student)}
+                      onClick={() => {
+                        // Vérifier la compatibilité du rôle avant d'ouvrir le profil
+                        if (
+                          isProfileTypeCompatible &&
+                          !isProfileTypeCompatible(student.user.role, "student")
+                        ) {
+                          alert(
+                            `Erreur: Un utilisateur avec le rôle "${student.user.role}" ne peut pas avoir un profil étudiant.`
+                          );
+                          return;
+                        }
+                        onEditProfile(student);
+                      }}
                       className={`p-2 rounded-lg transition-colors ${
                         student.id === "0"
                           ? "text-white bg-red-600 hover:bg-red-700"

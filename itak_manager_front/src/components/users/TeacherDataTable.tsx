@@ -12,12 +12,14 @@ interface TeacherDataTableProps {
   onEditProfile: (teacher: TeacherWithUser) => void;
   refreshTrigger?: number;
   users?: User[];
+  isProfileTypeCompatible?: (userRole: string, profileType: string) => boolean;
 }
 
 const TeacherDataTable = ({
   onEditProfile,
   refreshTrigger,
   users = [],
+  isProfileTypeCompatible,
 }: TeacherDataTableProps) => {
   const [teachers, setTeachers] = useState<TeacherWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,8 +37,12 @@ const TeacherDataTable = ({
         response.success && response.data ? response.data : [];
       console.log("📋 Profils enseignants existants:", existingProfiles);
 
-      // Filtrer les utilisateurs avec le rôle "teacher"
-      const teacherUsers = users.filter((user) => user.role === "teacher");
+      // Inclure tous les utilisateurs qui ont des profils enseignants OU qui ont le rôle "teacher"
+      const teacherUsers = users.filter(
+        (user) =>
+          user.role === "teacher" ||
+          existingProfiles.some((profile) => profile.user.id === user.id)
+      );
 
       // Combiner les utilisateurs avec leurs profils (s'ils existent)
       const combinedTeachers: TeacherWithUser[] = teacherUsers.map((user) => {
@@ -278,7 +284,19 @@ const TeacherDataTable = ({
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
                     <button
-                      onClick={() => onEditProfile(teacher)}
+                      onClick={() => {
+                        // Vérifier la compatibilité du rôle avant d'ouvrir le profil
+                        if (
+                          isProfileTypeCompatible &&
+                          !isProfileTypeCompatible(teacher.user.role, "teacher")
+                        ) {
+                          alert(
+                            `Erreur: Un utilisateur avec le rôle "${teacher.user.role}" ne peut pas avoir un profil enseignant.`
+                          );
+                          return;
+                        }
+                        onEditProfile(teacher);
+                      }}
                       className={`p-2 rounded-lg transition-colors ${
                         teacher.id === "0"
                           ? "text-white bg-red-600 hover:bg-red-700"

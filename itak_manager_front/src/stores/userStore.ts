@@ -61,10 +61,10 @@ export const useUserStore = create<UserState>()(
       },
 
       filterUsers: () => {
-        const { users, searchTerm, selectedRole } = get();
+        const { users, searchTerm } = get();
         let filtered = users;
 
-        // Filter by search term
+        // Filter by search term only (role filtering is now handled by individual table components)
         if (searchTerm) {
           filtered = filtered.filter(
             (user) =>
@@ -75,11 +75,6 @@ export const useUserStore = create<UserState>()(
               user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
               user.username.toLowerCase().includes(searchTerm.toLowerCase())
           );
-        }
-
-        // Filter by role
-        if (selectedRole !== "all") {
-          filtered = filtered.filter((user) => user.role === selectedRole);
         }
 
         set({ filteredUsers: filtered });

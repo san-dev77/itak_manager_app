@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = "http://localhost:3000";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -179,43 +179,48 @@ interface StaffWithUser {
 }
 
 interface ClassCategory {
-  id: number;
+  id: string;
   name: string;
   description?: string;
-  created_at: string;
+  createdAt: string;
 }
 
 interface ClassData {
   name: string;
+  code: string;
+  classCategoryId: string;
+  description?: string;
   level: string;
   capacity: number;
-  categorieId: number | null;
+  orderLevel: number;
+  category?: ClassCategory;
+  categoryId?: string;
 }
 
 interface Class {
   id: number;
   name: string;
+  code: string;
+  classCategoryId: string;
+  description?: string;
   level: string;
   capacity: number;
-  categorieId: number;
+  orderLevel: number;
   category: ClassCategory;
-  created_at: string;
+  createdAt: string;
 }
 
 interface SubjectData {
   name: string;
   code: string;
-  categorieId: number | null;
 }
 
 interface Subject {
   id: number;
   name: string;
   code: string;
-  categorieId: number | null;
-  category?: ClassCategory;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Nouvelles interfaces pour les affectations de configuration
@@ -365,7 +370,7 @@ class ApiService {
   // Méthode pour créer un nouvel utilisateur
   async createUser(userData: UserRegistrationData): Promise<ApiResponse<User>> {
     console.log(userData);
-    return this.makeRequest<User>("/users", {
+    return this.makeRequest<User>("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
     });
@@ -605,7 +610,7 @@ class ApiService {
     classSubjectData: ClassSubjectData
   ): Promise<ApiResponse<ClassSubject>> {
     console.log(classSubjectData);
-    return this.makeRequest<ClassSubject>("/config/class-subjects", {
+    return this.makeRequest<ClassSubject>("/class-subjects", {
       method: "POST",
       body: JSON.stringify(classSubjectData),
     });
@@ -613,7 +618,7 @@ class ApiService {
 
   // Méthode pour récupérer toutes les affectations de matières
   async getAllClassSubjects(): Promise<ApiResponse<ClassSubject[]>> {
-    return this.makeRequest<ClassSubject[]>("/config/class-subjects");
+    return this.makeRequest<ClassSubject[]>("/class-subjects");
   }
 
   // Méthode pour créer une affectation d'étudiant à une classe

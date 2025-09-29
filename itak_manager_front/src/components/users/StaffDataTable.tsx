@@ -8,12 +8,14 @@ interface StaffDataTableProps {
   onEditProfile: (staff: StaffWithUser) => void;
   refreshTrigger?: number;
   users?: User[];
+  isProfileTypeCompatible?: (userRole: string, profileType: string) => boolean;
 }
 
 const StaffDataTable = ({
   onEditProfile,
   refreshTrigger,
   users = [],
+  isProfileTypeCompatible,
 }: StaffDataTableProps) => {
   const [staffMembers, setStaffMembers] = useState<StaffWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,8 +31,13 @@ const StaffDataTable = ({
       const existingProfiles =
         response.success && response.data ? response.data : [];
 
-      // Filtrer les utilisateurs avec le rôle "staff"
-      const staffUsers = users.filter((user) => user.role === "staff");
+      // Inclure tous les utilisateurs qui ont des profils staff OU qui ont le rôle "staff" ou "teacher"
+      const staffUsers = users.filter(
+        (user) =>
+          user.role === "staff" ||
+          user.role === "teacher" ||
+          existingProfiles.some((profile) => profile.userId === user.id)
+      );
 
       // Combiner les utilisateurs avec leurs profils (s'ils existent)
       const combinedStaff: StaffWithUser[] = staffUsers.map((user) => {
@@ -199,14 +206,14 @@ const StaffDataTable = ({
               <tr
                 key={staff.id}
                 className={`hover:bg-blue-50 transition-colors ${
-                  staff.id === 0 ? "bg-red-50" : ""
+                  staff.id === "0" ? "bg-red-50" : ""
                 }`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium ${
-                        staff.id === 0
+                        staff.id === "0"
                           ? "bg-gradient-to-br from-red-500 to-red-600"
                           : "bg-gradient-to-br from-purple-500 to-purple-600"
                       }`}
@@ -235,8 +242,8 @@ const StaffDataTable = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-blue-900">
-                    {staff.hire_date
-                      ? new Date(staff.hire_date).toLocaleDateString("fr-FR")
+                    {staff.hireDate
+                      ? new Date(staff.hireDate).toLocaleDateString("fr-FR")
                       : "—"}
                   </div>
                 </td>
@@ -258,16 +265,28 @@ const StaffDataTable = ({
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
                     <button
-                      onClick={() => onEditProfile(staff)}
+                      onClick={() => {
+                        // Vérifier la compatibilité du rôle avant d'ouvrir le profil
+                        if (
+                          isProfileTypeCompatible &&
+                          !isProfileTypeCompatible(staff.user.role, "staff")
+                        ) {
+                          alert(
+                            `Erreur: Un utilisateur avec le rôle "${staff.user.role}" ne peut pas avoir un profil de personnel.`
+                          );
+                          return;
+                        }
+                        onEditProfile(staff);
+                      }}
                       className={`p-2 rounded-lg transition-colors ${
-                        staff.id === 0
+                        staff.id === "0"
                           ? "text-white bg-red-600 hover:bg-red-700"
                           : isProfileComplete(staff)
                           ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                           : "text-red-600 hover:text-red-700 hover:bg-red-50"
                       }`}
                       title={
-                        staff.id === 0
+                        staff.id === "0"
                           ? "Créer le profil"
                           : isProfileComplete(staff)
                           ? "Modifier le profil"

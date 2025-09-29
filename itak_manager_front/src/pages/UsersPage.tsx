@@ -41,6 +41,16 @@ const UsersPage = () => {
   >("student");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // États pour les compteurs et profils
+  const [userCounts, setUserCounts] = useState({
+    all: 0,
+    students: 0,
+    teachers: 0,
+    staff: 0,
+    parents: 0,
+    admins: 0,
+  });
+
   // Zustand store
   const {
     filteredUsers,
@@ -52,7 +62,6 @@ const UsersPage = () => {
     setSearchTerm,
     setSelectedRole,
     addUser,
-    getUserCounts,
   } = useUserStore();
 
   // Utiliser le hook pour les effets
@@ -76,6 +85,70 @@ const UsersPage = () => {
     },
     []
   );
+
+  // Fonction utilitaire pour vérifier la compatibilité rôle/profil
+  const isProfileTypeCompatible = (
+    userRole: string,
+    profileType: string
+  ): boolean => {
+    switch (profileType) {
+      case "student":
+        return userRole === "student";
+      case "teacher":
+        return userRole === "teacher";
+      case "staff":
+        return userRole === "teacher" || userRole === "staff";
+      default:
+        return false;
+    }
+  };
+
+  // Fonction pour calculer les compteurs en tenant compte des profils
+  const calculateUserCounts = useCallback(async () => {
+    try {
+      // Récupérer tous les profils
+      const [studentsRes, teachersRes, staffRes] = await Promise.all([
+        apiService.getAllStudents(),
+        apiService.getAllTeachers(),
+        apiService.getAllStaff(),
+      ]);
+
+      const studentProfilesData = studentsRes.success
+        ? studentsRes.data || []
+        : [];
+      const teacherProfilesData = teachersRes.success
+        ? teachersRes.data || []
+        : [];
+      const staffProfilesData = staffRes.success ? staffRes.data || [] : [];
+
+      // Calculer les compteurs
+      const counts = {
+        all: filteredUsers.length,
+        students: filteredUsers.filter(
+          (user) =>
+            user.role === "student" ||
+            studentProfilesData.some((profile) => profile.userId === user.id)
+        ).length,
+        teachers: filteredUsers.filter(
+          (user) =>
+            user.role === "teacher" ||
+            teacherProfilesData.some((profile) => profile.user.id === user.id)
+        ).length,
+        staff: filteredUsers.filter(
+          (user) =>
+            user.role === "staff" ||
+            user.role === "teacher" ||
+            staffProfilesData.some((profile) => profile.userId === user.id)
+        ).length,
+        parents: filteredUsers.filter((user) => user.role === "parent").length,
+        admins: filteredUsers.filter((user) => user.role === "admin").length,
+      };
+
+      setUserCounts(counts);
+    } catch (error) {
+      console.error("Erreur lors du calcul des compteurs:", error);
+    }
+  }, [filteredUsers]);
 
   const hideNotification = () => {
     setNotification((prev) => ({ ...prev, isVisible: false }));
@@ -140,6 +213,20 @@ const UsersPage = () => {
     }
   }, [navigate, fetchUsers]);
 
+  // Calculer les compteurs quand les utilisateurs filtrés changent
+  useEffect(() => {
+    if (filteredUsers.length > 0) {
+      calculateUserCounts();
+    }
+  }, [filteredUsers.length, calculateUserCounts]);
+
+  // Recalculer les compteurs quand le refreshTrigger change
+  useEffect(() => {
+    if (filteredUsers.length > 0) {
+      calculateUserCounts();
+    }
+  }, [refreshTrigger, filteredUsers.length, calculateUserCounts]);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -185,6 +272,37 @@ const UsersPage = () => {
     profileData: Record<string, unknown>
   ) => {
     try {
+      // Validation du rôle avant la création du profil
+      if (selectedProfileType === "student" && user.role !== "student") {
+        showNotification(
+          "error",
+          "Erreur de rôle",
+          "Seuls les utilisateurs avec le rôle 'étudiant' peuvent avoir un profil étudiant"
+        );
+        return;
+      }
+
+      if (selectedProfileType === "teacher" && user.role !== "teacher") {
+        showNotification(
+          "error",
+          "Erreur de rôle",
+          "Seuls les utilisateurs avec le rôle 'enseignant' peuvent avoir un profil enseignant"
+        );
+        return;
+      }
+
+      if (
+        selectedProfileType === "staff" &&
+        !["teacher", "staff"].includes(user.role)
+      ) {
+        showNotification(
+          "error",
+          "Erreur de rôle",
+          "Seuls les utilisateurs avec le rôle 'enseignant' ou 'personnel' peuvent avoir un profil personnel"
+        );
+        return;
+      }
+
       if (
         selectedProfileType === "student" &&
         "enrollmentDate" in profileData
@@ -496,7 +614,7 @@ const UsersPage = () => {
           <UserTabs
             activeTab={selectedRole}
             onTabChange={setSelectedRole}
-            userCounts={getUserCounts()}
+            userCounts={userCounts}
             onAssignProfile={handleAssignProfile}
           />
         </motion.div>
@@ -550,18 +668,21 @@ const UsersPage = () => {
             onEditProfile={handleEditStudentProfile}
             refreshTrigger={refreshTrigger}
             users={filteredUsers}
+            isProfileTypeCompatible={isProfileTypeCompatible}
           />
         ) : selectedRole === "teacher" ? (
           <TeacherDataTable
             onEditProfile={handleEditTeacherProfile}
             refreshTrigger={refreshTrigger}
             users={filteredUsers}
+            isProfileTypeCompatible={isProfileTypeCompatible}
           />
         ) : selectedRole === "staff" ? (
           <StaffDataTable
             onEditProfile={handleEditStaffProfile}
             refreshTrigger={refreshTrigger}
             users={filteredUsers}
+            isProfileTypeCompatible={isProfileTypeCompatible}
           />
         ) : (
           <motion.div

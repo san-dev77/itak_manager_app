@@ -63,15 +63,17 @@ const ClassesSubjectsPage = () => {
   // États pour les formulaires
   const [classForm, setClassForm] = useState<ClassData>({
     name: "",
+    code: "",
+    classCategoryId: "",
+    description: "",
     level: "",
     capacity: 0,
-    categorie_id: null,
+    orderLevel: 1,
   });
 
   const [subjectForm, setSubjectForm] = useState<SubjectData>({
     name: "",
     code: "",
-    categorie_id: null,
   });
 
   // États pour la recherche
@@ -107,6 +109,8 @@ const ClassesSubjectsPage = () => {
           apiService.getAllClassCategories(),
         ]);
 
+      console.log("data", classesResponse.data);
+
       if (classesResponse.success && classesResponse.data) {
         setClasses(classesResponse.data);
       }
@@ -141,7 +145,7 @@ const ClassesSubjectsPage = () => {
     e.preventDefault();
 
     // Validation de la catégorie
-    if (!classForm.categorie_id) {
+    if (!classForm.classCategoryId) {
       showNotificationMessage("Veuillez sélectionner une catégorie", "error");
       return;
     }
@@ -173,7 +177,7 @@ const ClassesSubjectsPage = () => {
     if (!editingClass) return;
 
     // Validation de la catégorie
-    if (!classForm.categorie_id) {
+    if (!classForm.classCategoryId) {
       showNotificationMessage("Veuillez sélectionner une catégorie", "error");
       return;
     }
@@ -182,7 +186,7 @@ const ClassesSubjectsPage = () => {
       const response = await apiService.updateClass(editingClass.id, classForm);
       if (response.success && response.data) {
         setClasses(
-          classes.map((c) => (c.id === editingClass.id ? response.data : c))
+          classes.map((c) => (c.id === editingClass.id ? response.data! : c))
         );
         setShowClassModal(false);
         setEditingClass(null);
@@ -231,9 +235,12 @@ const ClassesSubjectsPage = () => {
     setEditingClass(classItem);
     setClassForm({
       name: classItem.name,
+      code: classItem.code || "",
+      classCategoryId: classItem.classCategoryId,
+      description: classItem.description || "",
       level: classItem.level,
       capacity: classItem.capacity,
-      categorie_id: classItem.categorie_id,
+      orderLevel: classItem.orderLevel || 1,
     });
     setShowClassModal(true);
     setClassFormStep("details");
@@ -242,9 +249,12 @@ const ClassesSubjectsPage = () => {
   const resetClassForm = () => {
     setClassForm({
       name: "",
+      code: "",
+      classCategoryId: "",
+      description: "",
       level: "",
       capacity: 0,
-      categorie_id: null,
+      orderLevel: 1,
     });
     setEditingClass(null);
     setClassFormStep("category");
@@ -254,13 +264,14 @@ const ClassesSubjectsPage = () => {
   const nextStep = () => {
     if (
       classFormStep === "category" &&
-      classForm.categorie_id !== null &&
-      classForm.categorie_id > 0
+      classForm.classCategoryId !== null &&
+      classForm.classCategoryId !== ""
     ) {
       setClassFormStep("details");
     } else if (
       classFormStep === "details" &&
       classForm.name &&
+      classForm.code &&
       classForm.level &&
       classForm.capacity > 0
     ) {
@@ -278,9 +289,21 @@ const ClassesSubjectsPage = () => {
 
   const canProceed = () => {
     if (classFormStep === "category") {
-      return classForm.categorie_id !== null && classForm.categorie_id > 0;
+      const canProceedCategory =
+        classForm.classCategoryId !== null && classForm.classCategoryId !== "";
+      console.log("🔍 canProceed category check:", {
+        classFormStep,
+        classCategoryId: classForm.classCategoryId,
+        canProceedCategory,
+      });
+      return canProceedCategory;
     } else if (classFormStep === "details") {
-      return !!classForm.name && !!classForm.level && classForm.capacity > 0;
+      return (
+        !!classForm.name &&
+        !!classForm.code &&
+        !!classForm.level &&
+        classForm.capacity > 0
+      );
     }
     return true;
   };
@@ -330,7 +353,7 @@ const ClassesSubjectsPage = () => {
       );
       if (response.success && response.data) {
         setSubjects(
-          subjects.map((s) => (s.id === editingSubject.id ? response.data : s))
+          subjects.map((s) => (s.id === editingSubject.id ? response.data! : s))
         );
         setShowSubjectModal(false);
         setEditingSubject(null);
@@ -380,7 +403,6 @@ const ClassesSubjectsPage = () => {
     setSubjectForm({
       name: subject.name,
       code: subject.code,
-      categorie_id: subject.categorie_id || null,
     });
     setShowSubjectModal(true);
   };
@@ -389,7 +411,6 @@ const ClassesSubjectsPage = () => {
     setSubjectForm({
       name: "",
       code: "",
-      categorie_id: null,
     });
     setEditingSubject(null);
   };
@@ -410,36 +431,45 @@ const ClassesSubjectsPage = () => {
 
   const getLevelLabel = (level: string) => {
     const levels: { [key: string]: string } = {
-      "6eme": "6ème",
-      "5eme": "5ème",
-      "4eme": "4ème",
-      "3eme": "3ème",
-      "2nde": "2nde",
-      "1ere": "1ère",
-      terminale: "Terminale",
+      // Primaire
+      "1ere annee": "1ère Année",
+      "2eme annee": "2ème Année",
+      "3eme annee": "3ème Année",
+      "4eme annee": "4ème Année",
+      "5eme annee": "5ème Année",
+      "6eme annee": "6ème Année",
+      // Collège
+      "7eme annee": "7ème Année",
+      "8eme annee": "8ème Année",
+      "9eme annee": "9ème Année",
+      "10eme annee": "10ème Année",
+      // Lycée
+      seconde: "Seconde (11ème)",
+      premiere: "Première (12ème)",
+      terminale: "Terminale (13ème)",
+      // Enseignement Supérieur
+      bts: "BTS",
+      dut: "DUT",
+      licence1: "Licence 1",
+      licence2: "Licence 2",
+      licence3: "Licence 3",
+      master1: "Master 1",
+      master2: "Master 2",
     };
     return levels[level] || level;
   };
 
   // Fonction pour obtenir la catégorie sélectionnée
   const getSelectedCategory = () => {
-    return classCategories.find((c) => c.id === classForm.categorie_id);
+    return classCategories.find((c) => c.id === classForm.classCategoryId);
   };
 
   // Fonction utilitaire pour obtenir le nom de la catégorie d'une classe
   const getClassName = (classItem: Class) => {
     return (
       classItem.category?.name ||
-      classCategories.find((cat) => cat.id === classItem.categorie_id)?.name ||
-      "Non définie"
-    );
-  };
-
-  // Fonction utilitaire pour obtenir le nom de la catégorie d'une matière
-  const getSubjectCategoryName = (subject: Subject) => {
-    return (
-      subject.category?.name ||
-      classCategories.find((cat) => cat.id === subject.categorie_id)?.name ||
+      classCategories.find((cat) => cat.id === classItem.classCategoryId)
+        ?.name ||
       "Non définie"
     );
   };
@@ -505,25 +535,7 @@ const ClassesSubjectsPage = () => {
                 <p className="text-green-100 text-sm font-medium">Catégories</p>
                 <p className="text-3xl font-bold">{classCategories.length}</p>
               </div>
-              <div className="w-8 h-8 bg-green-200 rounded-lg flex items-center justify-center">
-                <span className="text-green-700 font-bold text-sm">C</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-orange-100 text-sm font-medium">
-                  Matières Catégorisées
-                </p>
-                <p className="text-3xl font-bold">
-                  {subjects.filter((s) => s.categorie_id !== null).length}
-                </p>
-              </div>
-              <div className="w-8 h-8 bg-orange-200 rounded-lg flex items-center justify-center">
-                <span className="text-orange-700 font-bold text-sm">A</span>
-              </div>
+              <div className="w-8 h-8 bg-green-200 rounded-lg flex items-center justify-center"></div>
             </div>
           </div>
         </div>
@@ -542,7 +554,7 @@ const ClassesSubjectsPage = () => {
               >
                 <div className="flex items-center justify-center gap-2">
                   <GraduationCap className="w-5 h-5" />
-                  Classes ({classes.length})
+                  Classes
                 </div>
               </button>
               <button
@@ -555,7 +567,7 @@ const ClassesSubjectsPage = () => {
               >
                 <div className="flex items-center justify-center gap-2">
                   <BookOpen className="w-5 h-5" />
-                  Matières ({subjects.length})
+                  Matières
                 </div>
               </button>
             </nav>
@@ -629,10 +641,7 @@ const ClassesSubjectsPage = () => {
                                     {getLevelLabel(classItem.level)}
                                   </span>
                                   <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
-                                    {classItem.capacity} élèves
-                                  </span>
-                                  <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full font-medium">
-                                    {getClassName(classItem)}
+                                    Capacité {": "} {classItem.capacity}
                                   </span>
                                 </div>
                               </div>
@@ -643,42 +652,9 @@ const ClassesSubjectsPage = () => {
                                 <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                                 Créée le{" "}
                                 {new Date(
-                                  classItem.created_at
+                                  classItem.createdAt
                                 ).toLocaleDateString("fr-FR")}
                               </span>
-                            </div>
-
-                            {/* Affichage des matières de la même catégorie */}
-                            <div className="mt-4">
-                              <p className="text-xs text-gray-500 mb-2">
-                                Matières disponibles dans cette catégorie:
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {subjects
-                                  .filter(
-                                    (subject) =>
-                                      subject.categorie_id ===
-                                      classItem.categorie_id
-                                  )
-                                  .map((subject) => (
-                                    <span
-                                      key={subject.id}
-                                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200"
-                                    >
-                                      <BookOpen className="w-3 h-3 mr-1" />
-                                      {subject.name}
-                                    </span>
-                                  ))}
-                                {subjects.filter(
-                                  (subject) =>
-                                    subject.categorie_id ===
-                                    classItem.categorie_id
-                                ).length === 0 && (
-                                  <span className="text-xs text-gray-400 italic">
-                                    Aucune matière disponible
-                                  </span>
-                                )}
-                              </div>
                             </div>
                           </div>
                           <div className="flex gap-2">
@@ -766,11 +742,6 @@ const ClassesSubjectsPage = () => {
                                   <p className="text-sm text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded">
                                     {subject.code}
                                   </p>
-                                  {subject.categorie_id && (
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                      {getSubjectCategoryName(subject)}
-                                    </span>
-                                  )}
                                 </div>
                               </div>
                             </div>
@@ -779,9 +750,9 @@ const ClassesSubjectsPage = () => {
                               <span className="flex items-center gap-1">
                                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                 Créée le{" "}
-                                {new Date(
-                                  subject.created_at
-                                ).toLocaleDateString("fr-FR")}
+                                {new Date(subject.createdAt).toLocaleDateString(
+                                  "fr-FR"
+                                )}
                               </span>
                             </div>
                           </div>
@@ -954,16 +925,21 @@ const ClassesSubjectsPage = () => {
                       {classCategories.map((category) => (
                         <button
                           key={category.id}
-                          onClick={() =>
+                          onClick={() => {
+                            console.log("🔍 Catégorie sélectionnée:", {
+                              categoryId: category.id,
+                              categoryName: category.name,
+                              currentForm: classForm,
+                            });
                             setClassForm({
                               ...classForm,
-                              categorie_id: category.id,
-                            })
-                          }
+                              classCategoryId: category.id,
+                            });
+                          }}
                           className={`p-6 rounded-xl border-2 transition-all duration-200 ${
-                            classForm.categorie_id === category.id
-                              ? "border-blue-500 bg-blue-50 shadow-lg scale-105"
-                              : "border-gray-200 hover:border-blue-300 hover:shadow-md"
+                            classForm.classCategoryId === category.id
+                              ? "border-slate-500 bg-slate-50 shadow-lg scale-105"
+                              : "border-gray-200 hover:border-slate-300 hover:shadow-md"
                           }`}
                         >
                           <div className="text-center">
@@ -1019,7 +995,7 @@ const ClassesSubjectsPage = () => {
                       </h3>
                       <p className="text-gray-600">
                         {classCategories.find(
-                          (c) => c.id === classForm.categorie_id
+                          (c) => c.id === classForm.categoryId
                         )?.name || "Catégorie"}{" "}
                         • Étape 2 sur 3
                       </p>
@@ -1037,6 +1013,37 @@ const ClassesSubjectsPage = () => {
                         required
                       />
 
+                      <Input
+                        label="Code de la classe"
+                        name="code"
+                        value={classForm.code}
+                        onChange={(e) =>
+                          setClassForm({ ...classForm, code: e.target.value })
+                        }
+                        placeholder="Ex: 6A, 2S1, L1..."
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Description (optionnel)
+                        </label>
+                        <textarea
+                          value={classForm.description}
+                          onChange={(e) =>
+                            setClassForm({
+                              ...classForm,
+                              description: e.target.value,
+                            })
+                          }
+                          placeholder="Ex: Classe de 6ème avec option anglais..."
+                          className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-colors bg-white resize-none"
+                          rows={3}
+                        />
+                      </div>
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Niveau
@@ -1049,17 +1056,54 @@ const ClassesSubjectsPage = () => {
                               level: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                          className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-colors bg-white"
                           required
                         >
                           <option value="">Sélectionner un niveau</option>
-                          <option value="6eme">6ème</option>
-                          <option value="5eme">5ème</option>
-                          <option value="4eme">4ème</option>
-                          <option value="3eme">3ème</option>
-                          <option value="2nde">2nde</option>
-                          <option value="1ere">1ère</option>
-                          <option value="terminale">Terminale</option>
+
+                          <optgroup
+                            label="🎒 Primaire"
+                            className="text-slate-600 font-medium"
+                          >
+                            <option value="1ere annee">1ère Année</option>
+                            <option value="2eme annee">2ème Année</option>
+                            <option value="3eme annee">3ème Année</option>
+                            <option value="4eme annee">4ème Année</option>
+                            <option value="5eme annee">5ème Année</option>
+                            <option value="6eme annee">6ème Année</option>
+                          </optgroup>
+
+                          <optgroup
+                            label="🏫 Collège"
+                            className="text-slate-600 font-medium"
+                          >
+                            <option value="7eme annee">7ème Année</option>
+                            <option value="8eme annee">8ème Année</option>
+                            <option value="9eme annee">9ème Année</option>
+                            <option value="10eme annee">10ème Année</option>
+                          </optgroup>
+
+                          <optgroup
+                            label="🎓 Lycée"
+                            className="text-slate-600 font-medium"
+                          >
+                            <option value="seconde">Seconde (11ème)</option>
+                            <option value="premiere">Première (12ème)</option>
+                            <option value="terminale">Terminale (13ème)</option>
+                          </optgroup>
+
+                          <optgroup
+                            label="🎓 Enseignement Supérieur"
+                            className="text-slate-600 font-medium"
+                          >
+                            <option value="bts">BTS</option>
+                            <option value="dut">DUT</option>
+                            <option value="licence1">Licence 1</option>
+                            <option value="licence2">Licence 2</option>
+                            <option value="licence3">Licence 3</option>
+                            <option value="master1">Master 1</option>
+                            <option value="master2">Master 2</option>
+                          </optgroup>
                         </select>
                       </div>
                     </div>
@@ -1079,6 +1123,24 @@ const ClassesSubjectsPage = () => {
                         min="1"
                         max="50"
                         placeholder="Nombre d'élèves"
+                        required
+                      />
+                    </div>
+
+                    <div className="max-w-md">
+                      <Input
+                        label="Niveau d'ordre"
+                        name="orderLevel"
+                        type="number"
+                        value={classForm.orderLevel}
+                        onChange={(e) =>
+                          setClassForm({
+                            ...classForm,
+                            orderLevel: parseInt(e.target.value) || 1,
+                          })
+                        }
+                        min="1"
+                        placeholder="Ex: 1, 2, 3..."
                         required
                       />
                     </div>
@@ -1171,10 +1233,26 @@ const ClassesSubjectsPage = () => {
                         </div>
                         <div>
                           <span className="text-sm font-medium text-gray-500">
+                            Code de la classe
+                          </span>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {classForm.code}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">
                             Niveau
                           </span>
                           <p className="text-lg font-semibold text-gray-900">
                             {getLevelLabel(classForm.level)}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-500">
+                            Niveau d'ordre
+                          </span>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {classForm.orderLevel}
                           </p>
                         </div>
                         <div>
@@ -1194,6 +1272,17 @@ const ClassesSubjectsPage = () => {
                           </p>
                         </div>
                       </div>
+
+                      {classForm.description && (
+                        <div className="mt-4">
+                          <span className="text-sm font-medium text-gray-500">
+                            Description
+                          </span>
+                          <p className="text-sm text-gray-700 mt-1">
+                            {classForm.description}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex justify-between pt-4">
@@ -1327,51 +1416,6 @@ const ClassesSubjectsPage = () => {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Catégorie d'établissement
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {classCategories.map((category) => (
-                        <button
-                          key={category.id}
-                          type="button"
-                          onClick={() =>
-                            setSubjectForm({
-                              ...subjectForm,
-                              categorie_id: category.id,
-                            })
-                          }
-                          className={`p-4 rounded-lg border-2 transition-all duration-200 text-left ${
-                            subjectForm.categorie_id === category.id
-                              ? "border-indigo-500 bg-indigo-50 shadow-lg scale-105"
-                              : "border-gray-200 hover:border-indigo-300 hover:shadow-md"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                              <span className="text-indigo-600 font-bold text-sm">
-                                {category.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <h4 className="font-medium text-gray-900">
-                                {category.name}
-                              </h4>
-                              <p className="text-sm text-gray-600">
-                                {category.description || "Type d'établissement"}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Sélectionnez le type d'établissement où cette matière est
-                      dispensée
-                    </p>
-                  </div>
-
                   <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
                     <Button
                       type="button"
@@ -1385,7 +1429,7 @@ const ClassesSubjectsPage = () => {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={!subjectForm.categorie_id}
+                      disabled={!subjectForm.name || !subjectForm.code}
                       className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {editingSubject ? "Mettre à jour" : "Créer la matière"}
