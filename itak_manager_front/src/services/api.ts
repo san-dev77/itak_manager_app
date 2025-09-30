@@ -642,41 +642,36 @@ class ApiService {
     teachingAssignmentData: TeachingAssignmentData
   ): Promise<ApiResponse<TeachingAssignment>> {
     console.log(teachingAssignmentData);
-    return this.makeRequest<TeachingAssignment>(
-      "/config/teaching-assignments",
-      {
-        method: "POST",
-        body: JSON.stringify(teachingAssignmentData),
-      }
-    );
+    return this.makeRequest<TeachingAssignment>("/teaching-assignments", {
+      method: "POST",
+      body: JSON.stringify(teachingAssignmentData),
+    });
   }
 
   // Méthode pour récupérer toutes les affectations d'enseignants
   async getAllTeachingAssignments(): Promise<
     ApiResponse<TeachingAssignment[]>
   > {
-    return this.makeRequest<TeachingAssignment[]>(
-      "/config/teaching-assignments"
-    );
+    return this.makeRequest<TeachingAssignment[]>("/teaching-assignments");
   }
 
   // Méthode pour supprimer une affectation d'étudiant à une classe
   async deleteStudentClass(id: number): Promise<ApiResponse<void>> {
-    return this.makeRequest<void>(`/config/student-classes/${id}`, {
+    return this.makeRequest<void>(`/student-classes/${id}`, {
       method: "DELETE",
     });
   }
 
   // Méthode pour supprimer une affectation de matière à une classe
   async deleteClassSubject(id: string): Promise<ApiResponse<void>> {
-    return this.makeRequest<void>(`/config/class-subjects/${id}`, {
+    return this.makeRequest<void>(`/class-subjects/${id}`, {
       method: "DELETE",
     });
   }
 
   // Méthode pour supprimer une affectation d'enseignant
   async deleteTeachingAssignment(id: number): Promise<ApiResponse<void>> {
-    return this.makeRequest<void>(`/config/teaching-assignments/${id}`, {
+    return this.makeRequest<void>(`/teaching-assignments/${id}`, {
       method: "DELETE",
     });
   }

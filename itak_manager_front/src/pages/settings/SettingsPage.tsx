@@ -78,9 +78,9 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* Menu des affectations */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Étape 1: Matières → Classes */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-lg border border-gray-500 p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-blue-600 text-xl">📚</span>
@@ -101,7 +101,7 @@ const SettingsPage: React.FC = () => {
           </div>
 
           {/* Étape 2: Élèves → Classes */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-lg border border-gray-500 p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-green-600 text-xl">👨‍🎓</span>
@@ -122,7 +122,7 @@ const SettingsPage: React.FC = () => {
           </div>
 
           {/* Étape 3: Enseignants → Matières-Classes */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-lg border border-gray-500 p-6 hover:shadow-md transition-shadow">
             <div className="text-center mb-4">
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-purple-600 text-xl">👨‍🏫</span>
@@ -143,26 +143,6 @@ const SettingsPage: React.FC = () => {
           </div>
 
           {/* Vue d'ensemble */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="text-center mb-4">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-indigo-600 text-xl">👁️</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Vue d'ensemble
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Consulter toutes les affectations enseignants-classes
-              </p>
-            </div>
-            <Button
-              onClick={() => navigate("/settings/teacher-class-assignment")}
-              variant="outline"
-              className="w-full"
-            >
-              Voir les affectations
-            </Button>
-          </div>
         </div>
 
         {/* Informations supplémentaires */}

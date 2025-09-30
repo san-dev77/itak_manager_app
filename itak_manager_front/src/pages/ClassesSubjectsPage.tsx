@@ -504,11 +504,11 @@ const ClassesSubjectsPage = () => {
         </div>
 
         {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+        <div className="grid grid-cols-4 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg border border-gray-500 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">
+                <p className="text-blue-500 text-sm font-medium">
                   Total Classes
                 </p>
                 <p className="text-3xl font-bold">{classes.length}</p>
@@ -517,10 +517,10 @@ const ClassesSubjectsPage = () => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="bg-white rounded-lg border border-gray-500 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-indigo-100 text-sm font-medium">
+                <p className="text-indigo-500 text-sm font-medium">
                   Total Matières
                 </p>
                 <p className="text-3xl font-bold">{subjects.length}</p>
@@ -529,13 +529,13 @@ const ClassesSubjectsPage = () => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="bg-white rounded-lg border border-gray-500 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Catégories</p>
+                <p className="text-green-500 text-sm font-medium">Catégories</p>
                 <p className="text-3xl font-bold">{classCategories.length}</p>
               </div>
-              <div className="w-8 h-8 bg-green-200 rounded-lg flex items-center justify-center"></div>
+              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center"></div>
             </div>
           </div>
         </div>
@@ -921,7 +921,7 @@ const ClassesSubjectsPage = () => {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                       {classCategories.map((category) => (
                         <button
                           key={category.id}
@@ -1001,7 +1001,7 @@ const ClassesSubjectsPage = () => {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-6">
                       <Input
                         label="Nom de la classe"
                         name="name"
@@ -1025,7 +1025,7 @@ const ClassesSubjectsPage = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 gap-6">
+                    <div className="grid grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Description (optionnel)

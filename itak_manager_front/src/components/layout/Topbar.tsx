@@ -22,7 +22,7 @@ interface TopbarProps {
   };
 }
 
-const Topbar = ({ onSidebarToggle, isSidebarCollapsed, user }: TopbarProps) => {
+const Topbar = ({ onSidebarToggle, user }: TopbarProps) => {
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);

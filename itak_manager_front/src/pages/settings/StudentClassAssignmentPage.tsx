@@ -324,15 +324,15 @@ const StudentClassAssignmentPage: React.FC = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="grid grid-cols-4 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-lg border border-gray-500 p-6">
               <div className="text-2xl font-bold text-gray-900">
                 {students.length}
               </div>
               <div className="text-sm text-gray-600">Total Élèves</div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="text-2xl font-bold text-blue-600">
+            <div className="bg-white rounded-lg border border-gray-500 p-6">
+              <div className="text-2xl font-bold text-gray-900">
                 {
                   students.filter(
                     (student) =>
@@ -344,13 +344,13 @@ const StudentClassAssignmentPage: React.FC = () => {
               </div>
               <div className="text-sm text-gray-600">Non Affectés</div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-500 p-6">
               <div className="text-2xl font-bold text-gray-900">
                 {classes.length}
               </div>
               <div className="text-sm text-gray-600">Classes</div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-500 p-6">
               <div className="text-2xl font-bold text-gray-900">
                 {assignments.length}
               </div>
