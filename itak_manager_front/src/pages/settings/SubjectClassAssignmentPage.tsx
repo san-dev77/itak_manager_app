@@ -37,6 +37,24 @@ const SubjectClassAssignmentPage: React.FC = () => {
   const [subjectSearchTerm, setSubjectSearchTerm] = useState("");
   const [classSearchTerm, setClassSearchTerm] = useState("");
 
+  // États pour la modal de détails de classe
+  const [selectedClassDetails, setSelectedClassDetails] = useState<{
+    show: boolean;
+    class: Class | null;
+    students: any[];
+    teachers: any[];
+    subjects: any[];
+  }>({
+    show: false,
+    class: null,
+    students: [],
+    teachers: [],
+    subjects: [],
+  });
+  const [classDetailsTab, setClassDetailsTab] = useState<
+    "students" | "teachers" | "subjects"
+  >("students");
+
   useEffect(() => {
     const userData =
       localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");

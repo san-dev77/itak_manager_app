@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -12,6 +12,7 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Notification from "../components/ui/Notification";
 import Layout from "../components/layout/Layout";
+import ClassDetailsModal from "../components/ClassDetailsModal";
 import {
   apiService,
   type Class,
@@ -34,7 +35,16 @@ const ClassesSubjectsPage = () => {
   const [notificationType, setNotificationType] = useState<"success" | "error">(
     "success"
   );
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  // États pour la modal de détails de classe
+  const [selectedClassDetails, setSelectedClassDetails] = useState<{
+    show: boolean;
+    class: Class | null;
+  }>({
+    show: false,
+    class: null,
+  });
 
   useEffect(() => {
     // Récupérer les informations utilisateur depuis le stockage
@@ -80,26 +90,7 @@ const ClassesSubjectsPage = () => {
   const [classSearchTerm, setClassSearchTerm] = useState("");
   const [subjectSearchTerm, setSubjectSearchTerm] = useState("");
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  // Recharger les données quand l'onglet change
-  useEffect(() => {
-    if (activeTab === "classes") {
-      // Recharger seulement les classes si nécessaire
-      if (classes.length === 0) {
-        fetchData();
-      }
-    } else if (activeTab === "subjects") {
-      // Recharger seulement les matières si nécessaire
-      if (subjects.length === 0) {
-        fetchData();
-      }
-    }
-  }, [activeTab]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [classesResponse, subjectsResponse, categoriesResponse] =
@@ -128,7 +119,26 @@ const ClassesSubjectsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Recharger les données quand l'onglet change
+  useEffect(() => {
+    if (activeTab === "classes") {
+      // Recharger seulement les classes si nécessaire
+      if (classes.length === 0) {
+        fetchData();
+      }
+    } else if (activeTab === "subjects") {
+      // Recharger seulement les matières si nécessaire
+      if (subjects.length === 0) {
+        fetchData();
+      }
+    }
+  }, [activeTab, classes.length, subjects.length, fetchData]);
 
   const showNotificationMessage = (
     message: string,
@@ -138,6 +148,22 @@ const ClassesSubjectsPage = () => {
     setNotificationType(type);
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 3000);
+  };
+
+  // Fonction pour gérer le clic sur une classe
+  const handleClassClick = (classItem: Class) => {
+    setSelectedClassDetails({
+      show: true,
+      class: classItem,
+    });
+  };
+
+  // Fonction pour fermer la modal de détails
+  const closeClassDetails = () => {
+    setSelectedClassDetails({
+      show: false,
+      class: null,
+    });
   };
 
   // Gestion des classes
@@ -183,7 +209,10 @@ const ClassesSubjectsPage = () => {
     }
 
     try {
-      const response = await apiService.updateClass(editingClass.id, classForm);
+      const response = await apiService.updateClass(
+        parseInt(editingClass.id),
+        classForm
+      );
       if (response.success && response.data) {
         setClasses(
           classes.map((c) => (c.id === editingClass.id ? response.data! : c))
@@ -214,7 +243,7 @@ const ClassesSubjectsPage = () => {
     try {
       const response = await apiService.deleteClass(id);
       if (response.success) {
-        setClasses(classes.filter((c) => c.id !== id));
+        setClasses(classes.filter((c) => c.id !== id.toString()));
         showNotificationMessage("Classe supprimée avec succès", "success");
       } else {
         showNotificationMessage(
@@ -311,9 +340,9 @@ const ClassesSubjectsPage = () => {
   // Fonction wrapper pour la soumission du formulaire
   const handleFormSubmit = () => {
     if (editingClass) {
-      handleUpdateClass(new Event("submit") as any);
+      handleUpdateClass(new Event("submit") as unknown as React.FormEvent);
     } else {
-      handleCreateClass(new Event("submit") as any);
+      handleCreateClass(new Event("submit") as unknown as React.FormEvent);
     }
   };
 
@@ -348,7 +377,7 @@ const ClassesSubjectsPage = () => {
 
     try {
       const response = await apiService.updateSubject(
-        editingSubject.id,
+        parseInt(editingSubject.id),
         subjectForm
       );
       if (response.success && response.data) {
@@ -381,7 +410,7 @@ const ClassesSubjectsPage = () => {
     try {
       const response = await apiService.deleteSubject(id);
       if (response.success) {
-        setSubjects(subjects.filter((s) => s.id !== id));
+        setSubjects(subjects.filter((s) => s.id !== id.toString()));
         showNotificationMessage("Matière supprimée avec succès", "success");
       } else {
         showNotificationMessage(
@@ -619,12 +648,13 @@ const ClassesSubjectsPage = () => {
                 ) : (
                   <div className="grid gap-4">
                     {filteredClasses.map((classItem) => (
-                      <motion.div
+                      <motion.button
                         key={`class-${classItem.id}-${activeTab}`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-blue-300"
+                        onClick={() => handleClassClick(classItem)}
+                        className="w-full bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-blue-300 text-left cursor-pointer"
                       >
                         <div className="flex justify-between items-center">
                           <div className="flex-1">
@@ -661,21 +691,25 @@ const ClassesSubjectsPage = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => openEditClassModal(classItem)}
+                              onClick={() => {
+                                openEditClassModal(classItem);
+                              }}
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDeleteClass(classItem.id)}
+                              onClick={() => {
+                                handleDeleteClass(parseInt(classItem.id));
+                              }}
                               className="text-red-600 hover:text-red-700 hover:border-red-300"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
-                      </motion.div>
+                      </motion.button>
                     ))}
                   </div>
                 )}
@@ -767,7 +801,9 @@ const ClassesSubjectsPage = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDeleteSubject(subject.id)}
+                              onClick={() =>
+                                handleDeleteSubject(parseInt(subject.id))
+                              }
                               className="text-red-600 hover:text-red-700 hover:border-red-300"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1452,6 +1488,13 @@ const ClassesSubjectsPage = () => {
           onClose={() => setShowNotification(false)}
         />
       )}
+
+      {/* Modal de détails de classe */}
+      <ClassDetailsModal
+        isOpen={selectedClassDetails.show}
+        onClose={closeClassDetails}
+        classItem={selectedClassDetails.class}
+      />
     </Layout>
   );
 };
