@@ -8,3 +8,4 @@ export { default as StaffDataTable } from "./StaffDataTable";
 export { default as StudentDetailsModal } from "./StudentDetailsModal";
 export { default as TeacherDetailsModal } from "./TeacherDetailsModal";
 export { default as StaffDetailsModal } from "./StaffDetailsModal";
+export { default as StudentCardGenerator } from "./StudentCardGenerator";

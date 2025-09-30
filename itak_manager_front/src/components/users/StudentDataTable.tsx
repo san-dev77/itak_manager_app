@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Edit, UserCheck, AlertTriangle, Eye } from "lucide-react";
+import { Edit, UserCheck, AlertTriangle, Eye, CreditCard } from "lucide-react";
 import {
   apiService,
   type StudentWithUser,
@@ -8,6 +8,7 @@ import {
 } from "../../services/api";
 import Button from "../ui/Button";
 import StudentDetailsModal from "./StudentDetailsModal";
+import StudentCardGenerator from "./StudentCardGenerator";
 
 interface StudentDataTableProps {
   onEditProfile: (student: StudentWithUser) => void;
@@ -27,6 +28,9 @@ const StudentDataTable = ({
   const [error, setError] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedStudent, setSelectedStudent] =
+    useState<StudentWithUser | null>(null);
+  const [showCardGenerator, setShowCardGenerator] = useState(false);
+  const [selectedStudentForCard, setSelectedStudentForCard] =
     useState<StudentWithUser | null>(null);
 
   const fetchStudents = useCallback(async () => {
@@ -141,6 +145,16 @@ const StudentDataTable = ({
   const handleCloseDetails = () => {
     setShowDetailsModal(false);
     setSelectedStudent(null);
+  };
+
+  const handleGenerateCard = (student: StudentWithUser) => {
+    setSelectedStudentForCard(student);
+    setShowCardGenerator(true);
+  };
+
+  const handleCloseCardGenerator = () => {
+    setShowCardGenerator(false);
+    setSelectedStudentForCard(null);
   };
 
   if (isLoading) {
@@ -300,6 +314,13 @@ const StudentDataTable = ({
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
+                      onClick={() => handleGenerateCard(student)}
+                      className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                      title="Générer une carte étudiante"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => {
                         // Vérifier la compatibilité du rôle avant d'ouvrir le profil
                         if (
@@ -343,6 +364,14 @@ const StudentDataTable = ({
         isOpen={showDetailsModal}
         onClose={handleCloseDetails}
         student={selectedStudent}
+      />
+
+      {/* Student Card Generator Modal */}
+      <StudentCardGenerator
+        isOpen={showCardGenerator}
+        onClose={handleCloseCardGenerator}
+        student={selectedStudentForCard}
+        redirectUrl="https://itak.edu" // Vous pouvez changer cette URL plus tard
       />
     </motion.div>
   );
