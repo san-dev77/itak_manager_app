@@ -35,6 +35,8 @@ import { InvoiceItemModule } from './modules/invoice-item/invoice-item.module';
 import { TimetableModule } from './modules/timetable/timetable.module';
 import { EventModule } from './modules/event/event.module';
 import { EventParticipantModule } from './modules/event-participant/event-participant.module';
+import { TeachingAssignmentModule } from './modules/teaching-assignment/teaching-assignment.module';
+import { ClassSubjectModule } from './modules/class-subject/class-subject.module';
 
 @Module({
   imports: [
@@ -75,6 +77,8 @@ import { EventParticipantModule } from './modules/event-participant/event-partic
     TimetableModule,
     EventModule,
     EventParticipantModule,
+    TeachingAssignmentModule,
+    ClassSubjectModule,
   ],
   controllers: [AppController],
   providers: [AppService],

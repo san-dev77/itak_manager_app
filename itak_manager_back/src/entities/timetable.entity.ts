@@ -8,9 +8,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { Class } from './class.entity';
-import { User } from './user.entity';
-import { Subject } from './subject.entity';
+import { TeachingAssignment } from './teaching-assignment.entity';
 import { SchoolYear } from './school-year.entity';
 
 export enum DayOfWeek {
@@ -23,23 +21,15 @@ export enum DayOfWeek {
 }
 
 @Entity('timetables')
-@Index(['classId', 'teacherId', 'academicYearId', 'dayOfWeek', 'startTime'])
-@Index(['teacherId', 'academicYearId', 'dayOfWeek', 'startTime'])
+@Index(['teachingAssignmentId', 'academicYearId', 'dayOfWeek', 'startTime'])
+@Index(['academicYearId', 'dayOfWeek', 'startTime'])
 export class Timetable {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ type: 'uuid', nullable: false })
   @Index()
-  classId: string;
-
-  @Column({ type: 'uuid', nullable: false })
-  @Index()
-  teacherId: string;
-
-  @Column({ type: 'uuid', nullable: false })
-  @Index()
-  subjectId: string;
+  teachingAssignmentId: string;
 
   @Column({ type: 'uuid', nullable: false })
   @Index()
@@ -69,23 +59,11 @@ export class Timetable {
   updatedAt: Date;
 
   // Relations
-  @ManyToOne(() => Class, {
+  @ManyToOne(() => TeachingAssignment, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'class_id' })
-  class: Class;
-
-  @ManyToOne(() => User, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'teacher_id' })
-  teacher: User;
-
-  @ManyToOne(() => Subject, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'subject_id' })
-  subject: Subject;
+  @JoinColumn({ name: 'teaching_assignment_id' })
+  teachingAssignment: TeachingAssignment;
 
   @ManyToOne(() => SchoolYear, {
     onDelete: 'CASCADE',

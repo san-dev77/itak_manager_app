@@ -47,6 +47,8 @@ const invoice_item_module_1 = require("./modules/invoice-item/invoice-item.modul
 const timetable_module_1 = require("./modules/timetable/timetable.module");
 const event_module_1 = require("./modules/event/event.module");
 const event_participant_module_1 = require("./modules/event-participant/event-participant.module");
+const teaching_assignment_module_1 = require("./modules/teaching-assignment/teaching-assignment.module");
+const class_subject_module_1 = require("./modules/class-subject/class-subject.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -90,6 +92,8 @@ exports.AppModule = AppModule = __decorate([
             timetable_module_1.TimetableModule,
             event_module_1.EventModule,
             event_participant_module_1.EventParticipantModule,
+            teaching_assignment_module_1.TeachingAssignmentModule,
+            class_subject_module_1.ClassSubjectModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

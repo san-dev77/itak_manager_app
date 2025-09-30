@@ -10,14 +10,8 @@ import {
 import { DayOfWeek } from '../../../entities/timetable.entity';
 
 export class CreateTimetableDto {
-  @IsUUID('4', { message: 'classId doit être un UUID valide' })
-  classId: string;
-
-  @IsUUID('4', { message: 'teacherId doit être un UUID valide' })
-  teacherId: string;
-
-  @IsUUID('4', { message: 'subjectId doit être un UUID valide' })
-  subjectId: string;
+  @IsUUID('4', { message: 'teachingAssignmentId doit être un UUID valide' })
+  teachingAssignmentId: string;
 
   @IsUUID('4', { message: 'academicYearId doit être un UUID valide' })
   academicYearId: string;
@@ -47,9 +41,7 @@ export class UpdateTimetableDto extends PartialType(CreateTimetableDto) {}
 
 export class TimetableResponseDto {
   id: string;
-  classId: string;
-  teacherId: string;
-  subjectId: string;
+  teachingAssignmentId: string;
   academicYearId: string;
   dayOfWeek: DayOfWeek;
   startTime: string;
@@ -57,21 +49,35 @@ export class TimetableResponseDto {
   room?: string;
   createdAt: string | Date;
   updatedAt: string | Date;
-  class?: {
+  teachingAssignment?: {
     id: string;
-    name: string;
-    level: string;
-  };
-  teacher?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  subject?: {
-    id: string;
-    name: string;
-    code: string;
+    startDate: Date;
+    endDate?: Date;
+    teacher: {
+      id: string;
+      matricule: string;
+      user: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+      };
+    };
+    classSubject: {
+      id: string;
+      coefficient: number;
+      weeklyHours: number;
+      class: {
+        id: string;
+        name: string;
+        code: string;
+      };
+      subject: {
+        id: string;
+        name: string;
+        code: string;
+      };
+    };
   };
   academicYear?: {
     id: string;
@@ -93,6 +99,7 @@ export class WeeklyTimetableDto {
       subject: string;
       teacher: string;
       room?: string;
+      teachingAssignmentId: string;
     }>;
   };
 }

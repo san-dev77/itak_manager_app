@@ -7,10 +7,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Timetable, DayOfWeek } from '../../entities/timetable.entity';
+import { TeachingAssignment } from '../../entities/teaching-assignment.entity';
+import { SchoolYear } from '../../entities/school-year.entity';
 import { Class } from '../../entities/class.entity';
 import { User } from '../../entities/user.entity';
-import { Subject } from '../../entities/subject.entity';
-import { SchoolYear } from '../../entities/school-year.entity';
 import {
   CreateTimetableDto,
   UpdateTimetableDto,
@@ -22,44 +22,32 @@ export class TimetableService {
   constructor(
     @InjectRepository(Timetable)
     private readonly timetableRepository: Repository<Timetable>,
+    @InjectRepository(TeachingAssignment)
+    private readonly teachingAssignmentRepository: Repository<TeachingAssignment>,
+    @InjectRepository(SchoolYear)
+    private readonly schoolYearRepository: Repository<SchoolYear>,
     @InjectRepository(Class)
     private readonly classRepository: Repository<Class>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(Subject)
-    private readonly subjectRepository: Repository<Subject>,
-    @InjectRepository(SchoolYear)
-    private readonly schoolYearRepository: Repository<SchoolYear>,
   ) {}
 
   async create(createTimetableDto: CreateTimetableDto): Promise<Timetable> {
-    // Vérifier que la classe existe
-    const classEntity = await this.classRepository.findOne({
-      where: { id: createTimetableDto.classId },
+    // Vérifier que l'affectation d'enseignement existe
+    const teachingAssignment = await this.teachingAssignmentRepository.findOne({
+      where: { id: createTimetableDto.teachingAssignmentId },
+      relations: [
+        'teacher',
+        'teacher.user',
+        'classSubject',
+        'classSubject.class',
+        'classSubject.subject',
+      ],
     });
-    if (!classEntity) {
-      throw new NotFoundException(
-        `Classe avec l'ID ${createTimetableDto.classId} non trouvée`,
-      );
-    }
 
-    // Vérifier que l'enseignant existe
-    const teacher = await this.userRepository.findOne({
-      where: { id: createTimetableDto.teacherId },
-    });
-    if (!teacher) {
+    if (!teachingAssignment) {
       throw new NotFoundException(
-        `Enseignant avec l'ID ${createTimetableDto.teacherId} non trouvé`,
-      );
-    }
-
-    // Vérifier que la matière existe
-    const subject = await this.subjectRepository.findOne({
-      where: { id: createTimetableDto.subjectId },
-    });
-    if (!subject) {
-      throw new NotFoundException(
-        `Matière avec l'ID ${createTimetableDto.subjectId} non trouvée`,
+        `Affectation d'enseignement avec l'ID ${createTimetableDto.teachingAssignmentId} non trouvée`,
       );
     }
 
@@ -73,7 +61,7 @@ export class TimetableService {
       );
     }
 
-    // Vérifier les heures
+    // Vérifier la cohérence des heures
     if (createTimetableDto.startTime >= createTimetableDto.endTime) {
       throw new BadRequestException(
         "L'heure de début doit être antérieure à l'heure de fin",
@@ -81,22 +69,17 @@ export class TimetableService {
     }
 
     // Vérifier les conflits d'horaires pour la classe
-    const classConflict = await this.checkClassTimeConflict(
-      createTimetableDto.classId,
+    await this.checkClassTimeConflict(
+      teachingAssignment.classSubject.class.id,
       createTimetableDto.academicYearId,
       createTimetableDto.dayOfWeek,
       createTimetableDto.startTime,
       createTimetableDto.endTime,
     );
-    if (classConflict) {
-      throw new ConflictException(
-        `Conflit d'horaire pour la classe ${classEntity.name} le ${createTimetableDto.dayOfWeek} de ${createTimetableDto.startTime} à ${createTimetableDto.endTime}`,
-      );
-    }
 
     // Vérifier les conflits d'horaires pour l'enseignant
     const teacherConflict = await this.checkTeacherTimeConflict(
-      createTimetableDto.teacherId,
+      teachingAssignment.teacher.id,
       createTimetableDto.academicYearId,
       createTimetableDto.dayOfWeek,
       createTimetableDto.startTime,
@@ -104,7 +87,7 @@ export class TimetableService {
     );
     if (teacherConflict) {
       throw new ConflictException(
-        `Conflit d'horaire pour l'enseignant ${teacher.firstName} ${teacher.lastName} le ${createTimetableDto.dayOfWeek} de ${createTimetableDto.startTime} à ${createTimetableDto.endTime}`,
+        `Conflit d'horaire pour l'enseignant ${teachingAssignment.teacher.user.firstName} ${teachingAssignment.teacher.user.lastName} le ${createTimetableDto.dayOfWeek} de ${createTimetableDto.startTime} à ${createTimetableDto.endTime}`,
       );
     }
 
@@ -114,7 +97,15 @@ export class TimetableService {
 
   async findAll(): Promise<Timetable[]> {
     return await this.timetableRepository.find({
-      relations: ['class', 'teacher', 'subject', 'academicYear'],
+      relations: [
+        'teachingAssignment',
+        'teachingAssignment.teacher',
+        'teachingAssignment.teacher.user',
+        'teachingAssignment.classSubject',
+        'teachingAssignment.classSubject.class',
+        'teachingAssignment.classSubject.subject',
+        'academicYear',
+      ],
       order: { dayOfWeek: 'ASC', startTime: 'ASC' },
     });
   }
@@ -122,7 +113,15 @@ export class TimetableService {
   async findOne(id: string): Promise<Timetable> {
     const timetable = await this.timetableRepository.findOne({
       where: { id },
-      relations: ['class', 'teacher', 'subject', 'academicYear'],
+      relations: [
+        'teachingAssignment',
+        'teachingAssignment.teacher',
+        'teachingAssignment.teacher.user',
+        'teachingAssignment.classSubject',
+        'teachingAssignment.classSubject.class',
+        'teachingAssignment.classSubject.subject',
+        'academicYear',
+      ],
     });
 
     if (!timetable) {
@@ -143,11 +142,21 @@ export class TimetableService {
       throw new NotFoundException(`Classe avec l'ID ${classId} non trouvée`);
     }
 
-    return await this.timetableRepository.find({
-      where: { classId, academicYearId },
-      relations: ['teacher', 'subject'],
-      order: { dayOfWeek: 'ASC', startTime: 'ASC' },
-    });
+    return await this.timetableRepository
+      .createQueryBuilder('timetable')
+      .leftJoinAndSelect('timetable.teachingAssignment', 'teachingAssignment')
+      .leftJoinAndSelect('teachingAssignment.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'user')
+      .leftJoinAndSelect('teachingAssignment.classSubject', 'classSubject')
+      .leftJoinAndSelect('classSubject.class', 'class')
+      .leftJoinAndSelect('classSubject.subject', 'subject')
+      .where('class.id = :classId', { classId })
+      .andWhere('timetable.academicYearId = :academicYearId', {
+        academicYearId,
+      })
+      .orderBy('timetable.dayOfWeek', 'ASC')
+      .addOrderBy('timetable.startTime', 'ASC')
+      .getMany();
   }
 
   async findByTeacher(
@@ -163,11 +172,21 @@ export class TimetableService {
       );
     }
 
-    return await this.timetableRepository.find({
-      where: { teacherId, academicYearId },
-      relations: ['class', 'subject'],
-      order: { dayOfWeek: 'ASC', startTime: 'ASC' },
-    });
+    return await this.timetableRepository
+      .createQueryBuilder('timetable')
+      .leftJoinAndSelect('timetable.teachingAssignment', 'teachingAssignment')
+      .leftJoinAndSelect('teachingAssignment.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'user')
+      .leftJoinAndSelect('teachingAssignment.classSubject', 'classSubject')
+      .leftJoinAndSelect('classSubject.class', 'class')
+      .leftJoinAndSelect('classSubject.subject', 'subject')
+      .where('teacher.id = :teacherId', { teacherId })
+      .andWhere('timetable.academicYearId = :academicYearId', {
+        academicYearId,
+      })
+      .orderBy('timetable.dayOfWeek', 'ASC')
+      .addOrderBy('timetable.startTime', 'ASC')
+      .getMany();
   }
 
   async getWeeklyTimetable(
@@ -194,9 +213,10 @@ export class TimetableService {
         id: timetable.id,
         startTime: timetable.startTime,
         endTime: timetable.endTime,
-        subject: timetable.subject.name,
-        teacher: `${timetable.teacher.firstName} ${timetable.teacher.lastName}`,
+        subject: timetable.teachingAssignment.classSubject.subject.name,
+        teacher: `${timetable.teachingAssignment.teacher.user.firstName} ${timetable.teachingAssignment.teacher.user.lastName}`,
         room: timetable.room,
+        teachingAssignmentId: timetable.teachingAssignmentId,
       });
     });
 
@@ -243,7 +263,10 @@ export class TimetableService {
   ): Promise<boolean> {
     const query = this.timetableRepository
       .createQueryBuilder('timetable')
-      .where('timetable.classId = :classId', { classId })
+      .leftJoin('timetable.teachingAssignment', 'teachingAssignment')
+      .leftJoin('teachingAssignment.classSubject', 'classSubject')
+      .leftJoin('classSubject.class', 'class')
+      .where('class.id = :classId', { classId })
       .andWhere('timetable.academicYearId = :academicYearId', {
         academicYearId,
       })
@@ -271,7 +294,9 @@ export class TimetableService {
   ): Promise<boolean> {
     const query = this.timetableRepository
       .createQueryBuilder('timetable')
-      .where('timetable.teacherId = :teacherId', { teacherId })
+      .leftJoin('timetable.teachingAssignment', 'teachingAssignment')
+      .leftJoin('teachingAssignment.teacher', 'teacher')
+      .where('teacher.id = :teacherId', { teacherId })
       .andWhere('timetable.academicYearId = :academicYearId', {
         academicYearId,
       })
