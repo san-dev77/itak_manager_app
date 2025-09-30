@@ -102,7 +102,7 @@ const UserTabs = ({
               )}`}
             >
               {tab.icon}
-              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="text-sm">{tab.label}</span>
               <span
                 className={`inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-full ${getBadgeColor(
                   tab.color
@@ -122,7 +122,7 @@ const UserTabs = ({
                 title={`Assigner un profil ${tab.label.toLowerCase()}`}
               >
                 <UserPlus className="w-3 h-3" />
-                <span className="hidden sm:inline">Assigner</span>
+                <span className="text-xs">Assigner</span>
               </button>
             )}
           </div>

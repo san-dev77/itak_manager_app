@@ -4,22 +4,33 @@ import Layout from "../../components/layout/Layout";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Notification from "../../components/ui/Notification";
-import { apiService } from "../../services/api";
+import {
+  apiService,
+  type User,
+  type Subject,
+  type Class,
+  type ClassSubject,
+} from "../../services/api";
 
 const SubjectClassAssignmentPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [classes, setClasses] = useState<any[]>([]);
-  const [assignments, setAssignments] = useState<any[]>([]);
-  const [selectedSubject, setSelectedSubject] = useState<number>(0);
-  const [selectedClass, setSelectedClass] = useState<number>(0);
+  const [user, setUser] = useState<User>();
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [assignments, setAssignments] = useState<ClassSubject[]>([]);
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [selectedClass, setSelectedClass] = useState<string>("");
   const [coefficient, setCoefficient] = useState<string>("1");
   const [weeklyHours, setWeeklyHours] = useState<string>("");
   const [isOptional, setIsOptional] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [notification, setNotification] = useState<any>(null);
+  const [notification, setNotification] = useState<{
+    type: "success" | "error";
+    title: string;
+    message: string;
+    isVisible: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const userData =
@@ -28,6 +39,7 @@ const SubjectClassAssignmentPage: React.FC = () => {
       try {
         setUser(JSON.parse(userData));
       } catch (error) {
+        console.error("Erreur parsing user data:", error);
         navigate("/login");
       }
     } else {
@@ -47,9 +59,29 @@ const SubjectClassAssignmentPage: React.FC = () => {
           apiService.getAllClassSubjects(),
         ]);
 
-        if (subjectsRes.success) setSubjects(subjectsRes.data || []);
-        if (classesRes.success) setClasses(classesRes.data || []);
-        if (assignmentsRes.success) setAssignments(assignmentsRes.data || []);
+        if (subjectsRes.success) {
+          console.log("📚 Sujets chargés:", subjectsRes.data);
+          console.log("📚 Nombre de sujets:", subjectsRes.data?.length);
+          setSubjects(subjectsRes.data || []);
+        } else {
+          console.error("❌ Erreur chargement sujets:", subjectsRes.error);
+        }
+        if (classesRes.success) {
+          console.log("🏫 Classes chargées:", classesRes.data);
+          console.log("🏫 Nombre de classes:", classesRes.data?.length);
+          setClasses(classesRes.data || []);
+        } else {
+          console.error("❌ Erreur chargement classes:", classesRes.error);
+        }
+        if (assignmentsRes.success) {
+          console.log("🔗 Affectations chargées:", assignmentsRes.data);
+          setAssignments(assignmentsRes.data || []);
+        } else {
+          console.error(
+            "❌ Erreur chargement affectations:",
+            assignmentsRes.error
+          );
+        }
       } catch (error) {
         console.error("Erreur chargement:", error);
       } finally {
@@ -76,10 +108,10 @@ const SubjectClassAssignmentPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       const response = await apiService.createClassSubject({
-        subject_id: selectedSubject,
         class_id: selectedClass,
+        subject_id: selectedSubject,
         coefficient: parseInt(coefficient),
-        weekly_hours: weeklyHours ? parseInt(weeklyHours) : undefined,
+        weeklyHours: weeklyHours ? parseInt(weeklyHours) : 0,
         is_optional: isOptional,
       });
 
@@ -98,13 +130,14 @@ const SubjectClassAssignmentPage: React.FC = () => {
         });
 
         // Reset form
-        setSelectedSubject(0);
-        setSelectedClass(0);
+        setSelectedSubject("");
+        setSelectedClass("");
         setCoefficient("1");
         setWeeklyHours("");
         setIsOptional(false);
       }
     } catch (error) {
+      console.error("Erreur lors de la création:", error);
       setNotification({
         type: "error",
         title: "Erreur",
@@ -116,7 +149,7 @@ const SubjectClassAssignmentPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       const response = await apiService.deleteClassSubject(id);
       if (response.success) {
@@ -134,6 +167,7 @@ const SubjectClassAssignmentPage: React.FC = () => {
         });
       }
     } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
       setNotification({
         type: "error",
         title: "Erreur",
@@ -221,6 +255,49 @@ const SubjectClassAssignmentPage: React.FC = () => {
           />
         )}
 
+        {/* Message d'information sur les données */}
+        {(subjects.length === 0 || classes.length === 0) && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white text-sm font-bold">⚠</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-yellow-900 mb-1">
+                  Données manquantes
+                </h3>
+                <p className="text-yellow-800 text-sm">
+                  {subjects.length === 0 && classes.length === 0
+                    ? "Aucune matière et aucune classe disponibles. Veuillez d'abord créer des matières et des classes."
+                    : subjects.length === 0
+                    ? "Aucune matière disponible. Veuillez d'abord créer des matières."
+                    : "Aucune classe disponible. Veuillez d'abord créer des classes."}
+                </p>
+                <div className="flex gap-2 mt-3">
+                  {subjects.length === 0 && (
+                    <Button
+                      onClick={() => navigate("/classes-subjects")}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Créer des matières
+                    </Button>
+                  )}
+                  {classes.length === 0 && (
+                    <Button
+                      onClick={() => navigate("/classes-subjects")}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Créer des classes
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Formulaire */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -231,39 +308,92 @@ const SubjectClassAssignmentPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Matière *
+                  Matière *{" "}
+                  {subjects.length > 0 &&
+                    `(${subjects.length} disponible${
+                      subjects.length > 1 ? "s" : ""
+                    })`}
                 </label>
                 <select
                   value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(Number(e.target.value))}
+                  onChange={(e) => {
+                    console.log(
+                      "🔄 Sélection matière:",
+                      e.target.value,
+                      typeof e.target.value
+                    );
+                    const value = e.target.value;
+                    console.log("📚 Valeur sélectionnée:", value);
+                    const selectedSubjectData = subjects.find(
+                      (s) => s.id === value
+                    );
+                    console.log(
+                      "📚 Matière sélectionnée:",
+                      selectedSubjectData
+                    );
+
+                    setSelectedSubject(value);
+                  }}
                   required
                   className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value={0}>Sélectionner une matière</option>
-                  {subjects.map((subject) => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.name} - {subject.code}
+                  <option value="">Sélectionner une matière</option>
+                  {subjects.length === 0 ? (
+                    <option value="" disabled>
+                      Aucune matière disponible
                     </option>
-                  ))}
+                  ) : (
+                    subjects.map((subject) => {
+                      console.log("📚 Matière disponible:", subject);
+                      return (
+                        <option key={subject.id} value={subject.id}>
+                          {subject.name} - {subject.code}
+                        </option>
+                      );
+                    })
+                  )}
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Classe *
+                  Classe * ({classes.length} disponible
+                  {classes.length > 1 ? "s" : ""})
                 </label>
                 <select
                   value={selectedClass}
-                  onChange={(e) => setSelectedClass(Number(e.target.value))}
+                  onChange={(e) => {
+                    console.log(
+                      "🔄 Sélection classe:",
+                      e.target.value,
+                      typeof e.target.value
+                    );
+                    const value = e.target.value;
+                    console.log("🏫 Valeur sélectionnée:", value);
+                    const selectedClassData = classes.find(
+                      (c) => c.id === value
+                    );
+                    console.log("🏫 Classe sélectionnée:", selectedClassData);
+                    setSelectedClass(value);
+                  }}
                   required
                   className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value={0}>Sélectionner une classe</option>
-                  {classes.map((cls) => (
-                    <option key={cls.id} value={cls.id}>
-                      {cls.name} - {cls.level}
+                  <option value="">Sélectionner une classe</option>
+                  {classes.length === 0 ? (
+                    <option value="" disabled>
+                      Aucune classe disponible
                     </option>
-                  ))}
+                  ) : (
+                    classes.map((cls) => {
+                      console.log("🏫 Classe disponible:", cls);
+                      return (
+                        <option key={cls.id} value={cls.id}>
+                          {cls.name} - {cls.level}
+                        </option>
+                      );
+                    })
+                  )}
                 </select>
               </div>
 
@@ -338,9 +468,9 @@ const SubjectClassAssignmentPage: React.FC = () => {
                     </p>
                     <p className="text-xs text-gray-500">
                       Coefficient : {assignment.coefficient}
-                      {assignment.weekly_hours &&
-                        ` • ${assignment.weekly_hours}h/semaine`}
-                      {assignment.is_optional && " • Optionnel"}
+                      {assignment.weeklyHours &&
+                        ` • ${assignment.weeklyHours}h/semaine`}
+                      {assignment.isOptional && " • Optionnel"}
                     </p>
                   </div>
                   <Button

@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Edit, UserCheck, AlertTriangle } from "lucide-react";
+import { Edit, UserCheck, AlertTriangle, Eye } from "lucide-react";
 import {
   apiService,
   type TeacherWithUser,
   type User,
 } from "../../services/api";
 import Button from "../ui/Button";
+import TeacherDetailsModal from "./TeacherDetailsModal";
 
 interface TeacherDataTableProps {
   onEditProfile: (teacher: TeacherWithUser) => void;
@@ -24,6 +25,9 @@ const TeacherDataTable = ({
   const [teachers, setTeachers] = useState<TeacherWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] =
+    useState<TeacherWithUser | null>(null);
 
   const fetchTeachers = useCallback(async () => {
     try {
@@ -138,6 +142,16 @@ const TeacherDataTable = ({
       return "Profil manquant";
     }
     return isProfileComplete(teacher) ? "Complet" : "Incomplet";
+  };
+
+  const handleShowDetails = (teacher: TeacherWithUser) => {
+    setSelectedTeacher(teacher);
+    setShowDetailsModal(true);
+  };
+
+  const handleCloseDetails = () => {
+    setShowDetailsModal(false);
+    setSelectedTeacher(null);
   };
 
   if (isLoading) {
@@ -284,6 +298,13 @@ const TeacherDataTable = ({
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
                     <button
+                      onClick={() => handleShowDetails(teacher)}
+                      className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                      title="Voir tous les détails"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => {
                         // Vérifier la compatibilité du rôle avant d'ouvrir le profil
                         if (
@@ -301,8 +322,8 @@ const TeacherDataTable = ({
                         teacher.id === "0"
                           ? "text-white bg-red-600 hover:bg-red-700"
                           : isProfileComplete(teacher)
-                          ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          : "text-red-600 hover:text-red-700 hover:bg-red-50"
+                          ? "text-green-600 hover:text-green-700 hover:bg-green-50"
+                          : "text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                       }`}
                       title={
                         teacher.id === "0"
@@ -321,6 +342,13 @@ const TeacherDataTable = ({
           </tbody>
         </table>
       </div>
+
+      {/* Teacher Details Modal */}
+      <TeacherDetailsModal
+        isOpen={showDetailsModal}
+        onClose={handleCloseDetails}
+        teacher={selectedTeacher}
+      />
     </motion.div>
   );
 };

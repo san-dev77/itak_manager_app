@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Scrollbar personnalisée */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #dbeafe; /* blue-100 */
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #60a5fa; /* blue-400 */
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #3b82f6; /* blue-500 */
+}
+
+.scrollbar-track-blue-100::-webkit-scrollbar-track {
+  background: #dbeafe;
+}
+
+.scrollbar-thumb-blue-400::-webkit-scrollbar-thumb {
+  background: #60a5fa;
+}
+
+.hover\:scrollbar-thumb-blue-500:hover::-webkit-scrollbar-thumb {
+  background: #3b82f6;
+}
+
+/* Scrollbar pour Firefox */
+.scrollbar-thin {
+  scrollbar-color: #60a5fa #dbeafe;
+}
+
+/* Animation de la scrollbar */
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  transition: all 0.2s ease;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:active {
+  background: #2563eb; /* blue-600 */
+}

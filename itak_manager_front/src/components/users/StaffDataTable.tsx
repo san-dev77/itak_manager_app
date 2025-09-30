@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Edit, UserCheck, AlertTriangle } from "lucide-react";
+import { Edit, UserCheck, AlertTriangle, Eye } from "lucide-react";
 import { apiService, type StaffWithUser, type User } from "../../services/api";
 import Button from "../ui/Button";
+import StaffDetailsModal from "./StaffDetailsModal";
 
 interface StaffDataTableProps {
   onEditProfile: (staff: StaffWithUser) => void;
@@ -20,6 +21,10 @@ const StaffDataTable = ({
   const [staffMembers, setStaffMembers] = useState<StaffWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<StaffWithUser | null>(
+    null
+  );
 
   const fetchStaff = useCallback(async () => {
     try {
@@ -117,6 +122,16 @@ const StaffDataTable = ({
       return "Profil manquant";
     }
     return isProfileComplete(staff) ? "Complet" : "Incomplet";
+  };
+
+  const handleShowDetails = (staff: StaffWithUser) => {
+    setSelectedStaff(staff);
+    setShowDetailsModal(true);
+  };
+
+  const handleCloseDetails = () => {
+    setShowDetailsModal(false);
+    setSelectedStaff(null);
   };
 
   if (isLoading) {
@@ -265,6 +280,13 @@ const StaffDataTable = ({
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
                     <button
+                      onClick={() => handleShowDetails(staff)}
+                      className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                      title="Voir tous les détails"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => {
                         // Vérifier la compatibilité du rôle avant d'ouvrir le profil
                         if (
@@ -282,8 +304,8 @@ const StaffDataTable = ({
                         staff.id === "0"
                           ? "text-white bg-red-600 hover:bg-red-700"
                           : isProfileComplete(staff)
-                          ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          : "text-red-600 hover:text-red-700 hover:bg-red-50"
+                          ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                          : "text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                       }`}
                       title={
                         staff.id === "0"
@@ -302,6 +324,13 @@ const StaffDataTable = ({
           </tbody>
         </table>
       </div>
+
+      {/* Staff Details Modal */}
+      <StaffDetailsModal
+        isOpen={showDetailsModal}
+        onClose={handleCloseDetails}
+        staff={selectedStaff}
+      />
     </motion.div>
   );
 };

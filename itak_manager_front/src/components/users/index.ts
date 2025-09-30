@@ -5,3 +5,6 @@ export { default as ProfileAssignmentModal } from "./ProfileAssignmentModal";
 export { default as StudentDataTable } from "./StudentDataTable";
 export { default as TeacherDataTable } from "./TeacherDataTable";
 export { default as StaffDataTable } from "./StaffDataTable";
+export { default as StudentDetailsModal } from "./StudentDetailsModal";
+export { default as TeacherDetailsModal } from "./TeacherDetailsModal";
+export { default as StaffDetailsModal } from "./StaffDetailsModal";

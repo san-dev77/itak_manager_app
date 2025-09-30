@@ -198,7 +198,7 @@ interface ClassData {
 }
 
 interface Class {
-  id: number;
+  id: string;
   name: string;
   code: string;
   classCategoryId: string;
@@ -216,7 +216,7 @@ interface SubjectData {
 }
 
 interface Subject {
-  id: number;
+  id: string;
   name: string;
   code: string;
   createdAt: string;
@@ -225,45 +225,45 @@ interface Subject {
 
 // Nouvelles interfaces pour les affectations de configuration
 interface ClassSubjectData {
-  class_id: number;
-  subject_id: number;
+  class_id: string;
+  subject_id: string;
   coefficient: number;
   weeklyHours: number;
   is_optional: boolean;
 }
 
 interface ClassSubject {
-  id: number;
-  classId: number;
-  subjectId: number;
+  id: string;
+  classId: string;
+  subjectId: string;
   coefficient: number;
   weeklyHours: number;
   isOptional: boolean;
   created_at: string;
   updated_at: string;
   class: {
-    id: number;
+    id: string;
     name: string;
     level: string;
   };
   subject: {
-    id: number;
+    id: string;
     name: string;
     code: string;
   };
 }
 
 interface StudentClassData {
-  studentId: number;
-  classId: number;
+  studentId: string;
+  classId: string;
   startDate: string;
   endDate?: string;
 }
 
 interface StudentClass {
-  id: number;
-  studentId: number;
-  classId: number;
+  id: string;
+  studentId: string;
+  classId: string;
   startDate: string;
   endDate?: string;
   created_at: string;
@@ -273,16 +273,16 @@ interface StudentClass {
 }
 
 interface TeachingAssignmentData {
-  teacherId: number;
-  classSubjectId: number;
+  teacherId: string;
+  classSubjectId: string;
   startDate: string;
   endDate?: string;
 }
 
 interface TeachingAssignment {
-  id: number;
-  teacherId: number;
-  classSubjectId: number;
+  id: string;
+  teacherId: string;
+  classSubjectId: string;
   startDate: string;
   endDate?: string;
   created_at: string;
@@ -668,7 +668,7 @@ class ApiService {
   }
 
   // Méthode pour supprimer une affectation de matière à une classe
-  async deleteClassSubject(id: number): Promise<ApiResponse<void>> {
+  async deleteClassSubject(id: string): Promise<ApiResponse<void>> {
     return this.makeRequest<void>(`/config/class-subjects/${id}`, {
       method: "DELETE",
     });

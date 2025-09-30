@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Edit, UserCheck, AlertTriangle } from "lucide-react";
+import { Edit, UserCheck, AlertTriangle, Eye } from "lucide-react";
 import {
   apiService,
   type StudentWithUser,
   type User,
 } from "../../services/api";
 import Button from "../ui/Button";
+import StudentDetailsModal from "./StudentDetailsModal";
 
 interface StudentDataTableProps {
   onEditProfile: (student: StudentWithUser) => void;
@@ -24,6 +25,9 @@ const StudentDataTable = ({
   const [students, setStudents] = useState<StudentWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedStudent, setSelectedStudent] =
+    useState<StudentWithUser | null>(null);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -57,8 +61,8 @@ const StudentDataTable = ({
             userId: user.id,
             matricule: "",
             enrollmentDate: "",
-            photo: null,
-            marital_status: "",
+            photo: undefined,
+            maritalStatus: "",
             fatherName: "",
             motherName: "",
             tutorName: "",
@@ -127,6 +131,16 @@ const StudentDataTable = ({
       return "Profil manquant";
     }
     return isProfileComplete(student) ? "Complet" : "Incomplet";
+  };
+
+  const handleShowDetails = (student: StudentWithUser) => {
+    setSelectedStudent(student);
+    setShowDetailsModal(true);
+  };
+
+  const handleCloseDetails = () => {
+    setShowDetailsModal(false);
+    setSelectedStudent(null);
   };
 
   if (isLoading) {
@@ -279,6 +293,13 @@ const StudentDataTable = ({
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
                     <button
+                      onClick={() => handleShowDetails(student)}
+                      className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Voir tous les détails"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => {
                         // Vérifier la compatibilité du rôle avant d'ouvrir le profil
                         if (
@@ -296,8 +317,8 @@ const StudentDataTable = ({
                         student.id === "0"
                           ? "text-white bg-red-600 hover:bg-red-700"
                           : isProfileComplete(student)
-                          ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          : "text-red-600 hover:text-red-700 hover:bg-red-50"
+                          ? "text-green-600 hover:text-green-700 hover:bg-green-50"
+                          : "text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                       }`}
                       title={
                         student.id === "0"
@@ -316,6 +337,13 @@ const StudentDataTable = ({
           </tbody>
         </table>
       </div>
+
+      {/* Student Details Modal */}
+      <StudentDetailsModal
+        isOpen={showDetailsModal}
+        onClose={handleCloseDetails}
+        student={selectedStudent}
+      />
     </motion.div>
   );
 };
