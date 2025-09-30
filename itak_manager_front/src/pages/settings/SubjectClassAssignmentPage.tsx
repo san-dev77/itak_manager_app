@@ -108,11 +108,11 @@ const SubjectClassAssignmentPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       const response = await apiService.createClassSubject({
-        class_id: selectedClass,
-        subject_id: selectedSubject,
+        classId: selectedClass,
+        subjectId: selectedSubject,
         coefficient: parseInt(coefficient),
         weeklyHours: weeklyHours ? parseInt(weeklyHours) : 0,
-        is_optional: isOptional,
+        isOptional: isOptional,
       });
 
       if (response.success) {
@@ -222,7 +222,7 @@ const SubjectClassAssignmentPage: React.FC = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-3 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <div className="text-2xl font-bold text-gray-900">
                 {subjects.length}
@@ -298,7 +298,7 @@ const SubjectClassAssignmentPage: React.FC = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-2 gap-8">
           {/* Formulaire */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">

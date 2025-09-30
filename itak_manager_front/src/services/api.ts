@@ -225,11 +225,11 @@ interface Subject {
 
 // Nouvelles interfaces pour les affectations de configuration
 interface ClassSubjectData {
-  class_id: string;
-  subject_id: string;
+  classId: string;
+  subjectId: string;
   coefficient: number;
   weeklyHours: number;
-  is_optional: boolean;
+  isOptional: boolean;
 }
 
 interface ClassSubject {
