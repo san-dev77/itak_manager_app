@@ -626,7 +626,7 @@ class ApiService {
     studentClassData: StudentClassData
   ): Promise<ApiResponse<StudentClass>> {
     console.log(studentClassData);
-    return this.makeRequest<StudentClass>("/config/student-classes", {
+    return this.makeRequest<StudentClass>("/student-classes", {
       method: "POST",
       body: JSON.stringify(studentClassData),
     });
@@ -634,7 +634,7 @@ class ApiService {
 
   // Méthode pour récupérer tous les étudiants avec leurs classes
   async getAllStudentClasses(): Promise<ApiResponse<StudentClass[]>> {
-    return this.makeRequest<StudentClass[]>("/config/student-classes");
+    return this.makeRequest<StudentClass[]>("/student-classes");
   }
 
   // Méthode pour créer une affectation d'enseignant

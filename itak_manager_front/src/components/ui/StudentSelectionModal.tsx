@@ -1,6 +1,6 @@
 import React from "react";
 import { User, Mail, Calendar, Hash } from "lucide-react";
-import DataListModal from "./DataListModal";
+import SimpleModal from "./SimpleModal";
 import { type StudentWithUser } from "../../services/api";
 
 interface StudentSelectionModalProps {
@@ -64,7 +64,7 @@ const StudentSelectionModal: React.FC<StudentSelectionModalProps> = ({
   );
 
   return (
-    <DataListModal
+    <SimpleModal<StudentWithUser>
       isOpen={isOpen}
       onClose={onClose}
       title="Sélectionner un élève"

@@ -32,6 +32,11 @@ const SubjectClassAssignmentPage: React.FC = () => {
     isVisible: boolean;
   } | null>(null);
 
+  // États pour les onglets et la recherche
+  const [activeTab, setActiveTab] = useState<"create" | "list">("create");
+  const [subjectSearchTerm, setSubjectSearchTerm] = useState("");
+  const [classSearchTerm, setClassSearchTerm] = useState("");
+
   useEffect(() => {
     const userData =
       localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
@@ -187,6 +192,15 @@ const SubjectClassAssignmentPage: React.FC = () => {
       </div>
     );
   }
+
+  // Filtrage des données
+  const filteredSubjects = subjects.filter((subject) =>
+    subject.name.toLowerCase().includes(subjectSearchTerm.toLowerCase())
+  );
+
+  const filteredClasses = classes.filter((classItem) =>
+    classItem.name.toLowerCase().includes(classSearchTerm.toLowerCase())
+  );
 
   if (isLoading) {
     return (

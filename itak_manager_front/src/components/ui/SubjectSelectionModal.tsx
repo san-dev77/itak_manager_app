@@ -1,6 +1,6 @@
 import React from "react";
 import { BookOpen, Code, Clock } from "lucide-react";
-import DataListModal from "./DataListModal";
+import SimpleModal from "./SimpleModal";
 import { type Subject } from "../../services/api";
 
 interface SubjectSelectionModalProps {
@@ -55,7 +55,7 @@ const SubjectSelectionModal: React.FC<SubjectSelectionModalProps> = ({
   );
 
   return (
-    <DataListModal
+    <SimpleModal<Subject>
       isOpen={isOpen}
       onClose={onClose}
       title="Sélectionner une matière"

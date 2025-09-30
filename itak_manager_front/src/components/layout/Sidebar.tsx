@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
   Users,
@@ -16,7 +15,6 @@ import {
   Receipt,
   Sparkles,
 } from "lucide-react";
-import logoItak from "../../assets/logo itak.png";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -112,18 +110,9 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
     const isActiveItem = isActive(item.path);
 
     return (
-      <motion.div
-        key={item.path}
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, delay: level * 0.1 }}
-      >
+      <div key={item.path}>
         <div className="relative">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
+          <div>
             <Link
               to={item.path}
               className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group overflow-hidden ${
@@ -139,126 +128,84 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
 
               {/* Indicateur actif */}
               {isActiveItem && (
-                <motion.div
-                  className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-indigo-400 rounded-r-full"
-                  initial={{ scaleY: 0 }}
-                  animate={{ scaleY: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-indigo-400 rounded-r-full" />
               )}
 
-              <motion.div
+              <div
                 className={`flex-shrink-0 relative ${
                   isActiveItem
                     ? "text-white"
                     : "text-white/60 group-hover:text-white"
                 }`}
-                whileHover={{ rotate: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
               >
                 {item.icon}
                 {isActiveItem && (
-                  <motion.div
-                    className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full" />
                 )}
-              </motion.div>
+              </div>
 
-              <AnimatePresence>
-                {!isCollapsed && (
-                  <motion.div
-                    className="flex-1 flex items-center justify-between"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <span className="font-medium text-sm">{item.title}</span>
-                    <div className="flex items-center gap-2">
-                      {item.badge && (
-                        <motion.span
-                          className={`text-xs font-bold px-2 py-1 rounded-full ${
-                            isActiveItem
-                              ? "bg-white/20 text-white"
-                              : "bg-blue-500/20 text-blue-300"
+              {!isCollapsed && (
+                <div className="flex-1 flex items-center justify-between">
+                  <span className="font-medium text-sm">{item.title}</span>
+                  <div className="flex items-center gap-2">
+                    {item.badge && (
+                      <span
+                        className={`text-xs font-bold px-2 py-1 rounded-full ${
+                          isActiveItem
+                            ? "bg-white/20 text-white"
+                            : "bg-blue-500/20 text-blue-300"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                    {hasChildren && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleMenu(item.title);
+                        }}
+                        className="p-1 rounded-lg hover:bg-white/10 transition-colors duration-200"
+                      >
+                        <div
+                          className={`transform transition-transform duration-200 ${
+                            isExpanded ? "rotate-90" : "rotate-0"
                           }`}
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 300 }}
                         >
-                          {item.badge}
-                        </motion.span>
-                      )}
-                      {hasChildren && (
-                        <motion.button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            toggleMenu(item.title);
-                          }}
-                          className="p-1 rounded-lg hover:bg-white/10 transition-colors duration-200"
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <motion.div
-                            animate={{ rotate: isExpanded ? 90 : 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <ChevronRight className="w-3 h-3" />
-                          </motion.div>
-                        </motion.button>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                          <ChevronRight className="w-3 h-3" />
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </Link>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Sous-menus avec animation */}
-        <AnimatePresence>
-          {hasChildren && !isCollapsed && isExpanded && (
-            <motion.div
-              className="mt-2 space-y-1"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {item.children!.map((child) => renderMenuItem(child, level + 1))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Sous-menus */}
+        {hasChildren && !isCollapsed && isExpanded && (
+          <div className="mt-2 space-y-1">
+            {item.children!.map((child) => renderMenuItem(child, level + 1))}
+          </div>
+        )}
 
         {/* Tooltip pour sidebar collapsed */}
-        <AnimatePresence>
-          {isCollapsed && hoveredItem === item.path && (
-            <motion.div
-              className="absolute left-full ml-3 px-3 py-2 bg-slate-800/95 backdrop-blur-sm text-white text-sm rounded-lg whitespace-nowrap z-50 shadow-xl border border-white/20"
-              initial={{ opacity: 0, x: -10, scale: 0.8 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -10, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
-            >
-              {item.title}
-              <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-4 border-l-slate-800 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+        {isCollapsed && hoveredItem === item.path && (
+          <div className="absolute left-full ml-3 px-3 py-2 bg-slate-800/95 backdrop-blur-sm text-white text-sm rounded-lg whitespace-nowrap z-50 shadow-xl border border-white/20">
+            {item.title}
+            <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-l-4 border-l-slate-800 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
+          </div>
+        )}
+      </div>
     );
   };
 
   return (
-    <motion.div
+    <div
       className={`relative h-screen flex flex-col transition-all duration-500 ease-in-out ${
         isCollapsed ? "w-16" : "w-64"
       }`}
-      initial={{ x: -20, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.3 }}
     >
       {/* Background avec effet glassmorphism */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900/95 via-blue-900/90 to-indigo-900/95 backdrop-blur-xl"></div>
@@ -272,68 +219,45 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
       </div>
 
       {/* Header */}
-      <motion.div
-        className="relative flex-shrink-0 flex items-center justify-between p-4 border-b border-white/10"
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-      >
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.div
-              className="flex items-center gap-3"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <motion.div
-                className="relative w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg"
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full animate-pulse"></div>
-              </motion.div>
-              <div className="flex flex-col">
-                <span className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-                  Gestion
-                </span>
-                <span className="text-xs text-blue-300/70 font-medium">
-                  école
-                </span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="relative flex-shrink-0 flex items-center justify-between p-4 border-b border-white/10">
+        {!isCollapsed && (
+          <div className="flex items-center gap-3">
+            <div className="relative w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full"></div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                Gestion
+              </span>
+              <span className="text-xs text-blue-300/70 font-medium">
+                école
+              </span>
+            </div>
+          </div>
+        )}
 
-        <motion.button
+        <button
           onClick={onToggle}
           className="relative p-2 rounded-xl bg-white/10 backdrop-blur-sm text-white/80 hover:text-white hover:bg-white/20 transition-all duration-300 border border-white/20 hover:border-white/30"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
         >
-          <motion.div
-            animate={{ rotate: isCollapsed ? 0 : 180 }}
-            transition={{ duration: 0.3 }}
+          <div
+            className={`transform transition-transform duration-300 ${
+              isCollapsed ? "rotate-0" : "rotate-180"
+            }`}
           >
             {isCollapsed ? (
               <ChevronRight className="w-4 h-4" />
             ) : (
               <ChevronLeft className="w-4 h-4" />
             )}
-          </motion.div>
-        </motion.button>
-      </motion.div>
+          </div>
+        </button>
+      </div>
 
       {/* Navigation Menu - Scrollable if needed */}
-      <motion.nav
-        className="relative flex-1 p-4 space-y-2 overflow-y-auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-      >
+      <nav className="relative flex-1 p-4 space-y-2 overflow-y-auto">
         {/* Scrollbar personnalisée */}
-        <style jsx>{`
+        <style>{`
           .overflow-y-auto::-webkit-scrollbar {
             width: 4px;
           }
@@ -350,61 +274,34 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
           }
         `}</style>
 
-        {menuItems.map((item, index) => (
-          <motion.div
-            key={item.path}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-          >
-            {renderMenuItem(item)}
-          </motion.div>
+        {menuItems.map((item) => (
+          <div key={item.path}>{renderMenuItem(item)}</div>
         ))}
-      </motion.nav>
+      </nav>
 
       {/* Footer */}
-      <AnimatePresence>
-        {!isCollapsed && (
-          <motion.div
-            className="relative flex-shrink-0 p-4 border-t border-white/10"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <motion.div
-              className="relative bg-gradient-to-r from-white/10 to-blue-500/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 overflow-hidden"
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              {/* Effet de brillance */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 translate-x-[-100%] hover:translate-x-[100%]"></div>
+      {!isCollapsed && (
+        <div className="relative flex-shrink-0 p-4 border-t border-white/10">
+          <div className="relative bg-gradient-to-r from-white/10 to-blue-500/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 overflow-hidden">
+            {/* Effet de brillance */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 translate-x-[-100%] hover:translate-x-[100%]"></div>
 
-              <div className="relative flex items-center gap-3">
-                <motion.div
-                  className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center"
-                  whileHover={{ rotate: 360 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <Sparkles className="w-4 h-4 text-white" />
-                </motion.div>
-                <div className="flex-1">
-                  <div className="text-xs text-blue-200/70 mb-1 font-medium">
-                    Version
-                  </div>
-                  <div className="text-sm font-bold text-white">1.0.0</div>
-                </div>
-                <motion.div
-                  className="w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
+            <div className="relative flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+              <div className="flex-1">
+                <div className="text-xs text-blue-200/70 mb-1 font-medium">
+                  Version
+                </div>
+                <div className="text-sm font-bold text-white">1.0.0</div>
+              </div>
+              <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

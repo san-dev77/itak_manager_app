@@ -1,6 +1,6 @@
 import React from "react";
 import { GraduationCap, Users, Calendar } from "lucide-react";
-import DataListModal from "./DataListModal";
+import SimpleModal from "./SimpleModal";
 import { type Class } from "../../services/api";
 
 interface ClassSelectionModalProps {
@@ -62,7 +62,7 @@ const ClassSelectionModal: React.FC<ClassSelectionModalProps> = ({
   );
 
   return (
-    <DataListModal
+    <SimpleModal<Class>
       isOpen={isOpen}
       onClose={onClose}
       title="Sélectionner une classe"
