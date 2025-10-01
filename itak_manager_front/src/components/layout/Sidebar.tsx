@@ -6,7 +6,6 @@ import {
   BookOpen,
   Settings,
   BarChart3,
-  Building,
   ChevronLeft,
   ChevronRight,
   DollarSign,
@@ -14,6 +13,10 @@ import {
   CreditCard,
   Receipt,
   Sparkles,
+  Calendar,
+  Clock,
+  CalendarDays,
+  GraduationCap,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -52,6 +55,28 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
       icon: <BookOpen className="w-5 h-5" />,
     },
     {
+      title: "Calendrier",
+      path: "/calendar",
+      icon: <Calendar className="w-5 h-5" />,
+      children: [
+        {
+          title: "Emplois du temps",
+          path: "/calendar/timetables",
+          icon: <Clock className="w-4 h-4" />,
+        },
+        {
+          title: "Événements",
+          path: "/calendar/events",
+          icon: <CalendarDays className="w-4 h-4" />,
+        },
+      ],
+    },
+    {
+      title: "Année scolaire",
+      path: "/school-years",
+      icon: <GraduationCap className="w-5 h-5" />,
+    },
+    {
       title: "Finances",
       path: "/finances",
       icon: <DollarSign className="w-5 h-5" />,
@@ -73,11 +98,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
         },
       ],
     },
-    {
-      title: "Établissements",
-      path: "/schools",
-      icon: <Building className="w-5 h-5" />,
-    },
+
     {
       title: "Rapports",
       path: "/reports",

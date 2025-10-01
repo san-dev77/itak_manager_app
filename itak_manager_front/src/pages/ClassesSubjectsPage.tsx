@@ -537,10 +537,12 @@ const ClassesSubjectsPage = () => {
           <div className="bg-white rounded-lg border border-gray-500 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-500 text-sm font-medium">
+                <p className="text-blue-900 text-sm font-medium">
                   Total Classes
                 </p>
-                <p className="text-3xl font-bold">{classes.length}</p>
+                <p className="text-3xl text-blue-900 font-bold">
+                  {classes.length}
+                </p>
               </div>
               <GraduationCap className="w-8 h-8 text-blue-200" />
             </div>
@@ -549,10 +551,12 @@ const ClassesSubjectsPage = () => {
           <div className="bg-white rounded-lg border border-gray-500 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-indigo-500 text-sm font-medium">
+                <p className="text-indigo-900 text-sm font-medium">
                   Total Matières
                 </p>
-                <p className="text-3xl font-bold">{subjects.length}</p>
+                <p className="text-3xl text-indigo-900 font-bold">
+                  {subjects.length}
+                </p>
               </div>
               <BookOpen className="w-8 h-8 text-indigo-200" />
             </div>
@@ -561,8 +565,10 @@ const ClassesSubjectsPage = () => {
           <div className="bg-white rounded-lg border border-gray-500 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-500 text-sm font-medium">Catégories</p>
-                <p className="text-3xl font-bold">{classCategories.length}</p>
+                <p className="text-green-900 text-sm font-medium">Catégories</p>
+                <p className="text-3xl text-green-900 font-bold">
+                  {classCategories.length}
+                </p>
               </div>
               <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center"></div>
             </div>
@@ -618,7 +624,7 @@ const ClassesSubjectsPage = () => {
                         placeholder="Rechercher une classe..."
                         value={classSearchTerm}
                         onChange={(e) => setClassSearchTerm(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 border-2 border-gray-900"
                       />
                     </div>
                   </div>
@@ -654,7 +660,7 @@ const ClassesSubjectsPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         onClick={() => handleClassClick(classItem)}
-                        className="w-full bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-blue-300 text-left cursor-pointer"
+                        className="w-full bg-white border border-gray-700 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-blue-300 text-left cursor-pointer"
                       >
                         <div className="flex justify-between items-center">
                           <div className="flex-1">
@@ -726,7 +732,7 @@ const ClassesSubjectsPage = () => {
                         placeholder="Rechercher une matière..."
                         value={subjectSearchTerm}
                         onChange={(e) => setSubjectSearchTerm(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 border-2 border-gray-900"
                       />
                     </div>
                   </div>
@@ -760,7 +766,7 @@ const ClassesSubjectsPage = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                        className="border border-gray-800 rounded-lg p-4 hover:shadow-md transition-shadow"
                       >
                         <div className="flex justify-between items-center">
                           <div className="flex-1">

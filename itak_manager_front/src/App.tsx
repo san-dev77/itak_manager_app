@@ -6,6 +6,10 @@ import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
 import ClassesSubjectsPage from "./pages/ClassesSubjectsPage";
 import FinancesPage from "./pages/FinancesPage";
+import CalendarPage from "./pages/CalendarPage";
+import TimetablePage from "./pages/calendar/TimetablePage";
+import EventsPage from "./pages/calendar/EventsPage";
+import SchoolYearsPage from "./pages/SchoolYearsPage";
 import "./App.css";
 import {
   SettingsPage,
@@ -16,8 +20,6 @@ import {
 } from "./pages/settings";
 
 function App() {
-  const user = localStorage.getItem("user");
-  const userData = JSON.parse(user as string);
   return (
     <Router>
       <Routes>
@@ -25,9 +27,17 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/users" element={<UsersPage user={userData} />} />
+        <Route path="/users" element={<UsersPage />} />
         <Route path="/classes-subjects" element={<ClassesSubjectsPage />} />
         <Route path="/finances" element={<FinancesPage />} />
+
+        {/* Routes du calendrier */}
+        <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/calendar/timetables" element={<TimetablePage />} />
+        <Route path="/calendar/events" element={<EventsPage />} />
+
+        {/* Routes des années scolaires */}
+        <Route path="/school-years" element={<SchoolYearsPage />} />
 
         {/* Routes de configuration */}
         <Route path="/settings" element={<SettingsPage />} />

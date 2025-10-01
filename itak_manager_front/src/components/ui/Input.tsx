@@ -34,8 +34,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
                   : ""
               }
               ${
-                props.type === "date"
-                  ? "bg-gray-700 text-white border-gray-600 focus:border-gray-500 focus:ring-2 focus:ring-gray-500"
+                props.type === "date" || props.type === "time"
+                  ? "bg-gray-700 text-white border-gray-600 focus:border-gray-500 focus:ring-2 focus:ring-gray-500 [color-scheme:dark]"
                   : "bg-white text-slate-800 border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               }
               ${className}

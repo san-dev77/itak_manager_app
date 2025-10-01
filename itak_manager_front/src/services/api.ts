@@ -291,6 +291,128 @@ interface TeachingAssignment {
   classSubject: ClassSubject;
 }
 
+// School Year interfaces
+export interface CreateSchoolYearDto {
+  name: string;
+  startDate: string;
+  endDate: string;
+  isActive?: boolean;
+}
+
+export interface UpdateSchoolYearDto {
+  name?: string;
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
+}
+
+export interface SchoolYear {
+  id: string;
+  name: string;
+  startDate: Date | string;
+  endDate: Date | string;
+  isActive: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  terms?: Term[];
+}
+
+// Term interfaces
+export interface CreateTermDto {
+  schoolYearId: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isActive?: boolean;
+  orderNumber?: number;
+}
+
+export interface UpdateTermDto {
+  schoolYearId?: string;
+  name?: string;
+  startDate?: string;
+  endDate?: string;
+  isActive?: boolean;
+  orderNumber?: number;
+}
+
+export interface Term {
+  id: string;
+  schoolYearId: string;
+  name: string;
+  startDate: Date | string;
+  endDate: Date | string;
+  isActive: boolean;
+  orderNumber: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  schoolYear?: SchoolYear;
+}
+
+// Timetable interfaces
+export const DayOfWeek = {
+  MONDAY: "Monday",
+  TUESDAY: "Tuesday",
+  WEDNESDAY: "Wednesday",
+  THURSDAY: "Thursday",
+  FRIDAY: "Friday",
+  SATURDAY: "Saturday",
+  SUNDAY: "Sunday",
+} as const;
+
+export type DayOfWeek = (typeof DayOfWeek)[keyof typeof DayOfWeek];
+
+export interface CreateTimetableDto {
+  teachingAssignmentId: string;
+  academicYearId: string;
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+  room?: string;
+}
+
+export interface UpdateTimetableDto {
+  teachingAssignmentId?: string;
+  academicYearId?: string;
+  dayOfWeek?: DayOfWeek;
+  startTime?: string;
+  endTime?: string;
+  room?: string;
+}
+
+export interface Timetable {
+  id: string;
+  teachingAssignmentId: string;
+  academicYearId: string;
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+  room?: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  teachingAssignment?: TeachingAssignment;
+  academicYear?: SchoolYear;
+}
+
+export interface TimetableSlot {
+  id: string;
+  startTime: string;
+  endTime: string;
+  subject: string;
+  teacher: string;
+  room?: string;
+  teachingAssignmentId: string;
+}
+
+export interface WeeklyTimetable {
+  classId: string;
+  className: string;
+  academicYearId: string;
+  schedule: {
+    [key in DayOfWeek]?: TimetableSlot[];
+  };
+}
+
 class ApiService {
   private async makeRequest<T>(
     endpoint: string,
@@ -322,7 +444,26 @@ class ApiService {
         Object.fromEntries(response.headers.entries())
       );
 
-      const data = await response.json();
+      // Vérifier si la réponse a un contenu avant de parser le JSON
+      const contentType = response.headers.get("content-type");
+      const hasJsonContent =
+        contentType && contentType.includes("application/json");
+
+      let data: unknown = null;
+
+      // Ne parser le JSON que si la réponse a du contenu
+      if (hasJsonContent) {
+        const text = await response.text();
+        if (text && text.trim().length > 0) {
+          try {
+            data = JSON.parse(text);
+          } catch {
+            console.warn("⚠️ Impossible de parser le JSON:", text);
+            data = null;
+          }
+        }
+      }
+
       console.log("📥 Données de la réponse:", data);
 
       if (!response.ok) {
@@ -332,15 +473,18 @@ class ApiService {
         // Extraction du message d'erreur selon la structure de réponse
         let errorMessage = "Erreur inconnue";
 
-        if (data.message && Array.isArray(data.message)) {
-          // Si le message est un tableau, prendre le premier élément
-          errorMessage = data.message[0];
-        } else if (data.message && typeof data.message === "string") {
-          // Si le message est une chaîne
-          errorMessage = data.message;
-        } else if (data.error && typeof data.error === "string") {
-          // Si l'erreur est une chaîne
-          errorMessage = data.error;
+        if (data && typeof data === "object" && "message" in data) {
+          const msg = (data as { message: unknown }).message;
+          if (Array.isArray(msg)) {
+            errorMessage = msg[0];
+          } else if (typeof msg === "string") {
+            errorMessage = msg;
+          }
+        } else if (data && typeof data === "object" && "error" in data) {
+          const err = (data as { error: unknown }).error;
+          if (typeof err === "string") {
+            errorMessage = err;
+          }
         } else {
           // Fallback avec le statut HTTP
           errorMessage = `Erreur ${response.status}: ${response.statusText}`;
@@ -353,10 +497,20 @@ class ApiService {
       }
 
       console.log("✅ Requête réussie!");
+
+      // Extraire le message s'il existe
+      let message: string | undefined;
+      if (data && typeof data === "object" && "message" in data) {
+        const msg = (data as { message: unknown }).message;
+        if (typeof msg === "string") {
+          message = msg;
+        }
+      }
+
       return {
         success: true,
-        data,
-        message: data.message,
+        data: data as T,
+        message,
       };
     } catch (error) {
       console.error("💥 Erreur de connexion:", error);
@@ -672,6 +826,151 @@ class ApiService {
   // Méthode pour supprimer une affectation d'enseignant
   async deleteTeachingAssignment(id: number): Promise<ApiResponse<void>> {
     return this.makeRequest<void>(`/teaching-assignments/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // ============ School Year Methods ============
+
+  // Créer une année scolaire
+  async createSchoolYear(
+    data: CreateSchoolYearDto
+  ): Promise<ApiResponse<SchoolYear>> {
+    return this.makeRequest<SchoolYear>("/school-years", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Récupérer toutes les années scolaires
+  async getAllSchoolYears(): Promise<ApiResponse<SchoolYear[]>> {
+    return this.makeRequest<SchoolYear[]>("/school-years");
+  }
+
+  // Récupérer une année scolaire par ID
+  async getSchoolYearById(id: string): Promise<ApiResponse<SchoolYear>> {
+    return this.makeRequest<SchoolYear>(`/school-years/${id}`);
+  }
+
+  // Mettre à jour une année scolaire
+  async updateSchoolYear(
+    id: string,
+    data: UpdateSchoolYearDto
+  ): Promise<ApiResponse<SchoolYear>> {
+    return this.makeRequest<SchoolYear>(`/school-years/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Supprimer une année scolaire
+  async deleteSchoolYear(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/school-years/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // ============ Term Methods ============
+
+  // Créer un trimestre
+  async createTerm(data: CreateTermDto): Promise<ApiResponse<Term>> {
+    return this.makeRequest<Term>("/terms", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Récupérer tous les trimestres
+  async getAllTerms(): Promise<ApiResponse<Term[]>> {
+    return this.makeRequest<Term[]>("/terms");
+  }
+
+  // Récupérer un trimestre par ID
+  async getTermById(id: string): Promise<ApiResponse<Term>> {
+    return this.makeRequest<Term>(`/terms/${id}`);
+  }
+
+  // Récupérer les trimestres d'une année scolaire
+  async getTermsBySchoolYear(
+    schoolYearId: string
+  ): Promise<ApiResponse<Term[]>> {
+    return this.makeRequest<Term[]>(`/terms/school-years/${schoolYearId}`);
+  }
+
+  // Mettre à jour un trimestre
+  async updateTerm(
+    id: string,
+    data: UpdateTermDto
+  ): Promise<ApiResponse<Term>> {
+    return this.makeRequest<Term>(`/terms/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Supprimer un trimestre
+  async deleteTerm(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/terms/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // ============ Timetable Methods ============
+
+  // Créer un emploi du temps
+  async createTimetable(
+    data: CreateTimetableDto
+  ): Promise<ApiResponse<Timetable>> {
+    return this.makeRequest<Timetable>("/timetables", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Récupérer tous les emplois du temps
+  async getAllTimetables(): Promise<ApiResponse<Timetable[]>> {
+    return this.makeRequest<Timetable[]>("/timetables");
+  }
+
+  // Récupérer un emploi du temps par ID
+  async getTimetableById(id: string): Promise<ApiResponse<Timetable>> {
+    return this.makeRequest<Timetable>(`/timetables/${id}`);
+  }
+
+  // Récupérer les emplois du temps d'une classe pour une année scolaire
+  async getTimetablesByClass(
+    classId: string,
+    academicYearId: string
+  ): Promise<ApiResponse<Timetable[]>> {
+    return this.makeRequest<Timetable[]>(
+      `/timetables/class/${classId}?academicYearId=${academicYearId}`
+    );
+  }
+
+  // Récupérer l'emploi du temps hebdomadaire d'une classe
+  async getWeeklyTimetable(
+    classId: string,
+    academicYearId: string
+  ): Promise<ApiResponse<WeeklyTimetable>> {
+    return this.makeRequest<WeeklyTimetable>(
+      `/timetables/weekly/${classId}?academicYearId=${academicYearId}`
+    );
+  }
+
+  // Mettre à jour un emploi du temps
+  async updateTimetable(
+    id: string,
+    data: UpdateTimetableDto
+  ): Promise<ApiResponse<Timetable>> {
+    return this.makeRequest<Timetable>(`/timetables/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Supprimer un emploi du temps
+  async deleteTimetable(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/timetables/${id}`, {
       method: "DELETE",
     });
   }
