@@ -10,6 +10,8 @@ import {
   Users,
   BookOpen,
   MapPin,
+  Grid3x3,
+  List,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -43,6 +45,7 @@ const TimetablePage: React.FC = () => {
     "success"
   );
   const [teachingAssignmentSearch, setTeachingAssignmentSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const [formData, setFormData] = useState<CreateTimetableDto>({
     teachingAssignmentId: "",
@@ -271,6 +274,11 @@ const TimetablePage: React.FC = () => {
     return acc;
   }, {} as Record<DayOfWeek, Timetable[]>);
 
+  // Fonction pour formater l'heure (enlever les secondes)
+  const formatTime = (time: string): string => {
+    return time.substring(0, 5); // Ne garde que HH:MM
+  };
+
   // Trier les cours par heure de début
   Object.keys(timetablesByDay).forEach((day) => {
     timetablesByDay[day as DayOfWeek].sort((a, b) =>
@@ -359,11 +367,36 @@ const TimetablePage: React.FC = () => {
               </select>
             </div>
 
-            <div className="flex items-end">
+            <div className="flex items-end gap-2">
+              <div className="flex gap-1 border border-gray-300 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`px-3 py-2 rounded-md transition-colors ${
+                    viewMode === "list"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                  title="Vue liste"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`px-3 py-2 rounded-md transition-colors ${
+                    viewMode === "grid"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                  title="Vue grille"
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                </button>
+              </div>
+
               <Button
                 onClick={() => setShowCreateModal(true)}
                 disabled={!selectedSchoolYear || !selectedClass}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
               >
                 <Plus className="w-4 h-4" />
                 Ajouter un cours
@@ -404,7 +437,8 @@ const TimetablePage: React.FC = () => {
               </Button>
             )}
           </div>
-        ) : (
+        ) : viewMode === "list" ? (
+          // Vue liste
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-6">
               <div className="grid gap-4">
@@ -437,7 +471,8 @@ const TimetablePage: React.FC = () => {
                                   <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
                                       <Clock className="w-4 h-4 text-gray-400" />
-                                      {tt.startTime} - {tt.endTime}
+                                      {formatTime(tt.startTime)} -{" "}
+                                      {formatTime(tt.endTime)}
                                     </div>
                                     {tt.room && (
                                       <div className="flex items-center gap-1 text-sm text-gray-600">
@@ -489,6 +524,146 @@ const TimetablePage: React.FC = () => {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Vue grille (format tableau)
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-6">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                      <th className="border border-gray-300 p-3 text-left font-semibold min-w-[100px]">
+                        Heures
+                      </th>
+                      {daysOfWeek
+                        .filter((d) => d.value !== DayOfWeek.SUNDAY)
+                        .map((day) => (
+                          <th
+                            key={day.value}
+                            className="border border-gray-300 p-3 text-center font-semibold"
+                          >
+                            {day.label}
+                          </th>
+                        ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      // Récupérer toutes les plages horaires uniques des cours
+                      const allTimeRanges = new Set<string>();
+                      filteredTimetables.forEach((tt) => {
+                        allTimeRanges.add(
+                          `${formatTime(tt.startTime)}-${formatTime(
+                            tt.endTime
+                          )}`
+                        );
+                      });
+
+                      // Convertir en tableau, trier par heure de début
+                      const timeSlots = Array.from(allTimeRanges).sort(
+                        (a, b) => {
+                          const [startA] = a.split("-");
+                          const [startB] = b.split("-");
+                          return startA.localeCompare(startB);
+                        }
+                      );
+
+                      // Si aucun cours, afficher un message
+                      if (timeSlots.length === 0) {
+                        return (
+                          <tr>
+                            <td
+                              colSpan={7}
+                              className="p-8 text-center text-gray-500"
+                            >
+                              Aucun cours programmé
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return timeSlots.map((timeRange) => {
+                        const [startTime, endTime] = timeRange.split("-");
+
+                        return (
+                          <tr key={timeRange} className="hover:bg-gray-50">
+                            <td className="border border-gray-300 p-3 bg-gradient-to-r from-gray-50 to-gray-100 whitespace-nowrap">
+                              <div className="flex flex-col items-center">
+                                <div className="text-base font-bold text-gray-900">
+                                  {startTime}
+                                </div>
+                                <div className="text-xs text-gray-400 my-1">
+                                  ↓
+                                </div>
+                                <div className="text-sm font-semibold text-gray-700">
+                                  {endTime}
+                                </div>
+                              </div>
+                            </td>
+                            {daysOfWeek
+                              .filter((d) => d.value !== DayOfWeek.SUNDAY)
+                              .map((day) => {
+                                const dayCourses =
+                                  timetablesByDay[day.value] || [];
+                                const courseAtTime = dayCourses.find(
+                                  (course) => {
+                                    return (
+                                      formatTime(course.startTime) ===
+                                        startTime &&
+                                      formatTime(course.endTime) === endTime
+                                    );
+                                  }
+                                );
+
+                                if (!courseAtTime) {
+                                  return (
+                                    <td
+                                      key={day.value}
+                                      className="border border-gray-300 p-2 bg-white"
+                                    >
+                                      {/* Cellule vide */}
+                                    </td>
+                                  );
+                                }
+
+                                const assignment = teachingAssignments.find(
+                                  (ta) =>
+                                    ta.id === courseAtTime.teachingAssignmentId
+                                );
+
+                                return (
+                                  <td
+                                    key={day.value}
+                                    className="border border-gray-300 p-3 bg-blue-50 align-top"
+                                  >
+                                    <div className="text-sm">
+                                      <div className="font-bold text-blue-900 mb-1">
+                                        {assignment?.classSubject?.subject
+                                          ?.name || "Matière"}
+                                      </div>
+                                      <div className="text-gray-700 text-xs">
+                                        {assignment?.teacher?.user?.firstName}{" "}
+                                        {assignment?.teacher?.user?.lastName}
+                                      </div>
+                                      {courseAtTime.room && (
+                                        <div className="text-gray-600 text-xs flex items-center gap-1 mt-1">
+                                          <MapPin className="w-3 h-3" />
+                                          {courseAtTime.room}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                          </tr>
+                        );
+                      });
+                    })()}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
