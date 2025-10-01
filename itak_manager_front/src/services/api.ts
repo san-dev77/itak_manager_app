@@ -362,6 +362,99 @@ export const DayOfWeek = {
 
 export type DayOfWeek = (typeof DayOfWeek)[keyof typeof DayOfWeek];
 
+// Types pour les événements
+export const EventTypeEnum = {
+  EXAM: "exam",
+  HOMEWORK: "homework",
+  CULTURAL_DAY: "cultural_day",
+  HEALTH_DAY: "health_day",
+  BALL: "ball",
+  OTHER: "other",
+} as const;
+
+export type EventType = (typeof EventTypeEnum)[keyof typeof EventTypeEnum];
+
+export interface CreateEventDto {
+  title: string;
+  description?: string;
+  eventType: EventType;
+  startDate: string;
+  endDate?: string;
+  allDay?: boolean;
+  classId?: string;
+  createdBy: string;
+  academicYearId: string;
+}
+
+export interface UpdateEventDto {
+  title?: string;
+  description?: string;
+  eventType?: EventType;
+  startDate?: string;
+  endDate?: string;
+  allDay?: boolean;
+  classId?: string;
+  createdBy?: string;
+  academicYearId?: string;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  eventType: EventType;
+  startDate: string | Date;
+  endDate?: string | Date;
+  allDay: boolean;
+  classId?: string;
+  createdBy: string;
+  academicYearId: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  class?: {
+    id: string;
+    name: string;
+    level: string;
+  };
+  creator?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  academicYear?: {
+    id: string;
+    name: string;
+    startDate: Date;
+    endDate: Date;
+  };
+  participants?: Array<{
+    id: string;
+    userId: string;
+    role: string;
+    status: string;
+    user: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+    };
+  }>;
+}
+
+export interface EventCalendarDto {
+  date: string;
+  events: Array<{
+    id: string;
+    title: string;
+    eventType: EventType;
+    startDate: string;
+    endDate?: string;
+    allDay: boolean;
+    className?: string;
+  }>;
+}
+
 export interface CreateTimetableDto {
   teachingAssignmentId: string;
   academicYearId: string;
@@ -971,6 +1064,66 @@ class ApiService {
   // Supprimer un emploi du temps
   async deleteTimetable(id: string): Promise<ApiResponse<void>> {
     return this.makeRequest<void>(`/timetables/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // ============ Event Methods ============
+
+  // Créer un événement
+  async createEvent(data: CreateEventDto): Promise<ApiResponse<Event>> {
+    return this.makeRequest<Event>("/events", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Récupérer tous les événements
+  async getAllEvents(): Promise<ApiResponse<Event[]>> {
+    return this.makeRequest<Event[]>("/events");
+  }
+
+  // Récupérer un événement par ID
+  async getEventById(id: string): Promise<ApiResponse<Event>> {
+    return this.makeRequest<Event>(`/events/${id}`);
+  }
+
+  // Récupérer les événements d'une année scolaire
+  async getEventsByAcademicYear(
+    academicYearId: string
+  ): Promise<ApiResponse<Event[]>> {
+    return this.makeRequest<Event[]>(`/events/academic-year/${academicYearId}`);
+  }
+
+  // Récupérer les événements d'une classe
+  async getEventsByClass(classId: string): Promise<ApiResponse<Event[]>> {
+    return this.makeRequest<Event[]>(`/events/class/${classId}`);
+  }
+
+  // Récupérer les événements d'un calendrier (par date)
+  async getEventsByDateRange(
+    startDate: string,
+    endDate: string
+  ): Promise<ApiResponse<EventCalendarDto[]>> {
+    return this.makeRequest<EventCalendarDto[]>(
+      `/events/calendar?startDate=${startDate}&endDate=${endDate}`
+    );
+  }
+
+  // Mettre à jour un événement
+  async updateEvent(
+    id: string,
+    data: UpdateEventDto
+  ): Promise<ApiResponse<Event>> {
+    return this.makeRequest<Event>(`/events/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Supprimer un événement
+  async deleteEvent(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/events/${id}`, {
       method: "DELETE",
     });
   }
