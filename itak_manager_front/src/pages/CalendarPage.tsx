@@ -10,6 +10,9 @@ import {
   Users,
   BookOpen,
   ChevronRight,
+  X,
+  FileText,
+  Info,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import {
@@ -17,6 +20,8 @@ import {
   type Timetable,
   type Class,
   type SchoolYear,
+  type Event,
+  type EventType,
 } from "../services/api";
 
 const CalendarPage: React.FC = () => {
@@ -28,7 +33,9 @@ const CalendarPage: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [schoolYears, setSchoolYears] = useState<SchoolYear[]>([]);
   const [allTimetables, setAllTimetables] = useState<Timetable[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   useEffect(() => {
     const userData =
@@ -47,11 +54,13 @@ const CalendarPage: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [classesRes, schoolYearsRes, timetablesRes] = await Promise.all([
-        apiService.getAllClasses(),
-        apiService.getAllSchoolYears(),
-        apiService.getAllTimetables(),
-      ]);
+      const [classesRes, schoolYearsRes, timetablesRes, eventsRes] =
+        await Promise.all([
+          apiService.getAllClasses(),
+          apiService.getAllSchoolYears(),
+          apiService.getAllTimetables(),
+          apiService.getAllEvents(),
+        ]);
 
       if (classesRes.success && classesRes.data) {
         setClasses(classesRes.data);
@@ -63,6 +72,10 @@ const CalendarPage: React.FC = () => {
 
       if (timetablesRes.success && timetablesRes.data) {
         setAllTimetables(timetablesRes.data);
+      }
+
+      if (eventsRes.success && eventsRes.data) {
+        setEvents(eventsRes.data);
       }
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
@@ -76,6 +89,58 @@ const CalendarPage: React.FC = () => {
       fetchData();
     }
   }, [user, fetchData]);
+
+  // Fonctions utilitaires pour les événements
+  const getEventTypeLabel = (eventType: EventType) => {
+    switch (eventType) {
+      case "exam":
+        return "Examen";
+      case "homework":
+        return "Devoir";
+      case "cultural_day":
+        return "Journée culturelle";
+      case "health_day":
+        return "Journée santé";
+      case "ball":
+        return "Bal";
+      default:
+        return "Autre";
+    }
+  };
+
+  const getEventTypeColor = (eventType: EventType) => {
+    switch (eventType) {
+      case "exam":
+        return "bg-red-100 text-red-800";
+      case "homework":
+        return "bg-blue-100 text-blue-800";
+      case "cultural_day":
+        return "bg-purple-100 text-purple-800";
+      case "health_day":
+        return "bg-green-100 text-green-800";
+      case "ball":
+        return "bg-pink-100 text-pink-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  // Obtenir les événements à venir (7 prochains jours)
+  const getUpcomingEvents = () => {
+    const today = new Date();
+    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    return events
+      .filter((event) => {
+        const eventDate = new Date(event.startDate);
+        return eventDate >= today && eventDate <= nextWeek;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      )
+      .slice(0, 5); // Limiter à 5 événements
+  };
 
   if (!user) {
     return (
@@ -172,7 +237,7 @@ const CalendarPage: React.FC = () => {
                     onClick={() => navigate("/calendar/timetables")}
                   >
                     <Plus className="w-4 h-4" />
-                    Gérer les emplois du temps
+                    Nouvel emploi du temps
                   </Button>
                 </div>
               </div>
@@ -285,7 +350,7 @@ const CalendarPage: React.FC = () => {
                         onClick={() => navigate("/calendar/timetables")}
                         className="bg-blue-600 hover:bg-blue-700"
                       >
-                        Créer un emploi du temps
+                        Nouvel emploi du temps
                       </Button>
                     </div>
                   )}
@@ -323,29 +388,371 @@ const CalendarPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Placeholder pour les événements */}
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CalendarDays className="w-8 h-8 text-green-600" />
+              {/* Aperçu des événements */}
+              <div className="space-y-6">
+                {/* Section événements à venir */}
+                {/* <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-green-600" />
+                    Événements à venir (7 prochains jours)
+                  </h3>
+
+                  {getUpcomingEvents().length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {getUpcomingEvents().map((event) => (
+                        <div
+                          key={event.id}
+                          className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => setSelectedEvent(event)}
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 mb-1">
+                                {event.title}
+                              </h4>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor(
+                                    event.eventType
+                                  )}`}
+                                >
+                                  {getEventTypeLabel(event.eventType)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Calendar className="w-4 h-4" />
+                              <span>
+                                {new Date(event.startDate).toLocaleDateString(
+                                  "fr-FR",
+                                  {
+                                    weekday: "long",
+                                    day: "numeric",
+                                    month: "long",
+                                  }
+                                )}
+                                {event.endDate &&
+                                  event.endDate !== event.startDate && (
+                                    <span className="ml-1">
+                                      -{" "}
+                                      {new Date(
+                                        event.endDate
+                                      ).toLocaleDateString("fr-FR", {
+                                        day: "numeric",
+                                        month: "long",
+                                      })}
+                                    </span>
+                                  )}
+                              </span>
+                            </div>
+
+                            {event.class && (
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Users className="w-4 h-4" />
+                                <span>{event.class.name}</span>
+                              </div>
+                            )}
+
+                            {event.description && (
+                              <p className="text-sm text-gray-600 line-clamp-2">
+                                {event.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                      <CalendarDays className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <h4 className="font-medium text-gray-900 mb-1">
+                        Aucun événement à venir
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        Créez des événements pour les 7 prochains jours
+                      </p>
+                    </div>
+                  )}
+                </div> */}
+
+                {/* Liste de tous les événements */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-green-600" />
+                    Tous les événements ({events.length})
+                  </h3>
+
+                  {events.length > 0 ? (
+                    <div className="space-y-3">
+                      {events
+                        .sort(
+                          (a, b) =>
+                            new Date(a.startDate).getTime() -
+                            new Date(b.startDate).getTime()
+                        )
+                        .map((event) => (
+                          <div
+                            key={event.id}
+                            className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => setSelectedEvent(event)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h4 className="font-semibold text-gray-900">
+                                    {event.title}
+                                  </h4>
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor(
+                                      event.eventType
+                                    )}`}
+                                  >
+                                    {getEventTypeLabel(event.eventType)}
+                                  </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4" />
+                                    <span>
+                                      {new Date(
+                                        event.startDate
+                                      ).toLocaleDateString("fr-FR", {
+                                        weekday: "long",
+                                        day: "numeric",
+                                        month: "long",
+                                        year: "numeric",
+                                      })}
+                                      {event.endDate &&
+                                        event.endDate !== event.startDate && (
+                                          <span className="ml-1">
+                                            -{" "}
+                                            {new Date(
+                                              event.endDate
+                                            ).toLocaleDateString("fr-FR", {
+                                              day: "numeric",
+                                              month: "long",
+                                              year: "numeric",
+                                            })}
+                                          </span>
+                                        )}
+                                    </span>
+                                  </div>
+
+                                  {event.class && (
+                                    <div className="flex items-center gap-2">
+                                      <Users className="w-4 h-4" />
+                                      <span>{event.class.name}</span>
+                                    </div>
+                                  )}
+
+                                  {event.description && (
+                                    <div className="md:col-span-3">
+                                      <p className="text-gray-600">
+                                        {event.description}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-gray-50 rounded-lg">
+                      <CalendarDays className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <h4 className="font-medium text-gray-900 mb-1">
+                        Aucun événement créé
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        Créez votre premier événement
+                      </p>
+                    </div>
+                  )}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Aucun événement créé
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Créez des événements pour marquer les journées spéciales de
-                  l'établissement
-                </p>
-                <Button
-                  onClick={() => navigate("/calendar/events")}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  Créer un événement
-                </Button>
+
+                {/* Bouton d'action */}
+                <div className="text-center pt-4">
+                  <Button
+                    onClick={() => navigate("/calendar/events")}
+                    className="bg-green-600 hover:bg-green-700 px-6 py-3"
+                  >
+                    <CalendarDays className="w-4 h-4 mr-2" />
+                    Gérer tous les événements
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Modal de détails d'événement */}
+      {selectedEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* En-tête */}
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    {selectedEvent.title}
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${getEventTypeColor(
+                        selectedEvent.eventType
+                      )}`}
+                    >
+                      {getEventTypeLabel(selectedEvent.eventType)}
+                    </span>
+                    {selectedEvent.allDay && (
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                        Toute la journée
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Contenu détaillé */}
+              <div className="space-y-6">
+                {/* Dates */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-green-600" />
+                    Dates
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 mb-1">
+                        Date de début
+                      </p>
+                      <p className="text-gray-900">
+                        {new Date(selectedEvent.startDate).toLocaleDateString(
+                          "fr-FR",
+                          {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                    {selectedEvent.endDate &&
+                      selectedEvent.endDate !== selectedEvent.startDate && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-600 mb-1">
+                            Date de fin
+                          </p>
+                          <p className="text-gray-900">
+                            {new Date(selectedEvent.endDate).toLocaleDateString(
+                              "fr-FR",
+                              {
+                                weekday: "long",
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              }
+                            )}
+                          </p>
+                        </div>
+                      )}
+                  </div>
+                </div>
+
+                {/* Classe */}
+                {selectedEvent.class && (
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <Users className="w-5 h-5 text-blue-600" />
+                      Classe concernée
+                    </h3>
+                    <p className="text-gray-900">{selectedEvent.class.name}</p>
+                  </div>
+                )}
+
+                {/* Description */}
+                {selectedEvent.description && (
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-green-600" />
+                      Description
+                    </h3>
+                    <p className="text-gray-900 whitespace-pre-wrap">
+                      {selectedEvent.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Informations supplémentaires */}
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Info className="w-5 h-5 text-purple-600" />
+                    Informations
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">Créé le</p>
+                      <p className="text-gray-900">
+                        {new Date(selectedEvent.createdAt).toLocaleDateString(
+                          "fr-FR",
+                          {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </p>
+                    </div>
+                    {selectedEvent.creator && (
+                      <div>
+                        <p className="text-gray-600">Créé par</p>
+                        <p className="text-gray-900">
+                          {selectedEvent.creator.firstName}{" "}
+                          {selectedEvent.creator.lastName}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedEvent(null)}
+                >
+                  Fermer
+                </Button>
+                <Button
+                  onClick={() => {
+                    setSelectedEvent(null);
+                    navigate("/calendar/events");
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  Modifier l'événement
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
