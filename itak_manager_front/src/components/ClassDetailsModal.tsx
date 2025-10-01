@@ -27,6 +27,12 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({
   const [students, setStudents] = useState<StudentWithUser[]>([]);
   const [teachers, setTeachers] = useState<TeacherWithUser[]>([]);
   const [subjects, setSubjects] = useState<ClassSubject[]>([]);
+  const [teacherSubjects, setTeacherSubjects] = useState<
+    Array<{
+      teacher: TeacherWithUser;
+      subjects: ClassSubject[];
+    }>
+  >([]);
   const [loading, setLoading] = useState(false);
 
   const loadClassDetails = useCallback(async () => {
@@ -88,29 +94,51 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({
             )
           : [];
 
-      // Filtrer les professeurs assignés à cette classe via les matières
-      const classTeachers =
-        teachingAssignmentsRes.success && teachingAssignmentsRes.data
-          ? teachingAssignmentsRes.data
-              .filter(
-                (ta: TeachingAssignment) =>
-                  ta?.classSubject?.id &&
-                  classSubjects.some(
-                    (cs: ClassSubject) => cs?.id === ta.classSubject.id
-                  )
-              )
-              .map((ta: TeachingAssignment) => ta.teacher)
-              .filter((teacher) => teacher) // Filtrer les professeurs undefined
-              .filter(
-                (teacher, index, self) =>
-                  teacher?.id &&
-                  index === self.findIndex((t) => t?.id === teacher.id)
-              ) // Supprimer les doublons
-          : [];
+      // Créer le mapping professeur-matières pour cette classe
+      const teacherSubjectMap = new Map<
+        string,
+        {
+          teacher: TeacherWithUser;
+          subjects: ClassSubject[];
+        }
+      >();
+
+      if (teachingAssignmentsRes.success && teachingAssignmentsRes.data) {
+        teachingAssignmentsRes.data.forEach((ta: TeachingAssignment) => {
+          if (
+            ta?.teacher &&
+            ta?.classSubject &&
+            classSubjects.some(
+              (cs: ClassSubject) => cs?.id === ta.classSubject.id
+            )
+          ) {
+            const teacherId = ta.teacher.id;
+
+            if (!teacherSubjectMap.has(teacherId)) {
+              teacherSubjectMap.set(teacherId, {
+                teacher: ta.teacher,
+                subjects: [],
+              });
+            }
+
+            const teacherData = teacherSubjectMap.get(teacherId);
+            if (
+              teacherData &&
+              !teacherData.subjects.some((s) => s.id === ta.classSubject.id)
+            ) {
+              teacherData.subjects.push(ta.classSubject);
+            }
+          }
+        });
+      }
+
+      const teacherSubjectsArray = Array.from(teacherSubjectMap.values());
+      const classTeachers = teacherSubjectsArray.map((ts) => ts.teacher);
 
       setStudents(classStudents);
       setTeachers(classTeachers);
       setSubjects(classSubjects);
+      setTeacherSubjects(teacherSubjectsArray);
     } catch (error) {
       console.error(
         "Erreur lors du chargement des détails de la classe:",
@@ -155,7 +183,7 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                <GraduationCap className="w-6 h-6 text-white" />
+                <GraduationCap className="w-6 h-6 text-black" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold">{classItem.name}</h2>
@@ -274,32 +302,68 @@ const ClassDetailsModal: React.FC<ClassDetailsModalProps> = ({
               )}
 
               {activeTab === "teachers" && (
-                <div className="space-y-3">
-                  {teachers.length === 0 ? (
+                <div className="space-y-4">
+                  {teacherSubjects.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       Aucun professeur assigné à cette classe
                     </div>
                   ) : (
-                    teachers.map((teacher) => (
+                    teacherSubjects.map((teacherData) => (
                       <div
-                        key={teacher.id}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                        key={teacherData.teacher.id}
+                        className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"
                       >
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {teacher.user?.firstName || "Prénom"}{" "}
-                            {teacher.user?.lastName || "Nom"}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {teacher.user?.email || "Email non disponible"}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Diplômes: {teacher.diplomas || "N/A"}
-                          </p>
+                        {/* En-tête du professeur */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                              <GraduationCap className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-gray-900">
+                                {teacherData.teacher.user?.firstName ||
+                                  "Prénom"}{" "}
+                                {teacherData.teacher.user?.lastName || "Nom"}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {teacherData.teacher.user?.email ||
+                                  "Email non disponible"}
+                              </p>
+                            </div>
+                            <div className="ml-auto">
+                              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                                {teacherData.subjects.length} matière
+                                {teacherData.subjects.length > 1 ? "s" : ""}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                          Professeur
-                        </span>
+
+                        {/* Liste des matières enseignées */}
+                        <div className="p-4">
+                          <div className="space-y-2">
+                            {teacherData.subjects.map((subject) => (
+                              <div
+                                key={subject.id}
+                                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
+                              >
+                                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                  <BookOpen className="w-4 h-4 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-gray-900">
+                                    {subject.subject?.name ||
+                                      "Matière inconnue"}
+                                  </h4>
+                                  <p className="text-sm text-gray-600">
+                                    Coefficient: {subject.coefficient} •{" "}
+                                    {subject.weeklyHours || 0}h/semaine
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     ))
                   )}

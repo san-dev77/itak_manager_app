@@ -14,8 +14,15 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
   const [assignments, setAssignments] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [selectedTeacher, setSelectedTeacher] = useState<number>(0);
   const [selectedClassSubject, setSelectedClassSubject] = useState<number>(0);
+  const [selectedClassSubjects, setSelectedClassSubjects] = useState<number[]>(
+    []
+  );
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [teacherCategory, setTeacherCategory] = useState<"college" | "lycee">(
+    "college"
+  );
+  const [isPrincipalTeacher, setIsPrincipalTeacher] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -27,6 +34,20 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
     assignmentId: null,
     assignmentInfo: "",
   });
+  const [bulkConfirm, setBulkConfirm] = useState<{
+    show: boolean;
+    teacherId: number | null;
+    classSubjectIds: number[];
+    isPrincipal: boolean;
+  }>({
+    show: false,
+    teacherId: null,
+    classSubjectIds: [],
+    isPrincipal: false,
+  });
+  const [expandedTeachers, setExpandedTeachers] = useState<Set<string>>(
+    new Set()
+  );
   const [notification, setNotification] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   // États pour les onglets et la recherche
@@ -206,6 +227,123 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
       show: false,
       assignmentId: null,
       assignmentInfo: "",
+    });
+  };
+
+  // Fonctions pour la sélection multiple
+  const handleClassSubjectToggle = (classSubjectId: number) => {
+    setSelectedClassSubjects((prev) => {
+      if (prev.includes(classSubjectId)) {
+        return prev.filter((id) => id !== classSubjectId);
+      } else {
+        return [...prev, classSubjectId];
+      }
+    });
+  };
+
+  const handleBulkAssignment = () => {
+    if (!selectedTeacher || selectedClassSubjects.length === 0) {
+      setNotification({
+        type: "error",
+        title: "Erreur",
+        message:
+          "Veuillez sélectionner un enseignant et au moins une matière-classe",
+        isVisible: true,
+      });
+      return;
+    }
+
+    setBulkConfirm({
+      show: true,
+      teacherId: selectedTeacher,
+      classSubjectIds: selectedClassSubjects,
+      isPrincipal: isPrincipalTeacher,
+    });
+  };
+
+  const handleBulkConfirm = async () => {
+    if (!bulkConfirm.teacherId || bulkConfirm.classSubjectIds.length === 0)
+      return;
+
+    setIsSubmitting(true);
+    try {
+      const promises = bulkConfirm.classSubjectIds.map((classSubjectId) => {
+        const assignmentData = {
+          teacherId: bulkConfirm.teacherId!.toString(),
+          classSubjectId: classSubjectId.toString(),
+          startDate,
+          endDate: endDate || undefined,
+        };
+        return apiService.createTeachingAssignment(assignmentData);
+      });
+
+      const results = await Promise.all(promises);
+      const successCount = results.filter((r) => r.success).length;
+
+      if (successCount === bulkConfirm.classSubjectIds.length) {
+        setNotification({
+          type: "success",
+          title: "Succès",
+          message: `${successCount} affectation(s) créée(s) avec succès (${bulkConfirm.classSubjectIds.length} requête(s) envoyée(s))`,
+          isVisible: true,
+        });
+
+        // Réinitialiser le formulaire
+        setSelectedTeacher(0);
+        setSelectedClassSubjects([]);
+        setStartDate("");
+        setEndDate("");
+        setIsPrincipalTeacher(false);
+
+        // Recharger les données
+        const assignmentsRes = await apiService.getAllTeachingAssignments();
+        if (assignmentsRes.success) setAssignments(assignmentsRes.data || []);
+      } else {
+        setNotification({
+          type: "error",
+          title: "Erreur partielle",
+          message: `${successCount}/${bulkConfirm.classSubjectIds.length} affectation(s) créée(s) (${bulkConfirm.classSubjectIds.length} requête(s) envoyée(s))`,
+          isVisible: true,
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la création en lot:", error);
+      setNotification({
+        type: "error",
+        title: "Erreur",
+        message: "Erreur lors de la création des affectations",
+        isVisible: true,
+      });
+    } finally {
+      setIsSubmitting(false);
+      setBulkConfirm({
+        show: false,
+        teacherId: null,
+        classSubjectIds: [],
+        isPrincipal: false,
+      });
+    }
+  };
+
+  const handleBulkCancel = () => {
+    setBulkConfirm({
+      show: false,
+      teacherId: null,
+      classSubjectIds: [],
+      isPrincipal: false,
+    });
+  };
+
+  // Fonction pour gérer l'expansion des professeurs
+  const toggleTeacherExpansion = (teacherId: string) => {
+    setExpandedTeachers((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(teacherId)) {
+        newSet.delete(teacherId);
+      } else {
+        newSet.add(teacherId);
+      }
+      return newSet;
     });
   };
 
@@ -505,10 +643,110 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Sélection de la catégorie */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Catégorie d'enseignement *
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div
+                        onClick={() => setTeacherCategory("college")}
+                        className={`p-4 rounded-lg cursor-pointer transition-colors border-2 ${
+                          teacherCategory === "college"
+                            ? "bg-blue-50 border-blue-500"
+                            : "bg-gray-50 border-gray-300 hover:bg-gray-100"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                              teacherCategory === "college"
+                                ? "bg-blue-500 border-blue-500"
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {teacherCategory === "college" && (
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              Collège (6ème)
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              Professeur principal possible
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        onClick={() => setTeacherCategory("lycee")}
+                        className={`p-4 rounded-lg cursor-pointer transition-colors border-2 ${
+                          teacherCategory === "lycee"
+                            ? "bg-blue-50 border-blue-500"
+                            : "bg-gray-50 border-gray-300 hover:bg-gray-100"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                              teacherCategory === "lycee"
+                                ? "bg-blue-500 border-blue-500"
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {teacherCategory === "lycee" && (
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              Lycée/Fac (7ème+)
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              Assignation multiple possible
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Option professeur principal pour collège */}
+                  {teacherCategory === "college" && (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="isPrincipal"
+                          checked={isPrincipalTeacher}
+                          onChange={(e) =>
+                            setIsPrincipalTeacher(e.target.checked)
+                          }
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label
+                          htmlFor="isPrincipal"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Définir comme professeur principal de la classe
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Le professeur principal gère la classe et peut enseigner
+                        plusieurs matières
+                      </p>
+                    </div>
+                  )}
+
                   {/* Sélection de la matière-classe */}
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Sélectionner la matière-classe *
+                      {teacherCategory === "college" && isPrincipalTeacher
+                        ? "Sélectionner les matières-classes (multiple) *"
+                        : teacherCategory === "lycee"
+                        ? "Sélectionner les matières-classes (multiple) *"
+                        : "Sélectionner la matière-classe *"}
                     </label>
 
                     {/* Recherche de matières-classes */}
@@ -541,61 +779,91 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
 
                     {/* Liste des matières-classes */}
                     <div className="h-48 overflow-y-auto border border-gray-200 rounded-lg p-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      {filteredClassSubjects.map((classSubject) => (
-                        <div
-                          key={classSubject.id}
-                          onClick={() =>
-                            setSelectedClassSubject(classSubject.id)
-                          }
-                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                            selectedClassSubject === classSubject.id
-                              ? "bg-green-300 border-2 border-green-200"
-                              : "bg-gray-200 border-2 border-gray-500 hover:bg-gray-100"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                                selectedClassSubject === classSubject.id
-                                  ? "bg-green-500 border-green-500"
-                                  : "border-gray-300"
-                              }`}
-                            >
-                              {selectedClassSubject === classSubject.id && (
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                              )}
-                            </div>
-                            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                              <svg
-                                className="w-4 h-4 text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                      {filteredClassSubjects.map((classSubject) => {
+                        const isMultipleSelection =
+                          (teacherCategory === "college" &&
+                            isPrincipalTeacher) ||
+                          teacherCategory === "lycee";
+                        const isSelected = isMultipleSelection
+                          ? selectedClassSubjects.includes(classSubject.id)
+                          : selectedClassSubject === classSubject.id;
+
+                        return (
+                          <div
+                            key={classSubject.id}
+                            onClick={() => {
+                              if (isMultipleSelection) {
+                                handleClassSubjectToggle(classSubject.id);
+                              } else {
+                                setSelectedClassSubject(classSubject.id);
+                              }
+                            }}
+                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                              isSelected
+                                ? "bg-green-300 border-2 border-green-200"
+                                : "bg-gray-200 border-2 border-gray-500 hover:bg-gray-100"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                  isSelected
+                                    ? "bg-green-500 border-green-500"
+                                    : "border-gray-300"
+                                }`}
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                />
-                              </svg>
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-900">
-                                {classSubject.subject?.name || "Matière"}
-                              </h3>
-                              <p className="text-sm text-gray-600">
-                                Classe: {classSubject.class?.name || "Classe"} (
-                                {classSubject.class?.level || "Niveau"})
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Coef: {classSubject.coefficient} •{" "}
-                                {classSubject.weeklyHours || 0}h/semaine
-                              </p>
+                                {isSelected && (
+                                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                                )}
+                              </div>
+                              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                <svg
+                                  className="w-4 h-4 text-white"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                  />
+                                </svg>
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900">
+                                  {classSubject.subject?.name || "Matière"}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  Classe: {classSubject.class?.name || "Classe"}{" "}
+                                  ({classSubject.class?.level || "Niveau"})
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Coef: {classSubject.coefficient} •{" "}
+                                  {classSubject.weeklyHours || 0}h/semaine
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
+
+                      {/* Indicateur de sélection multiple */}
+                      {((teacherCategory === "college" && isPrincipalTeacher) ||
+                        teacherCategory === "lycee") &&
+                        selectedClassSubjects.length > 0 && (
+                          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-sm font-medium text-blue-900">
+                                {selectedClassSubjects.length} matière(s)
+                                sélectionnée(s)
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
                       {filteredClassSubjects.length === 0 && (
                         <div className="text-center py-8 text-gray-500">
                           {classSubjects.length === 0 ? (
@@ -645,63 +913,280 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || classSubjects.length === 0}
-                  >
-                    {isSubmitting ? "Affectation..." : "Affecter l'enseignant"}
-                  </Button>
+                  <div className="flex gap-3">
+                    {/* Bouton pour affectation simple */}
+                    {!(
+                      (teacherCategory === "college" && isPrincipalTeacher) ||
+                      teacherCategory === "lycee"
+                    ) && (
+                      <Button
+                        type="submit"
+                        disabled={
+                          isSubmitting ||
+                          classSubjects.length === 0 ||
+                          !selectedClassSubject
+                        }
+                        className="flex-1"
+                      >
+                        {isSubmitting
+                          ? "Affectation..."
+                          : "Affecter l'enseignant"}
+                      </Button>
+                    )}
+
+                    {/* Bouton pour affectation multiple */}
+                    {((teacherCategory === "college" && isPrincipalTeacher) ||
+                      teacherCategory === "lycee") && (
+                      <Button
+                        type="button"
+                        onClick={handleBulkAssignment}
+                        disabled={
+                          isSubmitting || selectedClassSubjects.length === 0
+                        }
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        {isSubmitting
+                          ? "Affectation..."
+                          : `Affecter ${selectedClassSubjects.length} matière(s)`}
+                      </Button>
+                    )}
+                  </div>
                 </form>
               </div>
             )}
 
             {activeTab === "list" && (
               <div>
-                <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                  {assignments.map((assignment) => (
-                    <div
-                      key={assignment.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
-                    >
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          {assignment.teacher?.user?.firstName ||
-                            "Prénom inconnu"}{" "}
-                          {assignment.teacher?.user?.lastName || "Nom inconnu"}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {assignment.classSubject?.subject?.name ||
-                            "Matière inconnue"}{" "}
-                          -{" "}
-                          {assignment.classSubject?.class?.name ||
-                            "Classe inconnue"}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Du{" "}
-                          {new Date(assignment.startDate).toLocaleDateString()}
-                          {assignment.endDate &&
-                            ` au ${new Date(
-                              assignment.endDate
-                            ).toLocaleDateString()}`}
-                        </p>
-                      </div>
-                      <Button
-                        onClick={() =>
-                          handleDeleteClick(assignment.id, assignment)
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                  Affectations par enseignant
+                </h2>
+
+                <div className="space-y-6 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  {(() => {
+                    // Grouper les affectations par enseignant
+                    const groupedAssignments = assignments.reduce(
+                      (acc, assignment) => {
+                        const teacherId = assignment.teacher?.id;
+                        if (!teacherId) return acc;
+
+                        if (!acc[teacherId]) {
+                          acc[teacherId] = {
+                            teacher: assignment.teacher,
+                            assignments: [],
+                          };
                         }
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        Supprimer
-                      </Button>
-                    </div>
-                  ))}
-                  {assignments.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      Aucune affectation trouvée
-                    </div>
-                  )}
+                        acc[teacherId].assignments.push(assignment);
+                        return acc;
+                      },
+                      {} as Record<string, { teacher: any; assignments: any[] }> // eslint-disable-line @typescript-eslint/no-explicit-any
+                    );
+
+                    const groupedArray = Object.values(groupedAssignments);
+
+                    if (groupedArray.length === 0) {
+                      return (
+                        <div className="text-center py-12">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg
+                              className="w-8 h-8 text-gray-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                              />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            Aucune affectation
+                          </h3>
+                          <p className="text-gray-500">
+                            Commencez par créer des affectations d'enseignants
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return groupedArray.map(
+                      (
+                        group: any // eslint-disable-line @typescript-eslint/no-explicit-any
+                      ) => {
+                        const teacherId = group.teacher.id.toString();
+                        const isExpanded = expandedTeachers.has(teacherId);
+
+                        return (
+                          <div
+                            key={group.teacher.id}
+                            className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                          >
+                            {/* En-tête du professeur - cliquable pour expansion */}
+                            <div
+                              className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-colors"
+                              onClick={() => toggleTeacherExpansion(teacherId)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <svg
+                                      className="w-6 h-6 text-white"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                      />
+                                    </svg>
+                                  </div>
+                                  <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">
+                                      {group.teacher.user?.firstName ||
+                                        "Prénom inconnu"}{" "}
+                                      {group.teacher.user?.lastName ||
+                                        "Nom inconnu"}
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                      {group.assignments.length} matière
+                                      {group.assignments.length > 1
+                                        ? "s"
+                                        : ""}{" "}
+                                      assignée
+                                      {group.assignments.length > 1 ? "s" : ""}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="text-right">
+                                    <div className="text-sm font-medium text-blue-600">
+                                      {group.assignments.length} affectation
+                                      {group.assignments.length > 1 ? "s" : ""}
+                                    </div>
+                                  </div>
+                                  {/* Icône d'expansion */}
+                                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                    <svg
+                                      className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${
+                                        isExpanded ? "rotate-180" : ""
+                                      }`}
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 9l-7 7-7-7"
+                                      />
+                                    </svg>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Liste des matières - affichée seulement si étendu */}
+                            {isExpanded && (
+                              <div className="p-6 border-t border-gray-100">
+                                <div className="space-y-3">
+                                  {group.assignments.map(
+                                    (
+                                      assignment: any // eslint-disable-line @typescript-eslint/no-explicit-any
+                                    ) => (
+                                      <div
+                                        key={assignment.id}
+                                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors"
+                                      >
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                              <svg
+                                                className="w-4 h-4 text-white"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                                />
+                                              </svg>
+                                            </div>
+                                            <div>
+                                              <h4 className="font-medium text-gray-900">
+                                                {assignment.classSubject
+                                                  ?.subject?.name ||
+                                                  "Matière inconnue"}
+                                              </h4>
+                                              <p className="text-sm text-gray-600">
+                                                Classe:{" "}
+                                                {assignment.classSubject?.class
+                                                  ?.name || "Classe inconnue"}
+                                                (
+                                                {assignment.classSubject?.class
+                                                  ?.level || "Niveau"}
+                                                )
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                Du{" "}
+                                                {new Date(
+                                                  assignment.startDate
+                                                ).toLocaleDateString("fr-FR")}
+                                                {assignment.endDate &&
+                                                  ` au ${new Date(
+                                                    assignment.endDate
+                                                  ).toLocaleDateString(
+                                                    "fr-FR"
+                                                  )}`}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <Button
+                                          onClick={() =>
+                                            handleDeleteClick(
+                                              assignment.id,
+                                              assignment
+                                            )
+                                          }
+                                          variant="outline"
+                                          size="sm"
+                                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                        >
+                                          <svg
+                                            className="w-4 h-4 mr-1"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                            />
+                                          </svg>
+                                          Supprimer
+                                        </Button>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                    );
+                  })()}
                 </div>
               </div>
             )}
@@ -758,6 +1243,86 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
               >
                 Supprimer
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation pour affectation multiple */}
+      {bulkConfirm.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="p-6">
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Confirmer l'affectation multiple
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  {bulkConfirm.isPrincipal
+                    ? "Affecter l'enseignant aux matières sélectionnées (marqué comme professeur principal) ?"
+                    : "Affecter l'enseignant aux matières sélectionnées ?"}
+                </p>
+
+                {/* Détails de l'enseignant */}
+                <div className="bg-blue-50 rounded-lg p-3 mb-4">
+                  <p className="text-sm font-medium text-blue-900">
+                    Enseignant:{" "}
+                    {
+                      teachers.find((t) => t.id === bulkConfirm.teacherId)?.user
+                        ?.firstName
+                    }{" "}
+                    {
+                      teachers.find((t) => t.id === bulkConfirm.teacherId)?.user
+                        ?.lastName
+                    }
+                  </p>
+                  {bulkConfirm.isPrincipal && (
+                    <p className="text-xs text-blue-700 mt-1">
+                      ⭐ Professeur principal (affichage frontend uniquement)
+                    </p>
+                  )}
+                </div>
+
+                {/* Liste des matières */}
+                <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                  <p className="text-sm font-medium text-gray-900 mb-2">
+                    Matières sélectionnées ({bulkConfirm.classSubjectIds.length}
+                    ):
+                  </p>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {bulkConfirm.classSubjectIds.map((id) => {
+                      const classSubject = classSubjects.find(
+                        (cs) => cs.id === id
+                      );
+                      return (
+                        <p key={id} className="text-xs text-gray-600">
+                          • {classSubject?.subject?.name} -{" "}
+                          {classSubject?.class?.name}
+                        </p>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <p className="text-xs text-orange-600 mb-6">
+                  {bulkConfirm.classSubjectIds.length} affectation(s) seront
+                  créée(s).
+                </p>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <Button onClick={handleBulkCancel} variant="outline" size="sm">
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleBulkConfirm}
+                  variant="outline"
+                  size="sm"
+                  className="bg-green-600 text-white hover:bg-green-700 border-green-600"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Création..." : "Confirmer"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
