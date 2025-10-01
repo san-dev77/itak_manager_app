@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useReactToPrint } from "react-to-print";
 import Layout from "../../components/layout/Layout";
 import {
   Clock,
@@ -12,6 +13,7 @@ import {
   MapPin,
   Grid3x3,
   List,
+  Printer,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -46,6 +48,7 @@ const TimetablePage: React.FC = () => {
   );
   const [teachingAssignmentSearch, setTeachingAssignmentSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const printRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState<CreateTimetableDto>({
     teachingAssignmentId: "",
@@ -279,6 +282,50 @@ const TimetablePage: React.FC = () => {
     return time.substring(0, 5); // Ne garde que HH:MM
   };
 
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Emploi du temps - ${
+      selectedClass
+        ? classes.find((c) => c.id === selectedClass)?.name
+        : "Classe"
+    }`,
+    pageStyle: `
+      @page {
+        size: A4 landscape;
+        margin: 1cm;
+      }
+      @media print {
+        body {
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+        }
+        .print-header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+        }
+        .print-table {
+          border-collapse: collapse !important;
+        }
+        .print-cell {
+          border: 1px solid #d1d5db !important;
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+        }
+        .print-time-cell {
+          background: linear-gradient(to right, #f9fafb, #f3f4f6) !important;
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+        }
+        .print-course-cell {
+          background: #ffffff !important;
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+        }
+      }
+    `,
+  });
+
   // Trier les cours par heure de début
   Object.keys(timetablesByDay).forEach((day) => {
     timetablesByDay[day as DayOfWeek].sort((a, b) =>
@@ -393,13 +440,24 @@ const TimetablePage: React.FC = () => {
                 </button>
               </div>
 
+              {viewMode === "grid" && filteredTimetables.length > 0 && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handlePrint}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Printer className="w-4 h-4" />
+                </Button>
+              )}
+
               <Button
                 onClick={() => setShowCreateModal(true)}
                 disabled={!selectedSchoolYear || !selectedClass}
                 className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
               >
                 <Plus className="w-4 h-4" />
-                Ajouter un cours
+                Ajouter
               </Button>
             </div>
           </div>
@@ -532,138 +590,187 @@ const TimetablePage: React.FC = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-6">
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                      <th className="border border-gray-300 p-3 text-left font-semibold min-w-[100px]">
-                        Heures
-                      </th>
-                      {daysOfWeek
-                        .filter((d) => d.value !== DayOfWeek.SUNDAY)
-                        .map((day) => (
-                          <th
-                            key={day.value}
-                            className="border border-gray-300 p-3 text-center font-semibold"
-                          >
-                            {day.label}
-                          </th>
-                        ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(() => {
-                      // Récupérer toutes les plages horaires uniques des cours
-                      const allTimeRanges = new Set<string>();
-                      filteredTimetables.forEach((tt) => {
-                        allTimeRanges.add(
-                          `${formatTime(tt.startTime)}-${formatTime(
-                            tt.endTime
-                          )}`
-                        );
-                      });
+                <div ref={printRef} className="print-container">
+                  {/* En-tête pour l'impression */}
+                  <div className="print-header hidden print:block bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 mb-6 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <img
+                          src="/src/assets/logo itak.png"
+                          alt="Logo ITAK"
+                          className="w-16 h-16 object-contain bg-white rounded-lg p-2"
+                        />
+                        <div>
+                          <h1 className="text-2xl font-bold">
+                            Institut Technique 'l'Antidote' de Kati
+                          </h1>
+                          <p className="text-lg opacity-90">Emploi du temps</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm opacity-90">
+                          {selectedClass
+                            ? classes.find((c) => c.id === selectedClass)?.name
+                            : "Classe"}
+                        </p>
+                        <p className="text-sm opacity-90">
+                          {selectedSchoolYear
+                            ? schoolYears.find(
+                                (sy) => sy.id === selectedSchoolYear
+                              )?.name
+                            : "Année scolaire"}
+                        </p>
+                        <p className="text-xs opacity-75">
+                          {new Date().toLocaleDateString("fr-FR")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-                      // Convertir en tableau, trier par heure de début
-                      const timeSlots = Array.from(allTimeRanges).sort(
-                        (a, b) => {
-                          const [startA] = a.split("-");
-                          const [startB] = b.split("-");
-                          return startA.localeCompare(startB);
-                        }
-                      );
-
-                      // Si aucun cours, afficher un message
-                      if (timeSlots.length === 0) {
-                        return (
-                          <tr>
-                            <td
-                              colSpan={7}
-                              className="p-8 text-center text-gray-500"
+                  <table className="w-full border-collapse border border-gray-300 print-table">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                        <th className="border border-gray-300 p-3 text-left font-semibold min-w-[100px]">
+                          Heures
+                        </th>
+                        {daysOfWeek
+                          .filter((d) => d.value !== DayOfWeek.SUNDAY)
+                          .map((day) => (
+                            <th
+                              key={day.value}
+                              className="border border-gray-300 p-3 text-center font-semibold"
                             >
-                              Aucun cours programmé
-                            </td>
-                          </tr>
+                              {day.label}
+                            </th>
+                          ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        // Récupérer toutes les plages horaires uniques des cours
+                        const allTimeRanges = new Set<string>();
+                        filteredTimetables.forEach((tt) => {
+                          allTimeRanges.add(
+                            `${formatTime(tt.startTime)}-${formatTime(
+                              tt.endTime
+                            )}`
+                          );
+                        });
+
+                        // Convertir en tableau, trier par heure de début
+                        const timeSlots = Array.from(allTimeRanges).sort(
+                          (a, b) => {
+                            const [startA] = a.split("-");
+                            const [startB] = b.split("-");
+                            return startA.localeCompare(startB);
+                          }
                         );
-                      }
 
-                      return timeSlots.map((timeRange) => {
-                        const [startTime, endTime] = timeRange.split("-");
+                        // Si aucun cours, afficher un message
+                        if (timeSlots.length === 0) {
+                          return (
+                            <tr>
+                              <td
+                                colSpan={7}
+                                className="p-8 text-center text-gray-500"
+                              >
+                                Aucun cours programmé
+                              </td>
+                            </tr>
+                          );
+                        }
 
-                        return (
-                          <tr key={timeRange} className="hover:bg-gray-50">
-                            <td className="border border-gray-300 p-3 bg-gradient-to-r from-gray-50 to-gray-100 whitespace-nowrap">
-                              <div className="flex flex-col items-center">
-                                <div className="text-base font-bold text-gray-900">
-                                  {startTime}
+                        return timeSlots.map((timeRange) => {
+                          const [startTime, endTime] = timeRange.split("-");
+
+                          return (
+                            <tr key={timeRange} className="hover:bg-gray-50">
+                              <td className="border border-gray-300 p-3 bg-gradient-to-r from-gray-50 to-gray-100 whitespace-nowrap print-cell print-time-cell">
+                                <div className="flex flex-col items-center">
+                                  <div className="text-base font-bold text-gray-900">
+                                    {startTime}
+                                  </div>
+                                  <div className="text-xs text-gray-400 my-1">
+                                    ↓
+                                  </div>
+                                  <div className="text-sm font-semibold text-gray-700">
+                                    {endTime}
+                                  </div>
                                 </div>
-                                <div className="text-xs text-gray-400 my-1">
-                                  ↓
-                                </div>
-                                <div className="text-sm font-semibold text-gray-700">
-                                  {endTime}
-                                </div>
-                              </div>
-                            </td>
-                            {daysOfWeek
-                              .filter((d) => d.value !== DayOfWeek.SUNDAY)
-                              .map((day) => {
-                                const dayCourses =
-                                  timetablesByDay[day.value] || [];
-                                const courseAtTime = dayCourses.find(
-                                  (course) => {
+                              </td>
+                              {daysOfWeek
+                                .filter((d) => d.value !== DayOfWeek.SUNDAY)
+                                .map((day) => {
+                                  const dayCourses =
+                                    timetablesByDay[day.value] || [];
+                                  const courseAtTime = dayCourses.find(
+                                    (course) => {
+                                      return (
+                                        formatTime(course.startTime) ===
+                                          startTime &&
+                                        formatTime(course.endTime) === endTime
+                                      );
+                                    }
+                                  );
+
+                                  if (!courseAtTime) {
                                     return (
-                                      formatTime(course.startTime) ===
-                                        startTime &&
-                                      formatTime(course.endTime) === endTime
+                                      <td
+                                        key={day.value}
+                                        className="border border-gray-300 p-2 bg-white print-cell print-course-cell"
+                                      >
+                                        {/* Cellule vide */}
+                                      </td>
                                     );
                                   }
-                                );
 
-                                if (!courseAtTime) {
+                                  const assignment = teachingAssignments.find(
+                                    (ta) =>
+                                      ta.id ===
+                                      courseAtTime.teachingAssignmentId
+                                  );
+
                                   return (
                                     <td
                                       key={day.value}
-                                      className="border border-gray-300 p-2 bg-white"
+                                      className="border border-gray-300 p-3 bg-blue-50 align-top print-cell print-course-cell"
                                     >
-                                      {/* Cellule vide */}
+                                      <div className="text-sm">
+                                        <div className="font-bold text-blue-900 mb-1">
+                                          {assignment?.classSubject?.subject
+                                            ?.name || "Matière"}
+                                        </div>
+                                        <div className="text-gray-700 text-xs">
+                                          {assignment?.teacher?.user?.firstName}{" "}
+                                          {assignment?.teacher?.user?.lastName}
+                                        </div>
+                                        {courseAtTime.room && (
+                                          <div className="text-gray-600 text-xs flex items-center gap-1 mt-1">
+                                            <MapPin className="w-3 h-3" />
+                                            {courseAtTime.room}
+                                          </div>
+                                        )}
+                                      </div>
                                     </td>
                                   );
-                                }
+                                })}
+                            </tr>
+                          );
+                        });
+                      })()}
+                    </tbody>
+                  </table>
 
-                                const assignment = teachingAssignments.find(
-                                  (ta) =>
-                                    ta.id === courseAtTime.teachingAssignmentId
-                                );
-
-                                return (
-                                  <td
-                                    key={day.value}
-                                    className="border border-gray-300 p-3 bg-blue-50 align-top"
-                                  >
-                                    <div className="text-sm">
-                                      <div className="font-bold text-blue-900 mb-1">
-                                        {assignment?.classSubject?.subject
-                                          ?.name || "Matière"}
-                                      </div>
-                                      <div className="text-gray-700 text-xs">
-                                        {assignment?.teacher?.user?.firstName}{" "}
-                                        {assignment?.teacher?.user?.lastName}
-                                      </div>
-                                      {courseAtTime.room && (
-                                        <div className="text-gray-600 text-xs flex items-center gap-1 mt-1">
-                                          <MapPin className="w-3 h-3" />
-                                          {courseAtTime.room}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </td>
-                                );
-                              })}
-                          </tr>
-                        );
-                      });
-                    })()}
-                  </tbody>
-                </table>
+                  {/* Pied de page pour l'impression */}
+                  <div className="hidden print:block mt-8 pt-4 border-t border-gray-300">
+                    <div className="flex justify-between items-center text-sm text-gray-600">
+                      <div>
+                        <p>Kati, Mali</p>
+                      </div>
+                      <div className="text-right"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
