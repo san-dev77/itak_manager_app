@@ -105,7 +105,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
       icon: <BarChart3 className="w-5 h-5" />,
     },
     {
-      title: "Paramètres",
+      title: "Affectations",
       path: "/settings",
       icon: <Settings className="w-5 h-5" />,
     },

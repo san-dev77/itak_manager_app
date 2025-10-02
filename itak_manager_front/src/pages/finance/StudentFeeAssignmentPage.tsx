@@ -4,7 +4,18 @@ import Layout from "../../components/layout/Layout";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import { apiService } from "../../services/api";
-import { User, DollarSign, Calendar, Search } from "lucide-react";
+import {
+  User,
+  DollarSign,
+  Calendar,
+  Search,
+  CheckSquare,
+  Square,
+  Users,
+  GraduationCap,
+  FileText,
+  ArrowRight,
+} from "lucide-react";
 
 interface Student {
   id: string;
@@ -86,6 +97,12 @@ const StudentFeeAssignmentPage: React.FC = () => {
   // États pour la recherche
   const [studentSearchTerm, setStudentSearchTerm] = useState("");
   const [feeTypeSearchTerm, setFeeTypeSearchTerm] = useState("");
+
+  // États pour la sélection multiple
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(
+    new Set()
+  );
+  const [isBulkMode, setIsBulkMode] = useState(false);
 
   // État pour le formulaire
   const [formData, setFormData] = useState({
@@ -271,8 +288,43 @@ const StudentFeeAssignmentPage: React.FC = () => {
   };
 
   const handleStudentSelect = (student: Student) => {
-    setSelectedStudent(student);
-    setStudentSearchTerm("");
+    if (isBulkMode) {
+      toggleStudentSelection(student.id);
+    } else {
+      setSelectedStudent(student);
+      setStudentSearchTerm("");
+    }
+  };
+
+  // Fonctions pour la sélection multiple
+  const toggleStudentSelection = (studentId: string) => {
+    const newSelection = new Set(selectedStudents);
+    if (newSelection.has(studentId)) {
+      newSelection.delete(studentId);
+    } else {
+      newSelection.add(studentId);
+    }
+    setSelectedStudents(newSelection);
+  };
+
+  const selectAllFilteredStudents = () => {
+    const filtered = students.filter(
+      (student) =>
+        student.user.firstName
+          .toLowerCase()
+          .includes(studentSearchTerm.toLowerCase()) ||
+        student.user.lastName
+          .toLowerCase()
+          .includes(studentSearchTerm.toLowerCase()) ||
+        student.matricule
+          .toLowerCase()
+          .includes(studentSearchTerm.toLowerCase())
+    );
+    setSelectedStudents(new Set(filtered.map((s) => s.id)));
+  };
+
+  const deselectAllStudents = () => {
+    setSelectedStudents(new Set());
   };
 
   const handleFeeTypeSelect = (feeType: FeeType) => {
@@ -340,6 +392,78 @@ const StudentFeeAssignmentPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
+      alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Fonction pour la soumission en lot
+  const handleBulkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (
+      selectedStudents.size === 0 ||
+      !selectedFeeType ||
+      !selectedAcademicYear
+    ) {
+      alert(
+        "Veuillez sélectionner au moins un étudiant, un type de frais et une année scolaire."
+      );
+      return;
+    }
+
+    if (!formData.dueDate) {
+      alert("Veuillez définir une date d'échéance.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Vérifier que le montant par défaut est valide
+      if (
+        !selectedFeeType.amountDefault ||
+        selectedFeeType.amountDefault <= 0
+      ) {
+        alert(
+          "Erreur: Le type de frais sélectionné n'a pas de montant valide."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Créer les frais pour tous les étudiants sélectionnés
+      const promises = Array.from(selectedStudents).map((studentId) => {
+        const data = {
+          studentId: studentId,
+          feeTypeId: selectedFeeType.id,
+          academicYearId: selectedAcademicYear.id,
+          amountAssigned: Number(selectedFeeType.amountDefault),
+          dueDate: formData.dueDate,
+        };
+        return apiService.createStudentFee(data);
+      });
+
+      const responses = await Promise.all(promises);
+      const successful = responses.filter((r) => r.success);
+      const failed = responses.filter((r) => !r.success);
+
+      if (successful.length === responses.length) {
+        alert(
+          `Frais attribués avec succès à ${successful.length} étudiant(s) !`
+        );
+        window.location.reload();
+      } else {
+        alert(
+          `${successful.length} attribution(s) réussie(s), ${failed.length} échouée(s).`
+        );
+        if (failed.length < responses.length) {
+          window.location.reload();
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde en lot:", error);
       alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
     } finally {
       setIsSubmitting(false);
@@ -420,17 +544,54 @@ const StudentFeeAssignmentPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Sélection de l'étudiant */}
+          <form
+            onSubmit={isBulkMode ? handleBulkSubmit : handleSubmit}
+            className="space-y-8"
+          >
+            {/* Sélection de l'étudiant(s) */}
             <Card className="p-6">
-              <div className="flex items-center mb-4">
-                <User className="w-5 h-5 text-blue-600 mr-2" />
-                <h2 className="text-xl font-semibold text-gray-900">
-                  1. Sélectionner un étudiant
-                </h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  {isBulkMode ? (
+                    <Users className="w-5 h-5 text-purple-600 mr-2" />
+                  ) : (
+                    <User className="w-5 h-5 text-blue-600 mr-2" />
+                  )}
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    1. Sélectionner{" "}
+                    {isBulkMode ? "des étudiants" : "un étudiant"}
+                  </h2>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    type="button"
+                    variant={!isBulkMode ? "primary" : "outline"}
+                    onClick={() => {
+                      setIsBulkMode(false);
+                      setSelectedStudents(new Set());
+                    }}
+                    className="text-sm"
+                  >
+                    <User className="w-4 h-4 mr-1" />
+                    Mode unique
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={isBulkMode ? "primary" : "outline"}
+                    onClick={() => {
+                      setIsBulkMode(true);
+                      setSelectedStudent(null);
+                    }}
+                    className="text-sm"
+                  >
+                    <Users className="w-4 h-4 mr-1" />
+                    Mode multiple
+                  </Button>
+                </div>
               </div>
 
-              {selectedStudent ? (
+              {/* Mode unique - Affichage de l'étudiant sélectionné */}
+              {!isBulkMode && selectedStudent ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -442,34 +603,18 @@ const StudentFeeAssignmentPage: React.FC = () => {
                           {selectedStudent.user.firstName}{" "}
                           {selectedStudent.user.lastName}
                         </h3>
-                        <div className="space-y-1">
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Email:</span>{" "}
-                            {selectedStudent.user.email}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Matricule:</span>{" "}
+                        <div className="flex items-center space-x-4 text-sm">
+                          <span className="text-gray-600">
+                            <FileText className="w-3 h-3 inline mr-1" />
                             {selectedStudent.matricule}
-                          </p>
-                          {getStudentClass(
-                            selectedStudent.id,
-                            selectedStudent.userId
-                          ) ? (
-                            <p className="text-sm text-green-600 font-medium">
-                              <span className="font-medium">Classe:</span>{" "}
-                              {
-                                getStudentClass(
-                                  selectedStudent.id,
-                                  selectedStudent.userId
-                                )?.name
-                              }
-                            </p>
-                          ) : (
-                            <p className="text-sm text-orange-600 font-medium">
-                              <span className="font-medium">Classe:</span> Non
-                              assigné
-                            </p>
-                          )}
+                          </span>
+                          <span className="text-gray-600">
+                            <GraduationCap className="w-3 h-3 inline mr-1" />
+                            {getStudentClass(
+                              selectedStudent.id,
+                              selectedStudent.userId
+                            )?.name || "Non assigné"}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -482,71 +627,162 @@ const StudentFeeAssignmentPage: React.FC = () => {
                     </Button>
                   </div>
                 </div>
-              ) : (
+              ) : null}
+
+              {/* Mode multiple - Affichage du résumé des étudiants sélectionnés */}
+              {isBulkMode && selectedStudents.size > 0 && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Users className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-900">
+                          {selectedStudents.size} étudiant(s) sélectionné(s)
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Les frais seront attribués à tous les étudiants
+                          sélectionnés
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={deselectAllStudents}
+                    >
+                      Tout désélectionner
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Liste des étudiants - Compacte et scrollable */}
+              {((!isBulkMode && !selectedStudent) || isBulkMode) && (
                 <div>
+                  {/* Barre de recherche */}
                   <div className="relative mb-4">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
-                      placeholder="Rechercher un étudiant par nom, prénom, numéro ou email..."
+                      placeholder="Rechercher un étudiant par nom, prénom, matricule..."
                       value={studentSearchTerm}
                       onChange={(e) => setStudentSearchTerm(e.target.value)}
-                      className="w-full text-black pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full text-black pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  {filteredStudents.length === 0 && students.length > 0 && (
-                    <div className="text-center py-8 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
-                      <p className="text-yellow-800 font-medium">
-                        Tous les étudiants ont déjà des frais appliqués
-                      </p>
-                      <p className="text-yellow-600 text-sm mt-1">
-                        Seuls les étudiants sans frais sont affichés ici
-                      </p>
+
+                  {/* Actions en lot (mode multiple uniquement) */}
+                  {isBulkMode && (
+                    <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-lg">
+                      <span className="text-sm font-medium text-gray-700">
+                        {selectedStudents.size} / {filteredStudents.length}{" "}
+                        sélectionné(s)
+                      </span>
+                      <div className="flex space-x-2">
+                        <Button
+                          type="button"
+                          onClick={selectAllFilteredStudents}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          <CheckSquare className="w-3 h-3 mr-1" />
+                          Tout sélectionner
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={deselectAllStudents}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          <Square className="w-3 h-3 mr-1" />
+                          Tout désélectionner
+                        </Button>
+                      </div>
                     </div>
                   )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
-                    {filteredStudents.map((student) => (
-                      <div
-                        key={student.id}
-                        onClick={() => handleStudentSelect(student)}
-                        className="p-3 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all duration-200"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <User className="w-4 h-4 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-gray-900 text-sm">
-                              {student.user.firstName} {student.user.lastName}
-                            </h3>
-                            <div className="space-y-1">
-                              <p className="text-xs text-gray-600">
-                                <span className="font-medium">Email:</span>{" "}
-                                {student.user.email}
-                              </p>
-                              <p className="text-xs text-gray-600">
-                                <span className="font-medium">Matricule:</span>{" "}
-                                {student.matricule}
-                              </p>
-                              {getStudentClass(student.id, student.userId) ? (
-                                <p className="text-xs text-green-600 font-medium">
-                                  <span className="font-medium">Classe:</span>{" "}
-                                  {
-                                    getStudentClass(student.id, student.userId)
-                                      ?.name
-                                  }
-                                </p>
-                              ) : (
-                                <p className="text-xs text-orange-600 font-medium">
-                                  <span className="font-medium">Classe:</span>{" "}
-                                  Non assigné
-                                </p>
+
+                  {/* Liste compacte et scrollable */}
+                  <div className="border border-gray-200 rounded-lg p-2 bg-gray-50 max-h-[400px] overflow-y-auto">
+                    <div className="space-y-2">
+                      {filteredStudents.map((student) => {
+                        const isSelected =
+                          isBulkMode && selectedStudents.has(student.id);
+                        return (
+                          <div
+                            key={student.id}
+                            onClick={() => handleStudentSelect(student)}
+                            className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
+                              isSelected
+                                ? "border-purple-500 bg-purple-50"
+                                : "border-gray-200 hover:border-blue-500 hover:bg-blue-50 bg-white"
+                            }`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              {/* Checkbox en mode multiple */}
+                              {isBulkMode && (
+                                <div>
+                                  {isSelected ? (
+                                    <CheckSquare className="w-4 h-4 text-purple-600" />
+                                  ) : (
+                                    <Square className="w-4 h-4 text-gray-400" />
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Avatar */}
+                              <div
+                                className={`w-8 h-8 ${
+                                  isSelected ? "bg-purple-100" : "bg-blue-100"
+                                } rounded-full flex items-center justify-center`}
+                              >
+                                <GraduationCap
+                                  className={`w-4 h-4 ${
+                                    isSelected
+                                      ? "text-purple-600"
+                                      : "text-blue-600"
+                                  }`}
+                                />
+                              </div>
+
+                              {/* Informations */}
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-gray-900 text-sm truncate">
+                                  {student.user.firstName}{" "}
+                                  {student.user.lastName}
+                                </h3>
+                                <div className="flex items-center space-x-3 text-xs text-gray-600">
+                                  <span className="flex items-center">
+                                    <FileText className="w-3 h-3 mr-1" />
+                                    {student.matricule}
+                                  </span>
+                                  <span className="flex items-center">
+                                    <GraduationCap className="w-3 h-3 mr-1" />
+                                    {getStudentClass(student.id, student.userId)
+                                      ?.name || "Non assigné"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Flèche en mode unique */}
+                              {!isBulkMode && (
+                                <ArrowRight className="w-4 h-4 text-gray-400" />
                               )}
                             </div>
                           </div>
+                        );
+                      })}
+
+                      {filteredStudents.length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          <GraduationCap className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                          <p>Aucun étudiant trouvé</p>
                         </div>
-                      </div>
-                    ))}
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
