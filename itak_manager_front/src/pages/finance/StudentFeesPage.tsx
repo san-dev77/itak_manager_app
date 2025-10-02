@@ -89,6 +89,8 @@ const StudentFeesPage: React.FC = () => {
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
     new Set()
   );
+  const [payments, setPayments] = useState<any[]>([]);
+  const [studentClasses, setStudentClasses] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     studentId: "",
@@ -121,6 +123,29 @@ const StudentFeesPage: React.FC = () => {
     setExpandedStudents(newExpanded);
   };
 
+  // Fonction pour calculer le montant payé réel en sommant les paiements réussis
+  const getActualAmountPaid = (studentFeeId: string) => {
+    const successfulPayments = payments.filter(
+      (payment) =>
+        payment.studentFeeId === studentFeeId && payment.status === "successful"
+    );
+
+    const totalPaid = successfulPayments.reduce((sum, payment) => {
+      return sum + (Number(payment.amount) || 0);
+    }, 0);
+
+    console.log(`💰 Calcul pour studentFeeId ${studentFeeId}:`, {
+      successfulPayments: successfulPayments.length,
+      totalPaid,
+      payments: successfulPayments.map((p) => ({
+        amount: p.amount,
+        status: p.status,
+      })),
+    });
+
+    return totalPaid;
+  };
+
   // Fonction pour regrouper les frais par étudiant
   const groupFeesByStudent = (fees: StudentFee[]) => {
     const grouped = fees.reduce(
@@ -137,9 +162,12 @@ const StudentFeesPage: React.FC = () => {
         }
         acc[studentId].fees.push(fee);
         acc[studentId].totalAssigned += Number(fee.amountAssigned) || 0;
-        acc[studentId].totalPaid += Number(fee.amountPaid) || 0;
+
+        // Utiliser le montant payé calculé au lieu de fee.amountPaid
+        const actualAmountPaid = getActualAmountPaid(fee.id);
+        acc[studentId].totalPaid += actualAmountPaid;
         acc[studentId].totalRemaining +=
-          (Number(fee.amountAssigned) || 0) - (Number(fee.amountPaid) || 0);
+          (Number(fee.amountAssigned) || 0) - actualAmountPaid;
         return acc;
       },
       {} as Record<
@@ -160,6 +188,20 @@ const StudentFeesPage: React.FC = () => {
   // Fonction helper pour obtenir les données utilisateur d'un étudiant
   const getStudentUser = (userId: string) => {
     return users.find((user) => user.id === userId);
+  };
+
+  // Fonction helper pour obtenir la classe d'un étudiant
+  const getStudentClass = (studentId: string) => {
+    let studentClass = studentClasses.find(
+      (sc) => sc.student.id === studentId && !sc.endDate
+    );
+
+    // Si pas trouvé, essayer sans vérifier endDate
+    if (!studentClass) {
+      studentClass = studentClasses.find((sc) => sc.student.id === studentId);
+    }
+
+    return studentClass?.class?.name || "Non assigné";
   };
 
   const parseAmount = (value: string): number => {
@@ -189,6 +231,47 @@ const StudentFeesPage: React.FC = () => {
     }
   }, [navigate]);
 
+  const loadPayments = async () => {
+    try {
+      const response = await apiService.getAllPayments();
+      if (response.success && response.data) {
+        console.log("📥 Paiements reçus de l'API:", response.data);
+        setPayments(response.data);
+      } else {
+        console.error(
+          "Erreur lors du chargement des paiements:",
+          response.error
+        );
+        setPayments([]);
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des paiements:", error);
+      setPayments([]);
+    }
+  };
+
+  const loadStudentClasses = async () => {
+    try {
+      const response = await apiService.getAllStudentClasses();
+      if (response.success && response.data) {
+        console.log("📥 Classes d'étudiants reçues de l'API:", response.data);
+        setStudentClasses(response.data);
+      } else {
+        console.error(
+          "Erreur lors du chargement des classes d'étudiants:",
+          response.error
+        );
+        setStudentClasses([]);
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors du chargement des classes d'étudiants:",
+        error
+      );
+      setStudentClasses([]);
+    }
+  };
+
   const loadAllData = async () => {
     try {
       setIsLoading(true);
@@ -197,6 +280,8 @@ const StudentFeesPage: React.FC = () => {
         loadStudents(),
         loadFeeTypes(),
         loadAcademicYears(),
+        loadPayments(), // Ajouter le chargement des paiements
+        loadStudentClasses(), // Ajouter le chargement des classes d'étudiants
       ]);
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
@@ -490,7 +575,7 @@ const StudentFeesPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 text-black py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">Tous les statuts</option>
             <option value="pending">En attente</option>
@@ -542,102 +627,49 @@ const StudentFeesPage: React.FC = () => {
                       className="p-6 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-200 cursor-pointer hover:from-slate-100 hover:to-gray-100 transition-all duration-200 shadow-sm"
                       onClick={() => toggleStudentExpansion(group.student.id)}
                     >
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <GraduationCap className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-1">
-                              {studentUser
-                                ? `${studentUser.firstName} ${studentUser.lastName}`
-                                : `Étudiant ${group.student.matricule}`}
-                            </h3>
-                            <div className="flex items-center space-x-4 text-sm text-gray-700">
-                              <div className="flex items-center space-x-1">
-                                <FileText className="w-4 h-4 text-gray-500" />
-                                <span className="font-semibold">
-                                  Matricule:
-                                </span>
-                                <span className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-800">
-                                  {group.student.matricule}
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <DollarSign className="w-4 h-4 text-gray-500" />
-                                <span className="font-semibold">Frais:</span>
-                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold">
-                                  {group.fees.length}
-                                </span>
-                              </div>
+                      <div className="space-y-4">
+                        {/* Section étudiant */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <GraduationCap className="w-6 h-6 text-white" />
                             </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between lg:space-x-6">
-                          {/* Résumé des montants */}
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-right">
-                            <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-                              <div className="flex items-center justify-center space-x-1 mb-1">
-                                <TrendingUp className="w-4 h-4 text-blue-600" />
-                                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                                  Assigné
-                                </span>
-                              </div>
-                              <div className="text-lg font-bold text-gray-900">
-                                {formatAmount(group.totalAssigned)} FCFA
-                              </div>
-                            </div>
-
-                            <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-                              <div className="flex items-center justify-center space-x-1 mb-1">
-                                <CreditCard className="w-4 h-4 text-green-600" />
-                                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                                  Payé
-                                </span>
-                              </div>
-                              <div className="text-lg font-bold text-green-700">
-                                {formatAmount(group.totalPaid)} FCFA
-                              </div>
-                            </div>
-
-                            <div
-                              className={`rounded-lg p-3 shadow-sm border ${
-                                group.totalRemaining > 0
-                                  ? "bg-red-50 border-red-200"
-                                  : "bg-green-50 border-green-200"
-                              }`}
-                            >
-                              <div className="flex items-center justify-center space-x-1 mb-1">
-                                {group.totalRemaining > 0 ? (
-                                  <TrendingDown className="w-4 h-4 text-red-600" />
-                                ) : (
-                                  <CheckCircle className="w-4 h-4 text-green-600" />
-                                )}
-                                <span
-                                  className={`text-xs font-semibold uppercase tracking-wide ${
-                                    group.totalRemaining > 0
-                                      ? "text-red-600"
-                                      : "text-green-600"
-                                  }`}
-                                >
-                                  Restant
-                                </span>
-                              </div>
-                              <div
-                                className={`text-lg font-bold ${
-                                  group.totalRemaining > 0
-                                    ? "text-red-700"
-                                    : "text-green-700"
-                                }`}
-                              >
-                                {formatAmount(group.totalRemaining)} FCFA
+                            <div>
+                              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                {studentUser
+                                  ? `${studentUser.firstName} ${studentUser.lastName}`
+                                  : `Étudiant ${group.student.matricule}`}
+                              </h3>
+                              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
+                                <div className="flex items-center space-x-1">
+                                  <FileText className="w-4 h-4 text-gray-500" />
+                                  <span className="font-semibold">
+                                    Matricule:
+                                  </span>
+                                  <span className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-800">
+                                    {group.student.matricule}
+                                  </span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <GraduationCap className="w-4 h-4 text-gray-500" />
+                                  <span className="font-semibold">Classe:</span>
+                                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-semibold">
+                                    {getStudentClass(group.student.id)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <DollarSign className="w-4 h-4 text-gray-500" />
+                                  <span className="font-semibold">Frais:</span>
+                                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold">
+                                    {group.fees.length}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
 
                           {/* Icône d'expansion */}
-                          <div className="flex items-center ml-4">
+                          <div className="flex items-center">
                             <div
                               className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                                 isExpanded
@@ -650,6 +682,67 @@ const StudentFeesPage: React.FC = () => {
                               ) : (
                                 <ChevronRight className="w-5 h-5" />
                               )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Section résumé des montants */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div className="flex items-center justify-center space-x-2 mb-2">
+                              <TrendingUp className="w-5 h-5 text-blue-600" />
+                              <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                                Total Assigné
+                              </span>
+                            </div>
+                            <div className="text-xl font-bold text-gray-900 text-center">
+                              {formatAmount(group.totalAssigned)} FCFA
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div className="flex items-center justify-center space-x-2 mb-2">
+                              <CreditCard className="w-5 h-5 text-green-600" />
+                              <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                                Total Payé
+                              </span>
+                            </div>
+                            <div className="text-xl font-bold text-green-700 text-center">
+                              {formatAmount(group.totalPaid)} FCFA
+                            </div>
+                          </div>
+
+                          <div
+                            className={`rounded-lg p-4 shadow-sm border ${
+                              group.totalRemaining > 0
+                                ? "bg-red-50 border-red-200"
+                                : "bg-green-50 border-green-200"
+                            }`}
+                          >
+                            <div className="flex items-center justify-center space-x-2 mb-2">
+                              {group.totalRemaining > 0 ? (
+                                <TrendingDown className="w-5 h-5 text-red-600" />
+                              ) : (
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                              )}
+                              <span
+                                className={`text-sm font-semibold uppercase tracking-wide ${
+                                  group.totalRemaining > 0
+                                    ? "text-red-600"
+                                    : "text-green-600"
+                                }`}
+                              >
+                                Total Restant
+                              </span>
+                            </div>
+                            <div
+                              className={`text-xl font-bold text-center ${
+                                group.totalRemaining > 0
+                                  ? "text-red-700"
+                                  : "text-green-700"
+                              }`}
+                            >
+                              {formatAmount(group.totalRemaining)} FCFA
                             </div>
                           </div>
                         </div>
@@ -698,109 +791,112 @@ const StudentFeesPage: React.FC = () => {
 
                                 {/* Montant payé */}
                                 <div className="text-center">
-                                  <div
-                                    className={`rounded-lg p-3 border ${
-                                      Number(fee.amountPaid) > 0
-                                        ? Number(fee.amountPaid) >=
-                                          Number(fee.amountAssigned)
-                                          ? "bg-green-50 border-green-200"
-                                          : "bg-blue-50 border-blue-200"
-                                        : "bg-gray-50 border-gray-200"
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-center space-x-1 mb-1">
-                                      <CreditCard
-                                        className={`w-4 h-4 ${
-                                          Number(fee.amountPaid) > 0
-                                            ? Number(fee.amountPaid) >=
+                                  {(() => {
+                                    const actualAmountPaid =
+                                      getActualAmountPaid(fee.id);
+                                    return (
+                                      <div
+                                        className={`rounded-lg p-3 border ${
+                                          actualAmountPaid > 0
+                                            ? actualAmountPaid >=
                                               Number(fee.amountAssigned)
-                                              ? "text-green-600"
-                                              : "text-blue-600"
-                                            : "text-gray-500"
-                                        }`}
-                                      />
-                                      <span
-                                        className={`text-xs font-semibold uppercase tracking-wide ${
-                                          Number(fee.amountPaid) > 0
-                                            ? Number(fee.amountPaid) >=
-                                              Number(fee.amountAssigned)
-                                              ? "text-green-600"
-                                              : "text-blue-600"
-                                            : "text-gray-500"
+                                              ? "bg-green-50 border-green-200"
+                                              : "bg-blue-50 border-blue-200"
+                                            : "bg-gray-50 border-gray-200"
                                         }`}
                                       >
-                                        Payé
-                                      </span>
-                                    </div>
-                                    <div
-                                      className={`text-sm font-bold ${
-                                        Number(fee.amountPaid) > 0
-                                          ? Number(fee.amountPaid) >=
-                                            Number(fee.amountAssigned)
-                                            ? "text-green-700"
-                                            : "text-blue-700"
-                                          : "text-gray-600"
-                                      }`}
-                                    >
-                                      {formatAmount(fee.amountPaid)} FCFA
-                                      {Number(fee.amountPaid) > 0 &&
-                                        Number(fee.amountPaid) <
-                                          Number(fee.amountAssigned) && (
-                                          <span className="text-xs text-blue-500 ml-1 font-medium">
-                                            (partiel)
+                                        <div className="flex items-center justify-center space-x-1 mb-1">
+                                          <CreditCard
+                                            className={`w-4 h-4 ${
+                                              actualAmountPaid > 0
+                                                ? actualAmountPaid >=
+                                                  Number(fee.amountAssigned)
+                                                  ? "text-green-600"
+                                                  : "text-blue-600"
+                                                : "text-gray-500"
+                                            }`}
+                                          />
+                                          <span
+                                            className={`text-xs font-semibold uppercase tracking-wide ${
+                                              actualAmountPaid > 0
+                                                ? actualAmountPaid >=
+                                                  Number(fee.amountAssigned)
+                                                  ? "text-green-600"
+                                                  : "text-blue-600"
+                                                : "text-gray-500"
+                                            }`}
+                                          >
+                                            Payé
                                           </span>
-                                        )}
-                                    </div>
-                                  </div>
+                                        </div>
+                                        <div
+                                          className={`text-sm font-bold ${
+                                            actualAmountPaid > 0
+                                              ? actualAmountPaid >=
+                                                Number(fee.amountAssigned)
+                                                ? "text-green-700"
+                                                : "text-blue-700"
+                                              : "text-gray-600"
+                                          }`}
+                                        >
+                                          {formatAmount(actualAmountPaid)} FCFA
+                                          {actualAmountPaid > 0 &&
+                                            actualAmountPaid <
+                                              Number(fee.amountAssigned) && (
+                                              <span className="text-xs text-blue-500 ml-1 font-medium">
+                                                (partiel)
+                                              </span>
+                                            )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
 
                                 {/* Montant restant */}
                                 <div className="text-center">
-                                  <div
-                                    className={`rounded-lg p-3 border ${
+                                  {(() => {
+                                    const actualAmountPaid =
+                                      getActualAmountPaid(fee.id);
+                                    const remainingAmount =
                                       Number(fee.amountAssigned) -
-                                        Number(fee.amountPaid) >
-                                      0
-                                        ? "bg-red-50 border-red-200"
-                                        : "bg-green-50 border-green-200"
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-center space-x-1 mb-1">
-                                      {Number(fee.amountAssigned) -
-                                        Number(fee.amountPaid) >
-                                      0 ? (
-                                        <TrendingDown className="w-4 h-4 text-red-600" />
-                                      ) : (
-                                        <CheckCircle className="w-4 h-4 text-green-600" />
-                                      )}
-                                      <span
-                                        className={`text-xs font-semibold uppercase tracking-wide ${
-                                          Number(fee.amountAssigned) -
-                                            Number(fee.amountPaid) >
-                                          0
-                                            ? "text-red-600"
-                                            : "text-green-600"
+                                      actualAmountPaid;
+                                    return (
+                                      <div
+                                        className={`rounded-lg p-3 border ${
+                                          remainingAmount > 0
+                                            ? "bg-red-50 border-red-200"
+                                            : "bg-green-50 border-green-200"
                                         }`}
                                       >
-                                        Restant
-                                      </span>
-                                    </div>
-                                    <div
-                                      className={`text-sm font-bold ${
-                                        Number(fee.amountAssigned) -
-                                          Number(fee.amountPaid) >
-                                        0
-                                          ? "text-red-700"
-                                          : "text-green-700"
-                                      }`}
-                                    >
-                                      {formatAmount(
-                                        Number(fee.amountAssigned) -
-                                          Number(fee.amountPaid)
-                                      )}{" "}
-                                      FCFA
-                                    </div>
-                                  </div>
+                                        <div className="flex items-center justify-center space-x-1 mb-1">
+                                          {remainingAmount > 0 ? (
+                                            <TrendingDown className="w-4 h-4 text-red-600" />
+                                          ) : (
+                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                          )}
+                                          <span
+                                            className={`text-xs font-semibold uppercase tracking-wide ${
+                                              remainingAmount > 0
+                                                ? "text-red-600"
+                                                : "text-green-600"
+                                            }`}
+                                          >
+                                            Restant
+                                          </span>
+                                        </div>
+                                        <div
+                                          className={`text-sm font-bold ${
+                                            remainingAmount > 0
+                                              ? "text-red-700"
+                                              : "text-green-700"
+                                          }`}
+                                        >
+                                          {formatAmount(remainingAmount)} FCFA
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
 
                                 {/* Date d'échéance */}
