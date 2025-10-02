@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../../components/layout/Layout";
 import Button from "../../components/ui/Button";
-import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import FormModal from "../../components/ui/FormModal";
 import { apiService } from "../../services/api";
@@ -21,7 +20,7 @@ interface FeeType {
 
 const FeeTypesPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [feeTypes, setFeeTypes] = useState<FeeType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,6 +62,8 @@ const FeeTypesPage: React.FC = () => {
         setUser(JSON.parse(userData));
         loadFeeTypes();
       } catch (error) {
+        console.log(error);
+        console.log("Erreur lors du chargement des types de frais:", error);
         navigate("/login");
       }
     } else {
@@ -83,81 +84,11 @@ const FeeTypesPage: React.FC = () => {
           "Erreur lors du chargement des types de frais:",
           response.error
         );
-        // Fallback avec des données de test en cas d'erreur
-        setFeeTypes([
-          {
-            id: "1",
-            name: "Scolarité",
-            description: "Frais de scolarité annuels",
-            amountDefault: 500000,
-            isRecurring: true,
-            frequency: "yearly",
-            isActive: true,
-            createdAt: "2024-01-01",
-            updatedAt: "2024-01-01",
-          },
-          {
-            id: "2",
-            name: "Cantine",
-            description: "Frais de restauration mensuels",
-            amountDefault: 25000,
-            isRecurring: true,
-            frequency: "monthly",
-            isActive: true,
-            createdAt: "2024-01-01",
-            updatedAt: "2024-01-01",
-          },
-          {
-            id: "3",
-            name: "Transport",
-            description: "Frais de transport scolaire",
-            amountDefault: 15000,
-            isRecurring: true,
-            frequency: "monthly",
-            isActive: true,
-            createdAt: "2024-01-01",
-            updatedAt: "2024-01-01",
-          },
-        ]);
+        setFeeTypes([]);
       }
     } catch (error) {
       console.error("Erreur lors du chargement des types de frais:", error);
-      // En cas d'erreur réseau, utiliser les données de test
-      setFeeTypes([
-        {
-          id: "1",
-          name: "Scolarité",
-          description: "Frais de scolarité annuels",
-          amountDefault: 500000,
-          isRecurring: true,
-          frequency: "yearly",
-          isActive: true,
-          createdAt: "2024-01-01",
-          updatedAt: "2024-01-01",
-        },
-        {
-          id: "2",
-          name: "Cantine",
-          description: "Frais de restauration mensuels",
-          amountDefault: 25000,
-          isRecurring: true,
-          frequency: "monthly",
-          isActive: true,
-          createdAt: "2024-01-01",
-          updatedAt: "2024-01-01",
-        },
-        {
-          id: "3",
-          name: "Transport",
-          description: "Frais de transport scolaire",
-          amountDefault: 15000,
-          isRecurring: true,
-          frequency: "monthly",
-          isActive: true,
-          createdAt: "2024-01-01",
-          updatedAt: "2024-01-01",
-        },
-      ]);
+      setFeeTypes([]);
     } finally {
       setIsLoading(false);
     }
@@ -208,7 +139,7 @@ const FeeTypesPage: React.FC = () => {
       description: feeType.description || "",
       amountDefault: feeType.amountDefault,
       isRecurring: feeType.isRecurring,
-      frequency: feeType.frequency,
+      frequency: feeType.frequency as any,
     });
     setDisplayAmount(formatAmount(feeType.amountDefault));
     setIsModalOpen(true);
@@ -484,7 +415,7 @@ const FeeTypesPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      frequency: e.target.value as any,
+                      frequency: e.target.value as FeeFrequency,
                     })
                   }
                   className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

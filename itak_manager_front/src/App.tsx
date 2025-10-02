@@ -8,6 +8,8 @@ import ClassesSubjectsPage from "./pages/ClassesSubjectsPage";
 import FinancesPage from "./pages/FinancesPage";
 import FinanceOverviewPage from "./pages/finance/FinanceOverviewPage";
 import FeeTypesPage from "./pages/finance/FeeTypesPage";
+import StudentFeesPage from "./pages/finance/StudentFeesPage";
+import StudentFeeAssignmentPage from "./pages/finance/StudentFeeAssignmentPage";
 import PaymentsPage from "./pages/finance/PaymentsPage";
 import InvoicesPage from "./pages/finance/InvoicesPage";
 import CalendarPage from "./pages/CalendarPage";
@@ -38,6 +40,11 @@ function App() {
         {/* Routes financières */}
         <Route path="/finances/overview" element={<FinanceOverviewPage />} />
         <Route path="/finances/fee-types" element={<FeeTypesPage />} />
+        <Route path="/finances/student-fees" element={<StudentFeesPage />} />
+        <Route
+          path="/finances/student-fee-assignment"
+          element={<StudentFeeAssignmentPage />}
+        />
         <Route path="/finances/payments" element={<PaymentsPage />} />
         <Route path="/finances/invoices" element={<InvoicesPage />} />
 
