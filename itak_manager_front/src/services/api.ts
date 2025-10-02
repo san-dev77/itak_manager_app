@@ -74,6 +74,16 @@ interface StudentProfileData {
   user?: User;
 }
 
+export interface Payment {
+  amount: number;
+  method: "cash" | "bank_transfer" | "mobile_money" | "card";
+  provider?: string;
+  transactionRef?: string;
+  receivedBy: User;
+  status: "successful" | "failed" | "pending";
+  createdAt: string;
+}
+
 interface StudentWithUser {
   id: string;
   userId: string;
@@ -1150,7 +1160,7 @@ class ApiService {
   // ============ Finance Methods ============
 
   // Fee Types
-  async getAllFeeTypes(): Promise<ApiResponse<any[]>> {
+  async getAllFeeTypes(): Promise<ApiResponse<FeeType[]>> {
     return this.makeRequest<any[]>("/fee-types");
   }
 

@@ -5,6 +5,21 @@ import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import { apiService } from "../../services/api";
 import Input from "../../components/ui/Input";
+import InvoiceModal from "../../components/ui/InvoiceModal";
+import {
+  User,
+  DollarSign,
+  ChevronDown,
+  ChevronRight,
+  CreditCard,
+  Calendar,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  GraduationCap,
+  FileText,
+  Receipt,
+} from "lucide-react";
 
 interface Payment {
   id: string;
@@ -45,6 +60,14 @@ const PaymentsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedFeeType, setSelectedFeeType] = useState("all");
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
+    new Set()
+  );
+
+  // États pour la modal de facture
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [selectedPaymentForInvoice, setSelectedPaymentForInvoice] =
+    useState<Payment | null>(null);
 
   useEffect(() => {
     const userData =
@@ -214,6 +237,80 @@ const PaymentsPage: React.FC = () => {
     };
   };
 
+  // Fonction pour basculer l'expansion d'un étudiant
+  const toggleStudentExpansion = (studentId: string) => {
+    const newExpanded = new Set(expandedStudents);
+    if (newExpanded.has(studentId)) {
+      newExpanded.delete(studentId);
+    } else {
+      newExpanded.add(studentId);
+    }
+    setExpandedStudents(newExpanded);
+  };
+
+  // Fonction pour regrouper les paiements par étudiant
+  const groupPaymentsByStudent = (payments: Payment[]) => {
+    const grouped = payments.reduce(
+      (acc, payment) => {
+        const studentId = payment.studentFee.studentId;
+        if (!acc[studentId]) {
+          acc[studentId] = {
+            student: getStudentInfo(studentId),
+            payments: [],
+            totalAmount: 0,
+            successfulPayments: 0,
+            failedPayments: 0,
+          };
+        }
+        acc[studentId].payments.push(payment);
+        acc[studentId].totalAmount += Number(payment.amount) || 0;
+        if (payment.status === "successful") {
+          acc[studentId].successfulPayments += 1;
+        } else if (payment.status === "failed") {
+          acc[studentId].failedPayments += 1;
+        }
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          student: { name: string; matricule: string; class: string };
+          payments: Payment[];
+          totalAmount: number;
+          successfulPayments: number;
+          failedPayments: number;
+        }
+      >
+    );
+
+    return Object.values(grouped);
+  };
+
+  // Fonction pour formater les montants
+  const formatAmount = (amount: number | string | undefined | null): string => {
+    if (amount === undefined || amount === null || amount === "") {
+      return "0";
+    }
+    const numericAmount = typeof amount === "string" ? Number(amount) : amount;
+    if (isNaN(numericAmount)) {
+      return "0";
+    }
+    return numericAmount.toLocaleString("fr-FR");
+  };
+
+  // Fonction pour ouvrir la modal de facture
+  const handleOpenInvoice = (payment: Payment) => {
+    setSelectedPaymentForInvoice(payment);
+    setIsInvoiceModalOpen(true);
+  };
+
+  // Fonction pour fermer la modal de facture
+  const handleCloseInvoice = () => {
+    setIsInvoiceModalOpen(false);
+    setSelectedPaymentForInvoice(null);
+  };
+
+  // Filtrer d'abord les paiements, puis les regrouper par étudiant
   const filteredPayments = payments.filter((payment) => {
     // Vérifications de sécurité pour éviter les erreurs
     if (!payment.studentFee) {
@@ -240,6 +337,9 @@ const PaymentsPage: React.FC = () => {
 
     return matchesFeeType && matchesSearch && matchesStatus;
   });
+
+  // Regrouper les paiements filtrés par étudiant
+  const groupedPayments = groupPaymentsByStudent(filteredPayments);
 
   if (!user) {
     return (
@@ -289,7 +389,7 @@ const PaymentsPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 text-black py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">Tous les statuts</option>
             <option value="successful">Réussi</option>
@@ -338,118 +438,302 @@ const PaymentsPage: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredPayments.length === 0 ? (
-              <div className="text-center py-12 bg-gray-50 border border-gray-200 rounded-lg">
-                <p className="text-gray-600 text-lg font-medium">
-                  Aucun paiement trouvé
-                </p>
-                <p className="text-gray-500 text-sm mt-2">
-                  {selectedFeeType === "all"
-                    ? "Aucun paiement ne correspond aux critères de recherche"
-                    : `Aucun paiement trouvé pour le type de frais "${
-                        feeTypes.find((ft) => ft.id === selectedFeeType)
-                          ?.name || "sélectionné"
-                      }"`}
-                </p>
+            {groupedPayments.length === 0 ? (
+              <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-lg border border-gray-200">
+                <div className="max-w-md mx-auto">
+                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <Receipt className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                    Aucun paiement trouvé
+                  </h3>
+                  <p className="text-gray-600 mb-6 leading-relaxed">
+                    {selectedFeeType === "all"
+                      ? "Aucun paiement ne correspond aux critères de recherche"
+                      : `Aucun paiement trouvé pour le type de frais "${
+                          feeTypes.find((ft) => ft.id === selectedFeeType)
+                            ?.name || "sélectionné"
+                        }"`}
+                  </p>
+                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+                    <CreditCard className="w-4 h-4" />
+                    <span>
+                      Utilisez le bouton "Nouveau paiement" pour commencer
+                    </span>
+                  </div>
+                </div>
               </div>
             ) : (
-              filteredPayments.map((payment) => (
-                <Card key={payment.id} className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              {(() => {
-                                if (!payment.studentFee) {
-                                  return "Données manquantes";
-                                }
-                                const studentInfo = getStudentInfo(
-                                  payment.studentFee.studentId
-                                );
-                                return studentInfo.name;
-                              })()}
-                            </h3>
-                            <div className="text-sm text-gray-600 mt-1">
-                              <span className="font-medium">Matricule:</span>{" "}
-                              {(() => {
-                                if (!payment.studentFee) return "N/A";
-                                return getStudentInfo(
-                                  payment.studentFee.studentId
-                                ).matricule;
-                              })()}
-                              {" • "}
-                              <span className="font-medium">Classe:</span>{" "}
-                              {(() => {
-                                if (!payment.studentFee) return "N/A";
-                                return getStudentInfo(
-                                  payment.studentFee.studentId
-                                ).class;
-                              })()}
+              groupedPayments.map((group) => {
+                const isExpanded = expandedStudents.has(
+                  group.student.matricule
+                );
+                return (
+                  <Card
+                    key={group.student.matricule}
+                    className="overflow-hidden"
+                  >
+                    {/* En-tête de l'étudiant */}
+                    <div
+                      className="p-6 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-200 cursor-pointer hover:from-slate-100 hover:to-gray-100 transition-all duration-200 shadow-sm"
+                      onClick={() =>
+                        toggleStudentExpansion(group.student.matricule)
+                      }
+                    >
+                      <div className="space-y-4">
+                        {/* Section étudiant */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <Receipt className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                {group.student.name}
+                              </h3>
+                              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
+                                <div className="flex items-center space-x-1">
+                                  <FileText className="w-4 h-4 text-gray-500" />
+                                  <span className="font-semibold">
+                                    Matricule:
+                                  </span>
+                                  <span className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-800">
+                                    {group.student.matricule}
+                                  </span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <GraduationCap className="w-4 h-4 text-gray-500" />
+                                  <span className="font-semibold">Classe:</span>
+                                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-semibold">
+                                    {group.student.class}
+                                  </span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <CreditCard className="w-4 h-4 text-gray-500" />
+                                  <span className="font-semibold">
+                                    Paiements:
+                                  </span>
+                                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">
+                                    {group.payments.length}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            {/* Icône d'expansion */}
+                            <div className="flex items-center">
+                              <div
+                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                                  isExpanded
+                                    ? "bg-green-100 text-green-600"
+                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                }`}
+                              >
+                                {isExpanded ? (
+                                  <ChevronDown className="w-5 h-5" />
+                                ) : (
+                                  <ChevronRight className="w-5 h-5" />
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                              payment.status
-                            )}`}
-                          >
-                            {getStatusText(payment.status)}
-                          </span>
+                        </div>
+
+                        {/* Section résumé des paiements */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div className="flex items-center justify-center space-x-2 mb-2">
+                              <DollarSign className="w-5 h-5 text-green-600" />
+                              <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                                Total Payé
+                              </span>
+                            </div>
+                            <div className="text-xl font-bold text-gray-900 text-center">
+                              {formatAmount(group.totalAmount)} FCFA
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div className="flex items-center justify-center space-x-2 mb-2">
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                              <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                                Réussis
+                              </span>
+                            </div>
+                            <div className="text-xl font-bold text-green-700 text-center">
+                              {group.successfulPayments}
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                            <div className="flex items-center justify-center space-x-2 mb-2">
+                              <AlertCircle className="w-5 h-5 text-red-600" />
+                              <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                                Échoués
+                              </span>
+                            </div>
+                            <div className="text-xl font-bold text-red-700 text-center">
+                              {group.failedPayments}
+                            </div>
+                          </div>
                         </div>
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-sm text-gray-600">
-                        <div>
-                          <span className="font-medium">Type de frais:</span>
-                          <p>
-                            {payment.studentFee?.feeTypeId
-                              ? getFeeTypeName(payment.studentFee.feeTypeId)
-                              : "Non disponible"}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="font-medium">Montant:</span>
-                          <p className="font-semibold text-green-600">
-                            {payment.amount.toLocaleString()} FCFA
-                          </p>
-                        </div>
-                        <div>
-                          <span className="font-medium">Méthode:</span>
-                          <p>{getMethodText(payment.method)}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium">Date:</span>
-                          <p>
-                            {new Date(payment.paymentDate).toLocaleDateString(
-                              "fr-FR"
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="font-medium">Reçu par:</span>
-                          <p>
-                            {payment.receivedByUser
-                              ? `${payment.receivedByUser.firstName} ${payment.receivedByUser.lastName}`
-                              : "Non disponible"}
-                          </p>
-                        </div>
-                      </div>
-
-                      {payment.transactionRef && (
-                        <div className="mt-2 text-sm text-gray-600">
-                          <span className="font-medium">Référence:</span>{" "}
-                          {payment.transactionRef}
-                        </div>
-                      )}
                     </div>
-                  </div>
-                </Card>
-              ))
+
+                    {/* Détails des paiements (expandable) */}
+                    {isExpanded && (
+                      <div className="p-4 bg-white overflow-x-auto">
+                        <div className="space-y-3 min-w-max">
+                          {group.payments.map((payment) => (
+                            <div
+                              key={payment.id}
+                              className="bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-xl p-5 hover:border-green-300 hover:shadow-md transition-all duration-200"
+                            >
+                              <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 items-center">
+                                {/* Type de frais */}
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+                                    <FileText className="w-5 h-5 text-white" />
+                                  </div>
+                                  <div>
+                                    <div className="text-sm font-bold text-gray-900">
+                                      {getFeeTypeName(
+                                        payment.studentFee.feeTypeId
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-gray-600 font-medium">
+                                      {getMethodText(payment.method)}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Montant */}
+                                <div className="text-center">
+                                  <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                                    <div className="flex items-center justify-center space-x-1 mb-1">
+                                      <DollarSign className="w-4 h-4 text-green-600" />
+                                      <span className="text-xs font-semibold text-green-600 uppercase tracking-wide">
+                                        Montant
+                                      </span>
+                                    </div>
+                                    <div className="text-sm font-bold text-gray-900">
+                                      {formatAmount(payment.amount)} FCFA
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Date de paiement */}
+                                <div className="text-center">
+                                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                    <div className="flex items-center justify-center space-x-1 mb-1">
+                                      <Calendar className="w-4 h-4 text-gray-600" />
+                                      <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                        Date
+                                      </span>
+                                    </div>
+                                    <div className="text-sm font-bold text-gray-900">
+                                      {new Date(
+                                        payment.paymentDate
+                                      ).toLocaleDateString("fr-FR")}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Reçu par */}
+                                <div className="text-center">
+                                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                                    <div className="flex items-center justify-center space-x-1 mb-1">
+                                      <User className="w-4 h-4 text-blue-600" />
+                                      <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                                        Reçu par
+                                      </span>
+                                    </div>
+                                    <div className="text-sm font-bold text-gray-900">
+                                      {payment.receivedByUser.firstName}{" "}
+                                      {payment.receivedByUser.lastName}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Référence transaction */}
+                                <div className="text-center">
+                                  <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                                    <div className="flex items-center justify-center space-x-1 mb-1">
+                                      <Receipt className="w-4 h-4 text-purple-600" />
+                                      <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">
+                                        Référence
+                                      </span>
+                                    </div>
+                                    <div className="text-sm font-bold text-gray-900">
+                                      {payment.transactionRef || "N/A"}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Statut et Actions */}
+                                <div className="flex flex-col items-center space-y-2">
+                                  <span
+                                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${getStatusColor(
+                                      payment.status
+                                    )}`}
+                                  >
+                                    {payment.status === "successful" && (
+                                      <CheckCircle className="w-3 h-3 mr-1" />
+                                    )}
+                                    {payment.status === "failed" && (
+                                      <AlertCircle className="w-3 h-3 mr-1" />
+                                    )}
+                                    {payment.status === "pending" && (
+                                      <Clock className="w-3 h-3 mr-1" />
+                                    )}
+                                    {getStatusText(payment.status)}
+                                  </span>
+
+                                  {/* Bouton Facture */}
+                                  <button
+                                    onClick={() => handleOpenInvoice(payment)}
+                                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 border border-blue-200 hover:border-blue-300"
+                                  >
+                                    <Receipt className="w-3 h-3" />
+                                    <span>Facture</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                );
+              })
             )}
           </div>
         )}
       </div>
+
+      {/* Modal de facture */}
+      <InvoiceModal
+        isOpen={isInvoiceModalOpen}
+        onClose={handleCloseInvoice}
+        payment={selectedPaymentForInvoice}
+        studentInfo={
+          selectedPaymentForInvoice
+            ? getStudentInfo(selectedPaymentForInvoice.studentFee.studentId)
+            : null
+        }
+        feeTypeInfo={
+          selectedPaymentForInvoice
+            ? {
+                name: getFeeTypeName(
+                  selectedPaymentForInvoice.studentFee.feeTypeId
+                ),
+                amountDefault: Number(
+                  selectedPaymentForInvoice.studentFee.amountAssigned
+                ),
+              }
+            : null
+        }
+      />
     </Layout>
   );
 };
