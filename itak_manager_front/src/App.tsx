@@ -6,6 +6,10 @@ import DashboardPage from "./pages/DashboardPage";
 import UsersPage from "./pages/UsersPage";
 import ClassesSubjectsPage from "./pages/ClassesSubjectsPage";
 import FinancesPage from "./pages/FinancesPage";
+import FinanceOverviewPage from "./pages/finance/FinanceOverviewPage";
+import FeeTypesPage from "./pages/finance/FeeTypesPage";
+import PaymentsPage from "./pages/finance/PaymentsPage";
+import InvoicesPage from "./pages/finance/InvoicesPage";
 import CalendarPage from "./pages/CalendarPage";
 import TimetablePage from "./pages/calendar/TimetablePage";
 import EventsPage from "./pages/calendar/EventsPage";
@@ -30,6 +34,12 @@ function App() {
         <Route path="/users" element={<UsersPage />} />
         <Route path="/classes-subjects" element={<ClassesSubjectsPage />} />
         <Route path="/finances" element={<FinancesPage />} />
+
+        {/* Routes financières */}
+        <Route path="/finances/overview" element={<FinanceOverviewPage />} />
+        <Route path="/finances/fee-types" element={<FeeTypesPage />} />
+        <Route path="/finances/payments" element={<PaymentsPage />} />
+        <Route path="/finances/invoices" element={<InvoicesPage />} />
 
         {/* Routes du calendrier */}
         <Route path="/calendar" element={<CalendarPage />} />

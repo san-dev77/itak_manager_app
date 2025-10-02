@@ -112,12 +112,14 @@ const LoginPage = () => {
           // Stockage local (vous pouvez utiliser localStorage ou sessionStorage)
           if (formData.rememberMe) {
             localStorage.setItem("itak_access_token", access_token);
-            localStorage.setItem("itak_refresh_token", refresh_token);
+            localStorage.setItem("refresh_token", refresh_token);
             localStorage.setItem("itak_user", JSON.stringify(user));
+            console.log("✅ Token stocké dans localStorage:", access_token);
           } else {
             sessionStorage.setItem("itak_access_token", access_token);
-            sessionStorage.setItem("itak_refresh_token", refresh_token);
+            sessionStorage.setItem("refresh_token", refresh_token);
             sessionStorage.setItem("itak_user", JSON.stringify(user));
+            console.log("✅ Token stocké dans sessionStorage:", access_token);
           }
 
           showNotification(

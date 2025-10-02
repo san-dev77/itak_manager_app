@@ -46,7 +46,7 @@ const FinancesPage: React.FC = () => {
         </div>
 
         {/* Menu des finances */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
             <div className="text-center mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -104,6 +104,66 @@ const FinancesPage: React.FC = () => {
               className="w-full"
             >
               Gérer les factures
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <span className="text-orange-600 text-xl">💰</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Types de frais
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Configurer les types de frais
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate("/finances/fee-types")}
+              className="w-full"
+            >
+              Gérer les types de frais
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <span className="text-red-600 text-xl">🎓</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Frais étudiants
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Gérer les frais par étudiant
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate("/finances/student-fees")}
+              className="w-full"
+            >
+              Gérer les frais étudiants
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <span className="text-yellow-600 text-xl">💸</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Réductions
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Gérer les réductions et bourses
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate("/finances/discounts")}
+              className="w-full"
+            >
+              Gérer les réductions
             </Button>
           </div>
         </div>

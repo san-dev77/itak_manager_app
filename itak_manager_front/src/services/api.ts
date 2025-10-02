@@ -514,13 +514,32 @@ class ApiService {
     try {
       const url = `${API_BASE_URL}${endpoint}`;
 
+      // Récupérer le token d'accès depuis le stockage
+      const accessToken =
+        localStorage.getItem("itak_access_token") ||
+        sessionStorage.getItem("itak_access_token");
+
+      console.log(
+        "🔑 Token récupéré:",
+        accessToken ? "✅ Présent" : "❌ Absent"
+      );
+      if (accessToken) {
+        console.log(
+          "🔑 Token (premiers caractères):",
+          accessToken.substring(0, 20) + "..."
+        );
+      }
+
       const defaultOptions: RequestInit = {
         headers: {
           "Content-Type": "application/json",
+          ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
           ...options.headers,
         },
         ...options,
       };
+
+      console.log("📤 Headers envoyés:", defaultOptions.headers);
 
       console.log("🌐 Appel HTTP vers:", url);
       console.log("⚙️ Options de la requête:", defaultOptions);
@@ -1126,6 +1145,163 @@ class ApiService {
     return this.makeRequest<void>(`/events/${id}`, {
       method: "DELETE",
     });
+  }
+
+  // ============ Finance Methods ============
+
+  // Fee Types
+  async getAllFeeTypes(): Promise<ApiResponse<any[]>> {
+    return this.makeRequest<any[]>("/fee-types");
+  }
+
+  async createFeeType(data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>("/fee-types", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateFeeType(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>(`/fee-types/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteFeeType(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/fee-types/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Student Fees
+  async getAllStudentFees(): Promise<ApiResponse<any[]>> {
+    return this.makeRequest<any[]>("/student-fees");
+  }
+
+  async createStudentFee(data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>("/student-fees", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateStudentFee(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>(`/student-fees/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteStudentFee(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/student-fees/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Payments
+  async getAllPayments(): Promise<ApiResponse<any[]>> {
+    return this.makeRequest<any[]>("/payments");
+  }
+
+  async createPayment(data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>("/payments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePayment(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>(`/payments/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePayment(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/payments/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Invoices
+  async getAllInvoices(): Promise<ApiResponse<any[]>> {
+    return this.makeRequest<any[]>("/invoices");
+  }
+
+  async createInvoice(data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>("/invoices", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateInvoice(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>(`/invoices/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteInvoice(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/invoices/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Discounts
+  async getAllDiscounts(): Promise<ApiResponse<any[]>> {
+    return this.makeRequest<any[]>("/discounts");
+  }
+
+  async createDiscount(data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>("/discounts", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateDiscount(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>(`/discounts/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteDiscount(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/discounts/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Refunds
+  async getAllRefunds(): Promise<ApiResponse<any[]>> {
+    return this.makeRequest<any[]>("/refunds");
+  }
+
+  async createRefund(data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>("/refunds", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateRefund(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>(`/refunds/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteRefund(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/refunds/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Finance Statistics
+  async getFinanceStats(): Promise<ApiResponse<any>> {
+    return this.makeRequest<any>("/finance/stats");
   }
 }
 
