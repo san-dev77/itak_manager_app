@@ -3,9 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../../components/layout/Layout";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
-import Input from "../../components/ui/Input";
-import FormModal from "../../components/ui/FormModal";
 import { apiService } from "../../services/api";
+import Input from "../../components/ui/Input";
 
 interface Payment {
   id: string;
@@ -17,21 +16,22 @@ interface Payment {
   transactionRef?: string;
   receivedBy: string;
   status: "successful" | "failed" | "pending";
-  notes?: string;
   createdAt: string;
   studentFee: {
     id: string;
-    student: {
-      firstName: string;
-      lastName: string;
-    };
-    feeType: {
-      name: string;
-    };
+    studentId: string; // ID de l'étudiant
+    feeTypeId: string; // ID du type de frais
+    academicYearId: string;
+    amountAssigned: string;
+    amountPaid: string;
+    dueDate: string;
+    status: string;
   };
   receivedByUser: {
+    id: string;
     firstName: string;
     lastName: string;
+    role: string;
   };
 }
 
@@ -39,21 +39,12 @@ const PaymentsPage: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [feeTypes, setFeeTypes] = useState<any[]>([]);
+  const [studentClasses, setStudentClasses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-
-  const [formData, setFormData] = useState({
-    studentFeeId: "",
-    paymentDate: new Date().toISOString().split("T")[0],
-    amount: 0,
-    method: "cash" as const,
-    provider: "",
-    transactionRef: "",
-    notes: "",
-  });
+  const [selectedFeeType, setSelectedFeeType] = useState("all");
 
   useEffect(() => {
     const userData =
@@ -61,8 +52,10 @@ const PaymentsPage: React.FC = () => {
     if (userData) {
       try {
         setUser(JSON.parse(userData));
-        loadPayments();
+        loadAllData();
       } catch (error) {
+        console.log(error);
+
         navigate("/login");
       }
     } else {
@@ -70,202 +63,76 @@ const PaymentsPage: React.FC = () => {
     }
   }, [navigate]);
 
-  const loadPayments = async () => {
+  const loadAllData = async () => {
     try {
       setIsLoading(true);
+      await Promise.all([loadPayments(), loadFeeTypes(), loadStudentClasses()]);
+    } catch (error) {
+      console.error("Erreur lors du chargement des données:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadPayments = async () => {
+    try {
       const response = await apiService.getAllPayments();
 
       if (response.success && response.data) {
+        console.log("📥 Paiements reçus de l'API:", response.data);
         setPayments(response.data);
       } else {
         console.error(
           "Erreur lors du chargement des paiements:",
           response.error
         );
-        // Fallback avec des données de test en cas d'erreur
-        setPayments([
-          {
-            id: "1",
-            studentFeeId: "1",
-            paymentDate: "2024-01-15",
-            amount: 500000,
-            method: "bank_transfer",
-            provider: "Orange Money",
-            transactionRef: "OM123456789",
-            receivedBy: "1",
-            status: "successful",
-            notes: "Paiement de scolarité",
-            createdAt: "2024-01-15T10:30:00Z",
-            studentFee: {
-              id: "1",
-              student: {
-                firstName: "Mohamed",
-                lastName: "Kamissoko",
-              },
-              feeType: {
-                name: "Scolarité",
-              },
-            },
-            receivedByUser: {
-              firstName: "Admin",
-              lastName: "User",
-            },
-          },
-          {
-            id: "2",
-            studentFeeId: "2",
-            paymentDate: "2024-01-16",
-            amount: 25000,
-            method: "cash",
-            receivedBy: "1",
-            status: "successful",
-            notes: "Paiement cantine",
-            createdAt: "2024-01-16T14:20:00Z",
-            studentFee: {
-              id: "2",
-              student: {
-                firstName: "Fatoumata",
-                lastName: "Traoré",
-              },
-              feeType: {
-                name: "Cantine",
-              },
-            },
-            receivedByUser: {
-              firstName: "Admin",
-              lastName: "User",
-            },
-          },
-        ]);
+        setPayments([]);
       }
     } catch (error) {
       console.error("Erreur lors du chargement des paiements:", error);
-      // En cas d'erreur réseau, utiliser les données de test
-      setPayments([
-        {
-          id: "1",
-          studentFeeId: "1",
-          paymentDate: "2024-01-15",
-          amount: 500000,
-          method: "bank_transfer",
-          provider: "Orange Money",
-          transactionRef: "OM123456789",
-          receivedBy: "1",
-          status: "successful",
-          notes: "Paiement de scolarité",
-          createdAt: "2024-01-15T10:30:00Z",
-          studentFee: {
-            id: "1",
-            student: {
-              firstName: "Mohamed",
-              lastName: "Kamissoko",
-            },
-            feeType: {
-              name: "Scolarité",
-            },
-          },
-          receivedByUser: {
-            firstName: "Admin",
-            lastName: "User",
-          },
-        },
-        {
-          id: "2",
-          studentFeeId: "2",
-          paymentDate: "2024-01-16",
-          amount: 25000,
-          method: "cash",
-          receivedBy: "1",
-          status: "successful",
-          notes: "Paiement cantine",
-          createdAt: "2024-01-16T14:20:00Z",
-          studentFee: {
-            id: "2",
-            student: {
-              firstName: "Fatoumata",
-              lastName: "Traoré",
-            },
-            feeType: {
-              name: "Cantine",
-            },
-          },
-          receivedByUser: {
-            firstName: "Admin",
-            lastName: "User",
-          },
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
+      setPayments([]);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const loadFeeTypes = async () => {
     try {
-      if (editingPayment) {
-        const response = await apiService.updatePayment(
-          editingPayment.id,
-          formData
-        );
-        if (response.success) {
-          console.log("Paiement mis à jour avec succès");
-        } else {
-          console.error("Erreur lors de la mise à jour:", response.error);
-          alert("Erreur lors de la mise à jour du paiement");
-          return;
-        }
+      const response = await apiService.getAllFeeTypes();
+      if (response.success && response.data) {
+        console.log("📥 Types de frais reçus de l'API:", response.data);
+        setFeeTypes(response.data);
       } else {
-        const response = await apiService.createPayment(formData);
-        if (response.success) {
-          console.log("Paiement créé avec succès");
-        } else {
-          console.error("Erreur lors de la création:", response.error);
-          alert("Erreur lors de la création du paiement");
-          return;
-        }
+        console.error(
+          "Erreur lors du chargement des types de frais:",
+          response.error
+        );
+        setFeeTypes([]);
       }
-
-      setIsModalOpen(false);
-      setEditingPayment(null);
-      resetForm();
-      loadPayments();
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
-      alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
+      console.error("Erreur lors du chargement des types de frais:", error);
+      setFeeTypes([]);
     }
   };
 
-  const handleEdit = (payment: Payment) => {
-    setEditingPayment(payment);
-    setFormData({
-      studentFeeId: payment.studentFeeId,
-      paymentDate: payment.paymentDate,
-      amount: payment.amount,
-      method: payment.method,
-      provider: payment.provider || "",
-      transactionRef: payment.transactionRef || "",
-      notes: payment.notes || "",
-    });
-    setIsModalOpen(true);
-  };
-
-  const resetForm = () => {
-    setFormData({
-      studentFeeId: "",
-      paymentDate: new Date().toISOString().split("T")[0],
-      amount: 0,
-      method: "cash",
-      provider: "",
-      transactionRef: "",
-      notes: "",
-    });
-  };
-
-  const openModal = () => {
-    setEditingPayment(null);
-    resetForm();
-    setIsModalOpen(true);
+  const loadStudentClasses = async () => {
+    try {
+      const response = await apiService.getAllStudentClasses();
+      if (response.success && response.data) {
+        console.log("📥 Classes d'étudiants reçues de l'API:", response.data);
+        setStudentClasses(response.data);
+      } else {
+        console.error(
+          "Erreur lors du chargement des classes d'étudiants:",
+          response.error
+        );
+        setStudentClasses([]);
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors du chargement des classes d'étudiants:",
+        error
+      );
+      setStudentClasses([]);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -309,26 +176,69 @@ const PaymentsPage: React.FC = () => {
     }
   };
 
+  // Fonction helper pour obtenir les données utilisateur d'un étudiant
+  // Fonction helper pour obtenir le nom du type de frais
+  const getFeeTypeName = (feeTypeId: string) => {
+    const feeType = feeTypes.find((ft) => ft.id === feeTypeId);
+    return feeType ? feeType.name : "Type inconnu";
+  };
+
+  // Fonction helper pour obtenir les infos de l'étudiant qui a payé
+  const getStudentInfo = (studentId: string) => {
+    // Trouver l'étudiant dans les classes (qui contient student + class)
+    let studentClass = studentClasses.find(
+      (sc) => sc.studentId === studentId && !sc.endDate
+    );
+
+    // Si pas trouvé, essayer sans vérifier endDate
+    if (!studentClass) {
+      studentClass = studentClasses.find((sc) => sc.studentId === studentId);
+    }
+
+    if (!studentClass) {
+      return {
+        name: "Étudiant inconnu",
+        matricule: "N/A",
+        class: "Non assigné",
+      };
+    }
+
+    const student = studentClass.student;
+    // Utiliser directement student.user comme dans StudentFeeAssignmentPage
+    const user = student.user;
+
+    return {
+      name: user ? `${user.firstName} ${user.lastName}` : "Nom inconnu",
+      matricule: student.matricule || "N/A",
+      class: studentClass.class.name || "Non assigné",
+    };
+  };
+
   const filteredPayments = payments.filter((payment) => {
+    // Vérifications de sécurité pour éviter les erreurs
+    if (!payment.studentFee) {
+      console.warn("Payment sans studentFee:", payment);
+      return false;
+    }
+
+    // Filtrage par type de frais
+    const matchesFeeType =
+      selectedFeeType === "all" ||
+      payment.studentFee.feeTypeId === selectedFeeType;
+
+    // Filtrage par recherche
     const matchesSearch =
-      payment.studentFee.student.firstName
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      payment.studentFee.student.lastName
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      payment.studentFee.feeType.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
       (payment.transactionRef &&
         payment.transactionRef
           .toLowerCase()
-          .includes(searchTerm.toLowerCase()));
+          .includes(searchTerm.toLowerCase())) ||
+      payment.studentFeeId.toLowerCase().includes(searchTerm.toLowerCase());
 
+    // Filtrage par statut
     const matchesStatus =
       statusFilter === "all" || payment.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesFeeType && matchesSearch && matchesStatus;
   });
 
   if (!user) {
@@ -360,7 +270,9 @@ const PaymentsPage: React.FC = () => {
               <Button onClick={() => navigate("/finances")} variant="outline">
                 ← Retour
               </Button>
-              <Button onClick={openModal}>+ Nouveau paiement</Button>
+              <Button onClick={() => navigate("/finances/payments/assign")}>
+                + Nouveau paiement
+              </Button>
             </div>
           </div>
         </div>
@@ -386,6 +298,37 @@ const PaymentsPage: React.FC = () => {
           </select>
         </div>
 
+        {/* Onglets pour les types de frais */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setSelectedFeeType("all")}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  selectedFeeType === "all"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Tous les frais
+              </button>
+              {feeTypes.map((feeType) => (
+                <button
+                  key={feeType.id}
+                  onClick={() => setSelectedFeeType(feeType.id)}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    selectedFeeType === feeType.id
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  {feeType.name}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
@@ -395,181 +338,117 @@ const PaymentsPage: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredPayments.map((payment) => (
-              <Card key={payment.id} className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {payment.studentFee.student.firstName}{" "}
-                        {payment.studentFee.student.lastName}
-                      </h3>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          payment.status
-                        )}`}
-                      >
-                        {getStatusText(payment.status)}
-                      </span>
+            {filteredPayments.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 border border-gray-200 rounded-lg">
+                <p className="text-gray-600 text-lg font-medium">
+                  Aucun paiement trouvé
+                </p>
+                <p className="text-gray-500 text-sm mt-2">
+                  {selectedFeeType === "all"
+                    ? "Aucun paiement ne correspond aux critères de recherche"
+                    : `Aucun paiement trouvé pour le type de frais "${
+                        feeTypes.find((ft) => ft.id === selectedFeeType)
+                          ?.name || "sélectionné"
+                      }"`}
+                </p>
+              </div>
+            ) : (
+              filteredPayments.map((payment) => (
+                <Card key={payment.id} className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {(() => {
+                                if (!payment.studentFee) {
+                                  return "Données manquantes";
+                                }
+                                const studentInfo = getStudentInfo(
+                                  payment.studentFee.studentId
+                                );
+                                return studentInfo.name;
+                              })()}
+                            </h3>
+                            <div className="text-sm text-gray-600 mt-1">
+                              <span className="font-medium">Matricule:</span>{" "}
+                              {(() => {
+                                if (!payment.studentFee) return "N/A";
+                                return getStudentInfo(
+                                  payment.studentFee.studentId
+                                ).matricule;
+                              })()}
+                              {" • "}
+                              <span className="font-medium">Classe:</span>{" "}
+                              {(() => {
+                                if (!payment.studentFee) return "N/A";
+                                return getStudentInfo(
+                                  payment.studentFee.studentId
+                                ).class;
+                              })()}
+                            </div>
+                          </div>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                              payment.status
+                            )}`}
+                          >
+                            {getStatusText(payment.status)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-sm text-gray-600">
+                        <div>
+                          <span className="font-medium">Type de frais:</span>
+                          <p>
+                            {payment.studentFee?.feeTypeId
+                              ? getFeeTypeName(payment.studentFee.feeTypeId)
+                              : "Non disponible"}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Montant:</span>
+                          <p className="font-semibold text-green-600">
+                            {payment.amount.toLocaleString()} FCFA
+                          </p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Méthode:</span>
+                          <p>{getMethodText(payment.method)}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Date:</span>
+                          <p>
+                            {new Date(payment.paymentDate).toLocaleDateString(
+                              "fr-FR"
+                            )}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Reçu par:</span>
+                          <p>
+                            {payment.receivedByUser
+                              ? `${payment.receivedByUser.firstName} ${payment.receivedByUser.lastName}`
+                              : "Non disponible"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {payment.transactionRef && (
+                        <div className="mt-2 text-sm text-gray-600">
+                          <span className="font-medium">Référence:</span>{" "}
+                          {payment.transactionRef}
+                        </div>
+                      )}
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div>
-                        <span className="font-medium">Type de frais:</span>
-                        <p>{payment.studentFee.feeType.name}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Montant:</span>
-                        <p className="font-semibold text-green-600">
-                          {payment.amount.toLocaleString()} FCFA
-                        </p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Méthode:</span>
-                        <p>{getMethodText(payment.method)}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Date:</span>
-                        <p>
-                          {new Date(payment.paymentDate).toLocaleDateString(
-                            "fr-FR"
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    {payment.transactionRef && (
-                      <div className="mt-2 text-sm text-gray-600">
-                        <span className="font-medium">Référence:</span>{" "}
-                        {payment.transactionRef}
-                      </div>
-                    )}
-
-                    {payment.notes && (
-                      <div className="mt-2 text-sm text-gray-600">
-                        <span className="font-medium">Notes:</span>{" "}
-                        {payment.notes}
-                      </div>
-                    )}
                   </div>
-
-                  <div className="flex gap-2 ml-4">
-                    <button
-                      onClick={() => handleEdit(payment)}
-                      className="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 border border-blue-600 rounded hover:bg-blue-50"
-                    >
-                      Modifier
-                    </button>
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              ))
+            )}
           </div>
         )}
-
-        {/* Modal */}
-        <FormModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title={editingPayment ? "Modifier le paiement" : "Nouveau paiement"}
-        >
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="ID du frais étudiant"
-              type="text"
-              value={formData.studentFeeId}
-              onChange={(e) =>
-                setFormData({ ...formData, studentFeeId: e.target.value })
-              }
-              required
-            />
-
-            <Input
-              label="Date de paiement"
-              type="date"
-              value={formData.paymentDate}
-              onChange={(e) =>
-                setFormData({ ...formData, paymentDate: e.target.value })
-              }
-              required
-            />
-
-            <Input
-              label="Montant (FCFA)"
-              type="number"
-              value={formData.amount}
-              onChange={(e) =>
-                setFormData({ ...formData, amount: Number(e.target.value) })
-              }
-              required
-              min="0"
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Méthode de paiement
-              </label>
-              <select
-                value={formData.method}
-                onChange={(e) =>
-                  setFormData({ ...formData, method: e.target.value as any })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="cash">Espèces</option>
-                <option value="bank_transfer">Virement bancaire</option>
-                <option value="mobile_money">Mobile Money</option>
-                <option value="card">Carte bancaire</option>
-              </select>
-            </div>
-
-            <Input
-              label="Fournisseur (optionnel)"
-              type="text"
-              value={formData.provider}
-              onChange={(e) =>
-                setFormData({ ...formData, provider: e.target.value })
-              }
-            />
-
-            <Input
-              label="Référence de transaction (optionnel)"
-              type="text"
-              value={formData.transactionRef}
-              onChange={(e) =>
-                setFormData({ ...formData, transactionRef: e.target.value })
-              }
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notes (optionnel)
-              </label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={3}
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsModalOpen(false)}
-              >
-                Annuler
-              </Button>
-              <Button type="submit">
-                {editingPayment ? "Mettre à jour" : "Créer"}
-              </Button>
-            </div>
-          </form>
-        </FormModal>
       </div>
     </Layout>
   );

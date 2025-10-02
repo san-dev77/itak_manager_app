@@ -11,6 +11,7 @@ import FeeTypesPage from "./pages/finance/FeeTypesPage";
 import StudentFeesPage from "./pages/finance/StudentFeesPage";
 import StudentFeeAssignmentPage from "./pages/finance/StudentFeeAssignmentPage";
 import PaymentsPage from "./pages/finance/PaymentsPage";
+import PaymentAssignmentPage from "./pages/finance/PaymentAssignmentPage";
 import InvoicesPage from "./pages/finance/InvoicesPage";
 import CalendarPage from "./pages/CalendarPage";
 import TimetablePage from "./pages/calendar/TimetablePage";
@@ -46,6 +47,10 @@ function App() {
           element={<StudentFeeAssignmentPage />}
         />
         <Route path="/finances/payments" element={<PaymentsPage />} />
+        <Route
+          path="/finances/payments/assign"
+          element={<PaymentAssignmentPage />}
+        />
         <Route path="/finances/invoices" element={<InvoicesPage />} />
 
         {/* Routes du calendrier */}

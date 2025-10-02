@@ -6,7 +6,23 @@ import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import FormModal from "../../components/ui/FormModal";
 import { apiService } from "../../services/api";
-import { User, DollarSign } from "lucide-react";
+import {
+  User,
+  DollarSign,
+  ChevronDown,
+  ChevronRight,
+  CreditCard,
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Edit3,
+  Trash2,
+  GraduationCap,
+  FileText,
+} from "lucide-react";
 
 interface StudentFee {
   id: string;
@@ -70,6 +86,9 @@ const StudentFeesPage: React.FC = () => {
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
+    new Set()
+  );
 
   const [formData, setFormData] = useState({
     studentId: "",
@@ -89,6 +108,53 @@ const StudentFeesPage: React.FC = () => {
     const numericAmount =
       typeof amount === "string" ? parseFloat(amount) : amount;
     return numericAmount.toLocaleString("fr-FR");
+  };
+
+  // Fonction pour basculer l'expansion d'un étudiant
+  const toggleStudentExpansion = (studentId: string) => {
+    const newExpanded = new Set(expandedStudents);
+    if (newExpanded.has(studentId)) {
+      newExpanded.delete(studentId);
+    } else {
+      newExpanded.add(studentId);
+    }
+    setExpandedStudents(newExpanded);
+  };
+
+  // Fonction pour regrouper les frais par étudiant
+  const groupFeesByStudent = (fees: StudentFee[]) => {
+    const grouped = fees.reduce(
+      (acc, fee) => {
+        const studentId = fee.studentId;
+        if (!acc[studentId]) {
+          acc[studentId] = {
+            student: fee.student,
+            fees: [],
+            totalAssigned: 0,
+            totalPaid: 0,
+            totalRemaining: 0,
+          };
+        }
+        acc[studentId].fees.push(fee);
+        acc[studentId].totalAssigned += Number(fee.amountAssigned) || 0;
+        acc[studentId].totalPaid += Number(fee.amountPaid) || 0;
+        acc[studentId].totalRemaining +=
+          (Number(fee.amountAssigned) || 0) - (Number(fee.amountPaid) || 0);
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          student: StudentFee["student"];
+          fees: StudentFee[];
+          totalAssigned: number;
+          totalPaid: number;
+          totalRemaining: number;
+        }
+      >
+    );
+
+    return Object.values(grouped);
   };
 
   // Fonction helper pour obtenir les données utilisateur d'un étudiant
@@ -348,6 +414,7 @@ const StudentFeesPage: React.FC = () => {
     }
   };
 
+  // Filtrer d'abord les frais, puis les regrouper par étudiant
   const filteredStudentFees = studentFees.filter((studentFee) => {
     // Vérifications de sécurité pour éviter les erreurs
     const student = studentFee.student;
@@ -369,6 +436,9 @@ const StudentFeesPage: React.FC = () => {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Regrouper les frais filtrés par étudiant
+  const groupedStudentFees = groupFeesByStudent(filteredStudentFees);
 
   if (!user) {
     return (
@@ -438,158 +508,364 @@ const StudentFeesPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-                      #
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Étudiant
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type de frais
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Année scolaire
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Montant assigné
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Montant payé
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date d'échéance
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Statut
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredStudentFees.map((studentFee) => (
-                    <tr key={studentFee.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center justify-center">
-                          <DollarSign className="w-5 h-5 text-green-600" />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          {(() => {
-                            const studentUser = getStudentUser(
-                              studentFee.student.userId
-                            );
-                            return studentUser ? (
-                              <>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {studentUser.firstName} {studentUser.lastName}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {studentFee.student.matricule}
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div className="text-sm font-medium text-gray-900">
-                                  Étudiant {studentFee.student.matricule}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  Chargement...
-                                </div>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {studentFee.feeType.name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {studentFee.academicYear.name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {formatAmount(studentFee.amountAssigned)} FCFA
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-green-600">
-                          {formatAmount(studentFee.amountPaid)} FCFA
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {new Date(studentFee.dueDate).toLocaleDateString(
-                            "fr-FR"
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                            studentFee.status
-                          )}`}
-                        >
-                          {getStatusText(studentFee.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleEdit(studentFee)}
-                            className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md transition-colors"
-                          >
-                            Modifier
-                          </button>
-                          <button
-                            onClick={() => handleDelete(studentFee.id)}
-                            className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors"
-                          >
-                            Supprimer
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredStudentFees.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-gray-500">
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+          <div className="space-y-4">
+            {groupedStudentFees.length === 0 ? (
+              <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-lg border border-gray-200">
+                <div className="max-w-md mx-auto">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <GraduationCap className="w-10 h-10 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
                     Aucun frais étudiant
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Commencez par créer un nouveau frais étudiant.
+                  <p className="text-gray-600 mb-6 leading-relaxed">
+                    Commencez par attribuer des frais aux étudiants pour suivre
+                    leurs paiements.
                   </p>
+                  <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+                    <FileText className="w-4 h-4" />
+                    <span>
+                      Utilisez le bouton "Nouveau frais" pour commencer
+                    </span>
+                  </div>
                 </div>
               </div>
+            ) : (
+              groupedStudentFees.map((group) => {
+                const studentUser = getStudentUser(group.student.userId);
+                const isExpanded = expandedStudents.has(group.student.id);
+
+                return (
+                  <Card key={group.student.id} className="overflow-hidden">
+                    {/* En-tête de l'étudiant */}
+                    <div
+                      className="p-6 bg-gradient-to-r from-slate-50 to-gray-50 border-b border-gray-200 cursor-pointer hover:from-slate-100 hover:to-gray-100 transition-all duration-200 shadow-sm"
+                      onClick={() => toggleStudentExpansion(group.student.id)}
+                    >
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <GraduationCap className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-1">
+                              {studentUser
+                                ? `${studentUser.firstName} ${studentUser.lastName}`
+                                : `Étudiant ${group.student.matricule}`}
+                            </h3>
+                            <div className="flex items-center space-x-4 text-sm text-gray-700">
+                              <div className="flex items-center space-x-1">
+                                <FileText className="w-4 h-4 text-gray-500" />
+                                <span className="font-semibold">
+                                  Matricule:
+                                </span>
+                                <span className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-800">
+                                  {group.student.matricule}
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <DollarSign className="w-4 h-4 text-gray-500" />
+                                <span className="font-semibold">Frais:</span>
+                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold">
+                                  {group.fees.length}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between lg:space-x-6">
+                          {/* Résumé des montants */}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-right">
+                            <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                              <div className="flex items-center justify-center space-x-1 mb-1">
+                                <TrendingUp className="w-4 h-4 text-blue-600" />
+                                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                  Assigné
+                                </span>
+                              </div>
+                              <div className="text-lg font-bold text-gray-900">
+                                {formatAmount(group.totalAssigned)} FCFA
+                              </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                              <div className="flex items-center justify-center space-x-1 mb-1">
+                                <CreditCard className="w-4 h-4 text-green-600" />
+                                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                  Payé
+                                </span>
+                              </div>
+                              <div className="text-lg font-bold text-green-700">
+                                {formatAmount(group.totalPaid)} FCFA
+                              </div>
+                            </div>
+
+                            <div
+                              className={`rounded-lg p-3 shadow-sm border ${
+                                group.totalRemaining > 0
+                                  ? "bg-red-50 border-red-200"
+                                  : "bg-green-50 border-green-200"
+                              }`}
+                            >
+                              <div className="flex items-center justify-center space-x-1 mb-1">
+                                {group.totalRemaining > 0 ? (
+                                  <TrendingDown className="w-4 h-4 text-red-600" />
+                                ) : (
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                )}
+                                <span
+                                  className={`text-xs font-semibold uppercase tracking-wide ${
+                                    group.totalRemaining > 0
+                                      ? "text-red-600"
+                                      : "text-green-600"
+                                  }`}
+                                >
+                                  Restant
+                                </span>
+                              </div>
+                              <div
+                                className={`text-lg font-bold ${
+                                  group.totalRemaining > 0
+                                    ? "text-red-700"
+                                    : "text-green-700"
+                                }`}
+                              >
+                                {formatAmount(group.totalRemaining)} FCFA
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Icône d'expansion */}
+                          <div className="flex items-center ml-4">
+                            <div
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                                isExpanded
+                                  ? "bg-blue-100 text-blue-600"
+                                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                              }`}
+                            >
+                              {isExpanded ? (
+                                <ChevronDown className="w-5 h-5" />
+                              ) : (
+                                <ChevronRight className="w-5 h-5" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Détails des frais (expandable) */}
+                    {isExpanded && (
+                      <div className="p-4 bg-white overflow-x-auto">
+                        <div className="space-y-3 min-w-max">
+                          {group.fees.map((fee) => (
+                            <div
+                              key={fee.id}
+                              className="bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200"
+                            >
+                              <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 items-center">
+                                {/* Type de frais */}
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                                    <FileText className="w-5 h-5 text-white" />
+                                  </div>
+                                  <div>
+                                    <div className="text-sm font-bold text-gray-900">
+                                      {fee.feeType.name}
+                                    </div>
+                                    <div className="text-xs text-gray-600 font-medium">
+                                      {fee.academicYear.name}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Montant assigné */}
+                                <div className="text-center">
+                                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                                    <div className="flex items-center justify-center space-x-1 mb-1">
+                                      <TrendingUp className="w-4 h-4 text-blue-600" />
+                                      <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                                        Assigné
+                                      </span>
+                                    </div>
+                                    <div className="text-sm font-bold text-gray-900">
+                                      {formatAmount(fee.amountAssigned)} FCFA
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Montant payé */}
+                                <div className="text-center">
+                                  <div
+                                    className={`rounded-lg p-3 border ${
+                                      Number(fee.amountPaid) > 0
+                                        ? Number(fee.amountPaid) >=
+                                          Number(fee.amountAssigned)
+                                          ? "bg-green-50 border-green-200"
+                                          : "bg-blue-50 border-blue-200"
+                                        : "bg-gray-50 border-gray-200"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-center space-x-1 mb-1">
+                                      <CreditCard
+                                        className={`w-4 h-4 ${
+                                          Number(fee.amountPaid) > 0
+                                            ? Number(fee.amountPaid) >=
+                                              Number(fee.amountAssigned)
+                                              ? "text-green-600"
+                                              : "text-blue-600"
+                                            : "text-gray-500"
+                                        }`}
+                                      />
+                                      <span
+                                        className={`text-xs font-semibold uppercase tracking-wide ${
+                                          Number(fee.amountPaid) > 0
+                                            ? Number(fee.amountPaid) >=
+                                              Number(fee.amountAssigned)
+                                              ? "text-green-600"
+                                              : "text-blue-600"
+                                            : "text-gray-500"
+                                        }`}
+                                      >
+                                        Payé
+                                      </span>
+                                    </div>
+                                    <div
+                                      className={`text-sm font-bold ${
+                                        Number(fee.amountPaid) > 0
+                                          ? Number(fee.amountPaid) >=
+                                            Number(fee.amountAssigned)
+                                            ? "text-green-700"
+                                            : "text-blue-700"
+                                          : "text-gray-600"
+                                      }`}
+                                    >
+                                      {formatAmount(fee.amountPaid)} FCFA
+                                      {Number(fee.amountPaid) > 0 &&
+                                        Number(fee.amountPaid) <
+                                          Number(fee.amountAssigned) && (
+                                          <span className="text-xs text-blue-500 ml-1 font-medium">
+                                            (partiel)
+                                          </span>
+                                        )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Montant restant */}
+                                <div className="text-center">
+                                  <div
+                                    className={`rounded-lg p-3 border ${
+                                      Number(fee.amountAssigned) -
+                                        Number(fee.amountPaid) >
+                                      0
+                                        ? "bg-red-50 border-red-200"
+                                        : "bg-green-50 border-green-200"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-center space-x-1 mb-1">
+                                      {Number(fee.amountAssigned) -
+                                        Number(fee.amountPaid) >
+                                      0 ? (
+                                        <TrendingDown className="w-4 h-4 text-red-600" />
+                                      ) : (
+                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                      )}
+                                      <span
+                                        className={`text-xs font-semibold uppercase tracking-wide ${
+                                          Number(fee.amountAssigned) -
+                                            Number(fee.amountPaid) >
+                                          0
+                                            ? "text-red-600"
+                                            : "text-green-600"
+                                        }`}
+                                      >
+                                        Restant
+                                      </span>
+                                    </div>
+                                    <div
+                                      className={`text-sm font-bold ${
+                                        Number(fee.amountAssigned) -
+                                          Number(fee.amountPaid) >
+                                        0
+                                          ? "text-red-700"
+                                          : "text-green-700"
+                                      }`}
+                                    >
+                                      {formatAmount(
+                                        Number(fee.amountAssigned) -
+                                          Number(fee.amountPaid)
+                                      )}{" "}
+                                      FCFA
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Date d'échéance */}
+                                <div className="text-center">
+                                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                    <div className="flex items-center justify-center space-x-1 mb-1">
+                                      <Calendar className="w-4 h-4 text-gray-600" />
+                                      <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                        Échéance
+                                      </span>
+                                    </div>
+                                    <div className="text-sm font-bold text-gray-900">
+                                      {new Date(fee.dueDate).toLocaleDateString(
+                                        "fr-FR"
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Statut et Actions */}
+                                <div className="flex flex-col space-y-3">
+                                  <div className="flex justify-center">
+                                    <span
+                                      className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${getStatusColor(
+                                        fee.status
+                                      )}`}
+                                    >
+                                      {fee.status === "paid" && (
+                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                      )}
+                                      {fee.status === "partial" && (
+                                        <Clock className="w-3 h-3 mr-1" />
+                                      )}
+                                      {fee.status === "pending" && (
+                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                      )}
+                                      {getStatusText(fee.status)}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col space-y-2">
+                                    <button
+                                      onClick={() => handleEdit(fee)}
+                                      className="flex items-center justify-center space-x-2 text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border border-blue-200 hover:border-blue-300"
+                                    >
+                                      <Edit3 className="w-3 h-3" />
+                                      <span>Modifier</span>
+                                    </button>
+                                    <button
+                                      onClick={() => handleDelete(fee.id)}
+                                      className="flex items-center justify-center space-x-2 text-red-700 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border border-red-200 hover:border-red-300"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                      <span>Supprimer</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                );
+              })
             )}
           </div>
         )}

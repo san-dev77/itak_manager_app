@@ -347,13 +347,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
   };
 
   const filteredStudents = students.filter((student) => {
-    // Vérifier si l'étudiant a déjà des frais appliqués
-    const hasExistingFees = studentFees.some(
-      (fee) => fee.studentId === student.id
-    );
-
-    // Ne garder que les étudiants sans frais appliqués
-    if (hasExistingFees) return false;
+    // Afficher tous les étudiants, même ceux qui ont déjà des frais
 
     // Appliquer le filtre de recherche
     return (
