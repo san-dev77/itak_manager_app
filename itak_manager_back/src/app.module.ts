@@ -1,29 +1,86 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { SupabaseModule } from './modules/supabase.module';
-import { UserModule } from './modules/user.module';
-import { AuthModule } from './modules/auth.module';
-import { StudentModule } from './modules/student.module';
-import { TeacherModule } from './modules/teacher.module';
-import { StaffModule } from './modules/staff.module';
-import { ClassCategoryModule } from './modules/class-category.module';
-import { ClassModule } from './modules/class.module';
-import { SubjectModule } from './modules/subject.module';
-import { ConfigModule } from './modules/config.module';
+import databaseConfig from './config/database.config';
+import { AuthModule } from './modules/auth/auth.module';
+import { UserModule } from './modules/user/user.module';
+import { StudentModule } from './modules/student/student.module';
+import { TeacherModule } from './modules/teacher/teacher.module';
+import { StaffModule } from './modules/staff/staff.module';
+import { ClassModule } from './modules/class/class.module';
+import { ClassCategoryModule } from './modules/class-category/class-category.module';
+import { SubjectModule } from './modules/subject/subject.module';
+import { ParentModule } from './modules/parent/parent.module';
+import { PromotionModule } from './modules/promotion/promotion.module';
+import { SchoolYearModule } from './modules/school-year/school-year.module';
+import { TermModule } from './modules/term/term.module';
+import { AssessmentModule } from './modules/assessment/assessment.module';
+import { AssessmentResultModule } from './modules/assessment-result/assessment-result.module';
+import { GradeComplaintModule } from './modules/grade-complaint/grade-complaint.module';
+import { AssessmentSubjectModule } from './modules/assessment-subject/assessment-subject.module';
+import { StudentTransferModule } from './modules/student-transfer/student-transfer.module';
+import { AssessmentAttendanceModule } from './modules/assessment-attendance/assessment-attendance.module';
+import { GradeCalculationModule } from './modules/grade-calculation/grade-calculation.module';
+import { AssessmentVersionModule } from './modules/assessment-version/assessment-version.module';
+import { GradeFreezeModule } from './modules/grade-freeze/grade-freeze.module';
+import { FeeTypeModule } from './modules/fee-type/fee-type.module';
+import { StudentFeeModule } from './modules/student-fee/student-fee.module';
+import { PaymentModule } from './modules/payment/payment.module';
+import { RefundModule } from './modules/refund/refund.module';
+import { DiscountModule } from './modules/discount/discount.module';
+import { InvoiceModule } from './modules/invoice/invoice.module';
+import { InvoiceItemModule } from './modules/invoice-item/invoice-item.module';
+import { TimetableModule } from './modules/timetable/timetable.module';
+import { EventModule } from './modules/event/event.module';
+import { EventParticipantModule } from './modules/event-participant/event-participant.module';
+import { TeachingAssignmentModule } from './modules/teaching-assignment/teaching-assignment.module';
+import { ClassSubjectModule } from './modules/class-subject/class-subject.module';
+import { StudentClassModule } from './modules/student-class/student-class.module';
 
 @Module({
   imports: [
-    SupabaseModule,
-    UserModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    TypeOrmModule.forRootAsync({
+      useFactory: databaseConfig,
+    }),
     AuthModule,
+    UserModule,
     StudentModule,
     TeacherModule,
     StaffModule,
-    ClassCategoryModule,
     ClassModule,
+    ClassCategoryModule,
     SubjectModule,
-    ConfigModule,
+    ParentModule,
+    PromotionModule,
+    SchoolYearModule,
+    TermModule,
+    AssessmentModule,
+    AssessmentResultModule,
+    GradeComplaintModule,
+    AssessmentSubjectModule,
+    StudentTransferModule,
+    AssessmentAttendanceModule,
+    GradeCalculationModule,
+    AssessmentVersionModule,
+    GradeFreezeModule,
+    FeeTypeModule,
+    StudentFeeModule,
+    PaymentModule,
+    RefundModule,
+    DiscountModule,
+    InvoiceModule,
+    InvoiceItemModule,
+    TimetableModule,
+    EventModule,
+    EventParticipantModule,
+    TeachingAssignmentModule,
+    ClassSubjectModule,
+    StudentClassModule,
   ],
   controllers: [AppController],
   providers: [AppService],

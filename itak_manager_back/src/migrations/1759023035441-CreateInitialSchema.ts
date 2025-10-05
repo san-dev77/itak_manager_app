@@ -1,0 +1,1407 @@
+import { MigrationInterface, QueryRunner } from 'typeorm';
+
+export class CreateInitialSchema1759023035441 implements MigrationInterface {
+  name = 'CreateInitialSchema1759023035441';
+
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `CREATE TABLE "school_years" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(20) NOT NULL, "start_date" date NOT NULL, "end_date" date NOT NULL, "is_active" boolean NOT NULL DEFAULT false, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_687611dadc1a5966e0365e4f492" UNIQUE ("name"), CONSTRAINT "PK_3fe99d570a61178cb99065783cf" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_687611dadc1a5966e0365e4f49" ON "school_years" ("name") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_975c55d642528a2f478e8d7666" ON "school_years" ("start_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_478a2d98422fb3b99dcb31b6e6" ON "school_years" ("end_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_5e9b2616fdad7b0d3c33c93fe0" ON "school_years" ("is_active") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "terms" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "school_year_id" uuid NOT NULL, "name" character varying(20) NOT NULL, "start_date" date NOT NULL, "end_date" date NOT NULL, "is_active" boolean NOT NULL DEFAULT false, "order_number" integer NOT NULL DEFAULT '1', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "schoolYearId" uuid, CONSTRAINT "PK_33b6fe77d6ace7ff43cc8a65958" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_3ee8b061e5cb4972f9a2953a95" ON "terms" ("school_year_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_79b56b84207dc3c5510bb093d3" ON "terms" ("name") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_c7ac94655c7dc1edd0b5b01547" ON "terms" ("start_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_6811439bf289b3bb6de197648b" ON "terms" ("end_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_e5f8a2f92f738911997eebc794" ON "terms" ("is_active") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_a24ac15b9a8c74a4c7e8fdfb22" ON "terms" ("order_number") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "teaching_assignments" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "teacher_id" uuid NOT NULL, "class_subject_id" uuid NOT NULL, "start_date" date NOT NULL, "end_date" date, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_c149bbbb99fa6464cdb26612d31" UNIQUE ("teacher_id", "class_subject_id"), CONSTRAINT "chk_end_date_after_start" CHECK (end_date IS NULL OR end_date >= start_date), CONSTRAINT "chk_start_date_not_future" CHECK (start_date <= CURRENT_DATE), CONSTRAINT "PK_baf0d10098561a9840957b512e0" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_7eb84b6d68b1db6cc46b5fcea9" ON "teaching_assignments" ("teacher_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_074e7e672063e0b76786f67cd0" ON "teaching_assignments" ("class_subject_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_e0f83525a7bfd679c02107652c" ON "teaching_assignments" ("start_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_360b1f9ed98b16ad3f076084cf" ON "teaching_assignments" ("end_date") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "subjects" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(50) NOT NULL, "code" character varying(10) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_542cbba74dde3c82ab49c573109" UNIQUE ("code"), CONSTRAINT "PK_1a023685ac2b051b4e557b0b280" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_47a287fe64bd0e1027e603c335" ON "subjects" ("name") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_542cbba74dde3c82ab49c57310" ON "subjects" ("code") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "teachers" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "matricule" character varying(20) NOT NULL, "hire_date" date NOT NULL, "photo" text, "marital_status" character varying(20), "diplomas" text, "address" text, "emergency_contact" character varying(100), "notes" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_4668d4752e6766682d1be0b346f" UNIQUE ("user_id"), CONSTRAINT "UQ_4da9777c79b35eb3a0fcdcd833e" UNIQUE ("matricule"), CONSTRAINT "PK_a8d4f83be3abe4c687b0a0093c8" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_4668d4752e6766682d1be0b346" ON "teachers" ("user_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_4da9777c79b35eb3a0fcdcd833" ON "teachers" ("matricule") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_bc8ceddb4c4419b52ff7ff5c3b" ON "teachers" ("hire_date") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "staff" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "matricule" character varying(20) NOT NULL, "hire_date" date NOT NULL, "position" character varying(50) NOT NULL, "photo" text, "marital_status" character varying(20), "address" text, "emergency_contact" character varying(100), "notes" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_cec9365d9fc3a3409158b645f2e" UNIQUE ("user_id"), CONSTRAINT "UQ_a9de5f1c1623ab6169408ed4159" UNIQUE ("matricule"), CONSTRAINT "PK_e4ee98bb552756c180aec1e854a" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_cec9365d9fc3a3409158b645f2" ON "staff" ("user_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_a9de5f1c1623ab6169408ed415" ON "staff" ("matricule") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_cd84afbdfaeefe66740ec2fa27" ON "staff" ("hire_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_7390f81e2272a8da0aa825ce58" ON "staff" ("position") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."student_parents_relationship_enum" AS ENUM('père', 'mère', 'tuteur', 'beau-père', 'belle-mère', 'grand-père', 'grand-mère', 'autre')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "student_parents" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "student_id" uuid NOT NULL, "parent_id" uuid NOT NULL, "relationship" "public"."student_parents_relationship_enum" NOT NULL DEFAULT 'père', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_ad07904dc74a079fb1d7d82825c" UNIQUE ("student_id", "parent_id"), CONSTRAINT "PK_3f3fbf0307e277adf3e90495435" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ab5687be754283635fffe3692e" ON "student_parents" ("student_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_d4d691ddbc51607ae462b68e16" ON "student_parents" ("parent_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_b2d8a4832d31fa641ec667374b" ON "student_parents" ("relationship") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "parents" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "job" character varying(100), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_c94c3cea9b43a18c81269ded41d" UNIQUE ("user_id"), CONSTRAINT "PK_9a4dc67c7b8e6a9cb918938d353" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_c94c3cea9b43a18c81269ded41" ON "parents" ("user_id") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."grade_complaints_status_enum" AS ENUM('pending', 'under_review', 'approved', 'rejected')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "grade_complaints" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "student_id" uuid NOT NULL, "assessment_id" uuid NOT NULL, "status" "public"."grade_complaints_status_enum" NOT NULL DEFAULT 'pending', "reason" text NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_46c7901313d69fc712fb4534bc9" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_34d2b5c89e1a3b4f458dcbc9c7" ON "grade_complaints" ("student_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_04342a18ea7141b9069f460eb1" ON "grade_complaints" ("assessment_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_f9f21013dce950782fced82b00" ON "grade_complaints" ("status") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "grade_complaint_history" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "complaint_id" uuid NOT NULL, "old_score" numeric(5,2), "new_score" numeric(5,2), "changed_by" uuid NOT NULL, "changed_at" TIMESTAMP NOT NULL DEFAULT now(), "comment" text, CONSTRAINT "PK_1076d598f4110de7ae7f6dead25" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_4d212f739e47c5f2151985ed8d" ON "grade_complaint_history" ("complaint_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_52a0b364d5851f3fb88e13e431" ON "grade_complaint_history" ("changed_by") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."assessment_subjects_file_type_enum" AS ENUM('pdf', 'doc', 'docx', 'odt')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "assessment_subjects" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "assessment_id" uuid NOT NULL, "file_url" text NOT NULL, "file_type" "public"."assessment_subjects_file_type_enum" NOT NULL, "uploaded_by" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_d846f59e632a08b875d7fc720b2" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_32c0056f4a8acc773ab38fb3e5" ON "assessment_subjects" ("assessment_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_37ece249a758b7bc5a8a9ae126" ON "assessment_subjects" ("uploaded_by") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."fee_types_frequency_enum" AS ENUM('once', 'monthly', 'quarterly', 'yearly')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "fee_types" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(255) NOT NULL, "description" text, "amount_default" numeric(12,2) NOT NULL, "is_recurring" boolean NOT NULL DEFAULT false, "frequency" "public"."fee_types_frequency_enum", "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_76bf5373849c44d3bda84d29415" UNIQUE ("name"), CONSTRAINT "PK_13c213789b6c9fc376303db1fb9" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_76bf5373849c44d3bda84d2941" ON "fee_types" ("name") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."discounts_type_enum" AS ENUM('scholarship', 'sibling_discount', 'exemption', 'other')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "discounts" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "student_fee_id" uuid NOT NULL, "type" "public"."discounts_type_enum" NOT NULL, "description" text, "amount" numeric(12,2) NOT NULL, "approved_by" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_66c522004212dc814d6e2f14ecc" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ff01fb15e6cf299b093900e500" ON "discounts" ("student_fee_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_e74f762ec7d736345b1906da4e" ON "discounts" ("approved_by") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."invoices_status_enum" AS ENUM('unpaid', 'partial', 'paid', 'cancelled')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "invoices" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "student_id" uuid NOT NULL, "invoice_number" character varying(50) NOT NULL, "total_amount" numeric(12,2) NOT NULL, "status" "public"."invoices_status_enum" NOT NULL DEFAULT 'unpaid', "issued_date" date NOT NULL, "due_date" date, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_d8f8d3788694e1b3f96c42c36fb" UNIQUE ("invoice_number"), CONSTRAINT "PK_668cef7c22a427fd822cc1be3ce" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_0a19069218ffe36a4e4b41c487" ON "invoices" ("student_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_d8f8d3788694e1b3f96c42c36f" ON "invoices" ("invoice_number") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "invoice_items" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "invoice_id" uuid NOT NULL, "student_fee_id" uuid NOT NULL, "description" character varying(255) NOT NULL, "amount" numeric(12,2) NOT NULL, CONSTRAINT "PK_53b99f9e0e2945e69de1a12b75a" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_dc991d555664682cfe892eea2c" ON "invoice_items" ("invoice_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_16d2616b182aa05502747596a5" ON "invoice_items" ("student_fee_id") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."student_fees_status_enum" AS ENUM('pending', 'partial', 'paid', 'overdue')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "student_fees" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "student_id" uuid NOT NULL, "fee_type_id" uuid NOT NULL, "academic_year_id" uuid NOT NULL, "amount_assigned" numeric(12,2) NOT NULL, "due_date" date, "status" "public"."student_fees_status_enum" NOT NULL DEFAULT 'pending', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_a2cec5273eddb36c724e226cf13" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_9e8969b8c743de99403b16b592" ON "student_fees" ("student_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_e8e31608d1095702a3e5bd5c6d" ON "student_fees" ("fee_type_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_a84c5d5305c800b81f39f3f91d" ON "student_fees" ("academic_year_id") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "refunds" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "payment_id" uuid NOT NULL, "amount" numeric(12,2) NOT NULL, "reason" text, "processed_by" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_5106efb01eeda7e49a78b869738" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_7f48aa5d56c42aeb495db01668" ON "refunds" ("payment_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_c1cf8b20996c8a602311aac45e" ON "refunds" ("processed_by") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."payments_method_enum" AS ENUM('cash', 'bank_transfer', 'mobile_money', 'card')`,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."payments_status_enum" AS ENUM('successful', 'failed', 'pending')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "payments" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "student_fee_id" uuid NOT NULL, "payment_date" TIMESTAMP NOT NULL, "amount" numeric(12,2) NOT NULL, "method" "public"."payments_method_enum" NOT NULL, "provider" character varying(50), "transaction_ref" character varying(100), "received_by" uuid NOT NULL, "status" "public"."payments_status_enum" NOT NULL DEFAULT 'successful', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_197ab7af18c93fbb0c9b28b4a59" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_65e5a00b99fea251e787cf46f3" ON "payments" ("student_fee_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_addd19c06574aa904472b8c82b" ON "payments" ("received_by") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."users_role_enum" AS ENUM('admin', 'super_admin', 'teacher', 'student', 'staff', 'parent')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "users" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "username" character varying(50) NOT NULL, "email" character varying(100) NOT NULL, "first_name" character varying(50) NOT NULL, "last_name" character varying(50) NOT NULL, "gender" character varying(10), "birth_date" date, "phone" character varying(20), "password" character varying(255) NOT NULL, "role" "public"."users_role_enum" NOT NULL DEFAULT 'student', "is_active" boolean NOT NULL DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_fe0bb3f6520ee0469504521e710" UNIQUE ("username"), CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_fe0bb3f6520ee0469504521e71" ON "users" ("username") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_97672ac88f789774dd47f7c8be" ON "users" ("email") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ace513fa30d485cfd25c11a9e4" ON "users" ("role") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_20c7aea6112bef71528210f631" ON "users" ("is_active") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "student_promotions" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "student_id" uuid NOT NULL, "from_class_id" uuid NOT NULL, "to_class_id" uuid NOT NULL, "year" character varying(9) NOT NULL, "remarks" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "studentId" uuid, "fromClassId" uuid, "toClassId" uuid, CONSTRAINT "PK_b1f7041c5f21cff8bf7947275b7" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_8b5a02b2d1bd921d1343e0751e" ON "student_promotions" ("student_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_1f6fecc9cb339fdf3baa72106f" ON "student_promotions" ("from_class_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_b897ed65b14f94884075483b73" ON "student_promotions" ("to_class_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_3c0fdbba2b5ad35458ddac8af5" ON "student_promotions" ("year") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."assessment_results_status_enum" AS ENUM('present', 'absent', 'excused', 'excluded')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "assessment_results" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "assessment_id" uuid NOT NULL, "student_id" uuid NOT NULL, "score" numeric(5,2) NOT NULL, "remarks" text, "status" "public"."assessment_results_status_enum" NOT NULL DEFAULT 'present', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_5907c861a69b7bf628090784637" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX "IDX_fe3eef76d2c914c686d29ccde7" ON "assessment_results" ("assessment_id", "student_id") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."student_transfers_reason_enum" AS ENUM('disciplinary', 'academic', 'medical', 'family_request', 'administrative', 'capacity_adjustment')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "student_transfers" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "student_id" uuid NOT NULL, "from_class_id" uuid NOT NULL, "to_class_id" uuid NOT NULL, "transfer_date" date NOT NULL, "reason" "public"."student_transfers_reason_enum" NOT NULL, "reason_details" text, "year" character varying(9) NOT NULL, "approved_by" uuid, "approval_date" TIMESTAMP, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "chk_transfer_date_not_future" CHECK (transfer_date <= CURRENT_DATE), CONSTRAINT "chk_different_classes" CHECK (from_class_id != to_class_id), CONSTRAINT "PK_a5c3b6c61199784501930784735" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_937706f4ec7f289c620f1000d8" ON "student_transfers" ("student_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_1f7b7aed95430087cf2af83a91" ON "student_transfers" ("from_class_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_b8da28f97181ec03ca270dbbd8" ON "student_transfers" ("to_class_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_b7d41bad633c2a0dd26b6809a9" ON "student_transfers" ("transfer_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_0a213343eafc5d8f456d4f4c5e" ON "student_transfers" ("reason") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_f6e9a5010b0ce0cbefc9a16113" ON "student_transfers" ("year") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."assessment_attendance_status_enum" AS ENUM('present', 'absent', 'excused', 'excluded')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "assessment_attendance" ("assessment_id" uuid NOT NULL, "student_id" uuid NOT NULL, "status" "public"."assessment_attendance_status_enum" NOT NULL DEFAULT 'present', "reason" text, "marked_by" uuid, "marked_at" TIMESTAMP, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_41bb27e8bb71252af4c95f7d960" PRIMARY KEY ("assessment_id", "student_id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_384a47e1b2b4274e039383def0" ON "assessment_attendance" ("assessment_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_bca9e89585bf979755e936a62d" ON "assessment_attendance" ("student_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_c4593f7d91140d6fcc31d1abbf" ON "assessment_attendance" ("status") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "students" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "matricule" character varying(20) NOT NULL, "enrollment_date" date NOT NULL, "photo" text, "marital_status" character varying(20), "father_name" character varying(100), "mother_name" character varying(100), "tutor_name" character varying(100), "tutor_phone" character varying(20), "address" text, "emergency_contact" character varying(100), "notes" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_fb3eff90b11bddf7285f9b4e281" UNIQUE ("user_id"), CONSTRAINT "UQ_72985b50b5a897ee0ea6a3536cd" UNIQUE ("matricule"), CONSTRAINT "PK_7d7f07271ad4ce999880713f05e" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_fb3eff90b11bddf7285f9b4e28" ON "students" ("user_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_72985b50b5a897ee0ea6a3536c" ON "students" ("matricule") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_f02c3d198bd4cfafea78366b65" ON "students" ("enrollment_date") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."student_classes_status_enum" AS ENUM('active', 'transferred', 'repeating', 'graduated', 'dropped')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "student_classes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "student_id" uuid NOT NULL, "class_id" uuid NOT NULL, "start_date" date NOT NULL, "end_date" date, "status" "public"."student_classes_status_enum" NOT NULL DEFAULT 'active', "year" character varying(9) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_72cb908330b0e7eac3846c0998b" UNIQUE ("student_id", "class_id"), CONSTRAINT "chk_end_date_after_start" CHECK (end_date IS NULL OR end_date >= start_date), CONSTRAINT "chk_start_date_not_future" CHECK (start_date <= CURRENT_DATE), CONSTRAINT "PK_e6fcc2e4f8f79a5aa16a50c8f46" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_09b94eccbdedd86b77d54daaeb" ON "student_classes" ("student_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_250de2754beaff18091a60a665" ON "student_classes" ("class_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_fe3b07f79392a7333d197c8852" ON "student_classes" ("start_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_0f3d7aaa500b257483674cc898" ON "student_classes" ("end_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_7b802701077a468bdd5b3962ed" ON "student_classes" ("status") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_de18b50a2bd4b317616cec9756" ON "student_classes" ("year") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "class_category" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(50) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_57121e4285ce95dcb67dce5f77f" UNIQUE ("name"), CONSTRAINT "PK_903c13b4bea96ee4844ad7abd9e" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_57121e4285ce95dcb67dce5f77" ON "class_category" ("name") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "classes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(50) NOT NULL, "code" character varying(10) NOT NULL, "description" text, "level" character varying(20), "category_id" uuid NOT NULL, "capacity" integer, "order_level" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "class_category_id" uuid, CONSTRAINT "UQ_cf7491878e0fca8599438629988" UNIQUE ("code"), CONSTRAINT "PK_e207aa15404e9b2ce35910f9f7f" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_1f3940af28a76098f31004f03c" ON "classes" ("name") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_cf7491878e0fca859943862998" ON "classes" ("code") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_7f3d4d1ac00ffae553798f09d1" ON "classes" ("category_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_bebfac8b20c611dc0a5ffeca97" ON "classes" ("order_level") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "class_subjects" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "class_id" uuid NOT NULL, "subject_id" uuid NOT NULL, "coefficient" integer NOT NULL DEFAULT '1', "weekly_hours" integer, "is_optional" boolean NOT NULL DEFAULT false, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_bd863400a0b317b7e43118a970b" UNIQUE ("class_id", "subject_id"), CONSTRAINT "chk_weekly_hours_positive" CHECK (weekly_hours IS NULL OR weekly_hours >= 0), CONSTRAINT "chk_coefficient_positive" CHECK (coefficient >= 0), CONSTRAINT "PK_4e1ecabd8771166a29291dc09ed" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_433f93dd22b685e59c285726a1" ON "class_subjects" ("class_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_9d8971acdcc64a1703357a0075" ON "class_subjects" ("subject_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_99dddf68bda3b92f23f0039c36" ON "class_subjects" ("coefficient") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."assessment_versions_version_action_enum" AS ENUM('created', 'updated', 'deleted', 'restored')`,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."assessment_versions_type_enum" AS ENUM('exam', 'homework', 'supervised_homework', 'test', 'quiz', 'monthly_composition', 'continuous_assessment')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "assessment_versions" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "assessment_id" uuid NOT NULL, "version_number" integer NOT NULL, "version_action" "public"."assessment_versions_version_action_enum" NOT NULL, "term_id" uuid NOT NULL, "class_subject_id" uuid NOT NULL, "school_year_id" uuid NOT NULL, "type" "public"."assessment_versions_type_enum" NOT NULL, "title" character varying(100) NOT NULL, "description" text, "start_date" date NOT NULL, "end_date" date NOT NULL, "max_score" numeric(5,2) NOT NULL, "weight" numeric(5,2) NOT NULL, "changed_by" uuid NOT NULL, "change_reason" text, "changed_fields" json, "created_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_7c132bd1b96001adf3601276ce3" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_63f5bd4ac6b108de31cebd95d8" ON "assessment_versions" ("assessment_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_4d59ffb9398e4ee8de1c9c1eea" ON "assessment_versions" ("assessment_id", "created_at") `,
+    );
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX "IDX_dee47052e53b6e5ee7478ee5e8" ON "assessment_versions" ("assessment_id", "version_number") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."assessments_type_enum" AS ENUM('exam', 'homework', 'supervised_homework', 'test', 'quiz', 'monthly_composition', 'continuous_assessment')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "assessments" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "term_id" uuid NOT NULL, "class_subject_id" uuid NOT NULL, "school_year_id" uuid NOT NULL, "type" "public"."assessments_type_enum" NOT NULL DEFAULT 'test', "title" character varying(100) NOT NULL, "description" text, "start_date" date NOT NULL, "end_date" date NOT NULL, "max_score" numeric(5,2) NOT NULL, "weight" numeric(5,2) NOT NULL DEFAULT '1', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_a3442bd80a00e9111cefca57f6c" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_0fc9facafe432c9a5fcb6a00d4" ON "assessments" ("term_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_2b73c535109b7f105941e83b81" ON "assessments" ("class_subject_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_f89c041cfd106e6c7ef36d934f" ON "assessments" ("school_year_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_44e86abcddcbf3cbdb90502c69" ON "assessments" ("type") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_fa6c13bd0f1077f9bd02235112" ON "assessments" ("title") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_35e24da9b85a5fa69de3e049b7" ON "assessments" ("start_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_949e337542feac3095503a3693" ON "assessments" ("end_date") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."grade_freeze_periods_scope_enum" AS ENUM('school_wide', 'term_specific', 'class_specific')`,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."grade_freeze_periods_status_enum" AS ENUM('scheduled', 'active', 'completed', 'cancelled')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "grade_freeze_periods" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "school_year_id" uuid NOT NULL, "term_id" uuid, "class_id" uuid, "title" character varying(200) NOT NULL, "description" text, "scope" "public"."grade_freeze_periods_scope_enum" NOT NULL DEFAULT 'school_wide', "status" "public"."grade_freeze_periods_status_enum" NOT NULL DEFAULT 'scheduled', "start_date" TIMESTAMP NOT NULL, "end_date" TIMESTAMP NOT NULL, "created_by" uuid NOT NULL, "approved_by" uuid, "approved_at" TIMESTAMP, "cancelled_by" uuid, "cancelled_at" TIMESTAMP, "cancellation_reason" text, "allow_emergency_override" boolean NOT NULL DEFAULT false, "override_password" character varying(255), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "chk_end_date_after_start" CHECK (end_date > start_date), CONSTRAINT "PK_d00ce451e504c1ddec809fbf8a6" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_a6eafb0aa2a552bcd979a7123e" ON "grade_freeze_periods" ("school_year_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_6b4d459a8835bbf4b5954eb638" ON "grade_freeze_periods" ("term_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_4d3f2eba8748be7b392f1f5dec" ON "grade_freeze_periods" ("class_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_1b17b7ac59b75b6c6917b3618b" ON "grade_freeze_periods" ("scope") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_2f25b31abd6f91023f8e714df1" ON "grade_freeze_periods" ("status") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_d77654290c921a8809637d6f24" ON "grade_freeze_periods" ("start_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_a34d3bba841b20d7eded27dd88" ON "grade_freeze_periods" ("end_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_b5bdacce0ad3e8beb4b9b7b688" ON "grade_freeze_periods" ("status", "scope") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_4fa390b8f47deea93efa22a435" ON "grade_freeze_periods" ("school_year_id", "start_date", "end_date") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."timetables_day_of_week_enum" AS ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "timetables" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "class_id" uuid NOT NULL, "teacher_id" uuid NOT NULL, "subject_id" uuid NOT NULL, "academic_year_id" uuid NOT NULL, "day_of_week" "public"."timetables_day_of_week_enum" NOT NULL, "start_time" TIME NOT NULL, "end_time" TIME NOT NULL, "room" character varying(50), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_9dd7e50645bff59e9ac5b4725c0" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_54d3ddcc757a7639a1ca4ea159" ON "timetables" ("class_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_82b11ba087125514207fa541c3" ON "timetables" ("teacher_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_6f592a24e991c80fabe3f3b844" ON "timetables" ("subject_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_bc47153018268d8a0903fc3f05" ON "timetables" ("academic_year_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_54e3a5ad25a60e1dd7ca8f0991" ON "timetables" ("day_of_week") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_d9b15cab5293a8ef52771c3a40" ON "timetables" ("teacher_id", "academic_year_id", "day_of_week", "start_time") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_9dacd47ded63b88095e262feec" ON "timetables" ("class_id", "teacher_id", "academic_year_id", "day_of_week", "start_time") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."events_event_type_enum" AS ENUM('exam', 'homework', 'cultural_day', 'health_day', 'ball', 'other')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "events" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "title" character varying(100) NOT NULL, "description" text, "event_type" "public"."events_event_type_enum" NOT NULL, "start_date" date NOT NULL, "end_date" date, "all_day" boolean NOT NULL DEFAULT true, "class_id" uuid, "created_by" uuid NOT NULL, "academic_year_id" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_40731c7151fe4be3116e45ddf73" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_2411ea245f7bb91d20d940793f" ON "events" ("event_type") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ce5225c17497c5adddc1819c69" ON "events" ("start_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_fa8af7a830b5923f72cb6cd64c" ON "events" ("class_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_1a259861a2ce114f074b366eed" ON "events" ("created_by") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_778965e321e262f254d5f93366" ON "events" ("academic_year_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_8b64033006237a624458e5123a" ON "events" ("academic_year_id", "start_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_2779d8be750d7cec26b119ea80" ON "events" ("class_id", "start_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_025ced9578ae03010d9f514d0a" ON "events" ("start_date", "event_type") `,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."event_participants_role_enum" AS ENUM('student', 'teacher', 'staff', 'other')`,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."event_participants_status_enum" AS ENUM('invited', 'confirmed', 'declined', 'absent')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "event_participants" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "event_id" uuid NOT NULL, "user_id" uuid NOT NULL, "role" "public"."event_participants_role_enum" NOT NULL, "status" "public"."event_participants_status_enum" NOT NULL DEFAULT 'invited', CONSTRAINT "PK_b65ffd558d76fd51baffe81d42b" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_b5349807aae71193d0cc0f52e3" ON "event_participants" ("event_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ce3f433e47fdd8f072964293c8" ON "event_participants" ("user_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_2571db93a0db49ff99d74209c5" ON "event_participants" ("role") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_bd617cd8b316446a126b3bf4bd" ON "event_participants" ("status") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_8d7506ab698a814d61dfe76deb" ON "event_participants" ("event_id", "status") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_3b07adacd173ba71adf8f298f2" ON "event_participants" ("event_id", "role") `,
+    );
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX "IDX_badb99ed7e07532bba1315a8af" ON "event_participants" ("event_id", "user_id") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "teacher_subjects" ("teacher_id" uuid NOT NULL, "subject_id" uuid NOT NULL, CONSTRAINT "PK_9e05964fe6f2598b643470c2067" PRIMARY KEY ("teacher_id", "subject_id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_6675136306b9111126bbdbbaba" ON "teacher_subjects" ("teacher_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_f35ef96bfb3a84b712722d6db7" ON "teacher_subjects" ("subject_id") `,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "terms" ADD CONSTRAINT "FK_8ccf58120321db1b8293c4f3575" FOREIGN KEY ("schoolYearId") REFERENCES "school_years"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "teaching_assignments" ADD CONSTRAINT "FK_7eb84b6d68b1db6cc46b5fcea98" FOREIGN KEY ("teacher_id") REFERENCES "teachers"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "teaching_assignments" ADD CONSTRAINT "FK_074e7e672063e0b76786f67cd00" FOREIGN KEY ("class_subject_id") REFERENCES "class_subjects"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "teachers" ADD CONSTRAINT "FK_4668d4752e6766682d1be0b346f" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "staff" ADD CONSTRAINT "FK_cec9365d9fc3a3409158b645f2e" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_parents" ADD CONSTRAINT "FK_ab5687be754283635fffe3692ee" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_parents" ADD CONSTRAINT "FK_d4d691ddbc51607ae462b68e16c" FOREIGN KEY ("parent_id") REFERENCES "parents"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "parents" ADD CONSTRAINT "FK_c94c3cea9b43a18c81269ded41d" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_complaints" ADD CONSTRAINT "FK_34d2b5c89e1a3b4f458dcbc9c70" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_complaints" ADD CONSTRAINT "FK_04342a18ea7141b9069f460eb1f" FOREIGN KEY ("assessment_id") REFERENCES "assessments"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_complaint_history" ADD CONSTRAINT "FK_4d212f739e47c5f2151985ed8de" FOREIGN KEY ("complaint_id") REFERENCES "grade_complaints"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_complaint_history" ADD CONSTRAINT "FK_52a0b364d5851f3fb88e13e4317" FOREIGN KEY ("changed_by") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_subjects" ADD CONSTRAINT "FK_32c0056f4a8acc773ab38fb3e5f" FOREIGN KEY ("assessment_id") REFERENCES "assessments"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_subjects" ADD CONSTRAINT "FK_37ece249a758b7bc5a8a9ae1263" FOREIGN KEY ("uploaded_by") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "discounts" ADD CONSTRAINT "FK_ff01fb15e6cf299b093900e500b" FOREIGN KEY ("student_fee_id") REFERENCES "student_fees"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "discounts" ADD CONSTRAINT "FK_e74f762ec7d736345b1906da4eb" FOREIGN KEY ("approved_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "invoices" ADD CONSTRAINT "FK_0a19069218ffe36a4e4b41c4870" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "invoice_items" ADD CONSTRAINT "FK_dc991d555664682cfe892eea2c1" FOREIGN KEY ("invoice_id") REFERENCES "invoices"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "invoice_items" ADD CONSTRAINT "FK_16d2616b182aa05502747596a53" FOREIGN KEY ("student_fee_id") REFERENCES "student_fees"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_fees" ADD CONSTRAINT "FK_9e8969b8c743de99403b16b592c" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_fees" ADD CONSTRAINT "FK_e8e31608d1095702a3e5bd5c6d6" FOREIGN KEY ("fee_type_id") REFERENCES "fee_types"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_fees" ADD CONSTRAINT "FK_a84c5d5305c800b81f39f3f91da" FOREIGN KEY ("academic_year_id") REFERENCES "school_years"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "refunds" ADD CONSTRAINT "FK_7f48aa5d56c42aeb495db016683" FOREIGN KEY ("payment_id") REFERENCES "payments"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "refunds" ADD CONSTRAINT "FK_c1cf8b20996c8a602311aac45e8" FOREIGN KEY ("processed_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "payments" ADD CONSTRAINT "FK_65e5a00b99fea251e787cf46f3f" FOREIGN KEY ("student_fee_id") REFERENCES "student_fees"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "payments" ADD CONSTRAINT "FK_addd19c06574aa904472b8c82bd" FOREIGN KEY ("received_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_promotions" ADD CONSTRAINT "FK_5bb49b0b9f660e400bba2875d07" FOREIGN KEY ("studentId") REFERENCES "students"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_promotions" ADD CONSTRAINT "FK_dc4204329210a246f88d339984f" FOREIGN KEY ("fromClassId") REFERENCES "classes"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_promotions" ADD CONSTRAINT "FK_b99d4b2364e460808da39548bd0" FOREIGN KEY ("toClassId") REFERENCES "classes"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_results" ADD CONSTRAINT "FK_053245407efdbd008dbfe227053" FOREIGN KEY ("assessment_id") REFERENCES "assessments"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_results" ADD CONSTRAINT "FK_2ab229464f61751c37720261dcf" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_transfers" ADD CONSTRAINT "FK_937706f4ec7f289c620f1000d86" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_transfers" ADD CONSTRAINT "FK_1f7b7aed95430087cf2af83a91b" FOREIGN KEY ("from_class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_transfers" ADD CONSTRAINT "FK_b8da28f97181ec03ca270dbbd8a" FOREIGN KEY ("to_class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_attendance" ADD CONSTRAINT "FK_384a47e1b2b4274e039383def09" FOREIGN KEY ("assessment_id") REFERENCES "assessments"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_attendance" ADD CONSTRAINT "FK_bca9e89585bf979755e936a62d2" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "students" ADD CONSTRAINT "FK_fb3eff90b11bddf7285f9b4e281" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_classes" ADD CONSTRAINT "FK_09b94eccbdedd86b77d54daaeb8" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_classes" ADD CONSTRAINT "FK_250de2754beaff18091a60a6654" FOREIGN KEY ("class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "classes" ADD CONSTRAINT "FK_fbc2a60d09eaf6d4cbb9f326932" FOREIGN KEY ("class_category_id") REFERENCES "class_category"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "class_subjects" ADD CONSTRAINT "FK_433f93dd22b685e59c285726a1f" FOREIGN KEY ("class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "class_subjects" ADD CONSTRAINT "FK_9d8971acdcc64a1703357a00759" FOREIGN KEY ("subject_id") REFERENCES "subjects"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_versions" ADD CONSTRAINT "FK_63f5bd4ac6b108de31cebd95d8f" FOREIGN KEY ("assessment_id") REFERENCES "assessments"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_versions" ADD CONSTRAINT "FK_3e235d3cbf6deaa4a9d0d2efe76" FOREIGN KEY ("changed_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessments" ADD CONSTRAINT "FK_0fc9facafe432c9a5fcb6a00d47" FOREIGN KEY ("term_id") REFERENCES "terms"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessments" ADD CONSTRAINT "FK_2b73c535109b7f105941e83b81a" FOREIGN KEY ("class_subject_id") REFERENCES "class_subjects"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessments" ADD CONSTRAINT "FK_f89c041cfd106e6c7ef36d934f6" FOREIGN KEY ("school_year_id") REFERENCES "school_years"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" ADD CONSTRAINT "FK_a6eafb0aa2a552bcd979a7123e5" FOREIGN KEY ("school_year_id") REFERENCES "school_years"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" ADD CONSTRAINT "FK_6b4d459a8835bbf4b5954eb6381" FOREIGN KEY ("term_id") REFERENCES "terms"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" ADD CONSTRAINT "FK_4d3f2eba8748be7b392f1f5decd" FOREIGN KEY ("class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" ADD CONSTRAINT "FK_ddb8531408608c26e263858709e" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" ADD CONSTRAINT "FK_b64079f1886e71d88e9c85a0fbb" FOREIGN KEY ("approved_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" ADD CONSTRAINT "FK_d34d445832013a2e0451e313b44" FOREIGN KEY ("cancelled_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "timetables" ADD CONSTRAINT "FK_54d3ddcc757a7639a1ca4ea159c" FOREIGN KEY ("class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "timetables" ADD CONSTRAINT "FK_82b11ba087125514207fa541c3c" FOREIGN KEY ("teacher_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "timetables" ADD CONSTRAINT "FK_6f592a24e991c80fabe3f3b8447" FOREIGN KEY ("subject_id") REFERENCES "subjects"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "timetables" ADD CONSTRAINT "FK_bc47153018268d8a0903fc3f050" FOREIGN KEY ("academic_year_id") REFERENCES "school_years"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "events" ADD CONSTRAINT "FK_fa8af7a830b5923f72cb6cd64c3" FOREIGN KEY ("class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "events" ADD CONSTRAINT "FK_1a259861a2ce114f074b366eed2" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "events" ADD CONSTRAINT "FK_778965e321e262f254d5f933663" FOREIGN KEY ("academic_year_id") REFERENCES "school_years"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "event_participants" ADD CONSTRAINT "FK_b5349807aae71193d0cc0f52e35" FOREIGN KEY ("event_id") REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "event_participants" ADD CONSTRAINT "FK_ce3f433e47fdd8f072964293c8d" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "teacher_subjects" ADD CONSTRAINT "FK_6675136306b9111126bbdbbaba7" FOREIGN KEY ("teacher_id") REFERENCES "teachers"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "teacher_subjects" ADD CONSTRAINT "FK_f35ef96bfb3a84b712722d6db70" FOREIGN KEY ("subject_id") REFERENCES "subjects"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `ALTER TABLE "teacher_subjects" DROP CONSTRAINT "FK_f35ef96bfb3a84b712722d6db70"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "teacher_subjects" DROP CONSTRAINT "FK_6675136306b9111126bbdbbaba7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "event_participants" DROP CONSTRAINT "FK_ce3f433e47fdd8f072964293c8d"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "event_participants" DROP CONSTRAINT "FK_b5349807aae71193d0cc0f52e35"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "events" DROP CONSTRAINT "FK_778965e321e262f254d5f933663"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "events" DROP CONSTRAINT "FK_1a259861a2ce114f074b366eed2"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "events" DROP CONSTRAINT "FK_fa8af7a830b5923f72cb6cd64c3"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "timetables" DROP CONSTRAINT "FK_bc47153018268d8a0903fc3f050"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "timetables" DROP CONSTRAINT "FK_6f592a24e991c80fabe3f3b8447"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "timetables" DROP CONSTRAINT "FK_82b11ba087125514207fa541c3c"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "timetables" DROP CONSTRAINT "FK_54d3ddcc757a7639a1ca4ea159c"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" DROP CONSTRAINT "FK_d34d445832013a2e0451e313b44"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" DROP CONSTRAINT "FK_b64079f1886e71d88e9c85a0fbb"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" DROP CONSTRAINT "FK_ddb8531408608c26e263858709e"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" DROP CONSTRAINT "FK_4d3f2eba8748be7b392f1f5decd"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" DROP CONSTRAINT "FK_6b4d459a8835bbf4b5954eb6381"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_freeze_periods" DROP CONSTRAINT "FK_a6eafb0aa2a552bcd979a7123e5"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessments" DROP CONSTRAINT "FK_f89c041cfd106e6c7ef36d934f6"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessments" DROP CONSTRAINT "FK_2b73c535109b7f105941e83b81a"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessments" DROP CONSTRAINT "FK_0fc9facafe432c9a5fcb6a00d47"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_versions" DROP CONSTRAINT "FK_3e235d3cbf6deaa4a9d0d2efe76"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_versions" DROP CONSTRAINT "FK_63f5bd4ac6b108de31cebd95d8f"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "class_subjects" DROP CONSTRAINT "FK_9d8971acdcc64a1703357a00759"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "class_subjects" DROP CONSTRAINT "FK_433f93dd22b685e59c285726a1f"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "classes" DROP CONSTRAINT "FK_fbc2a60d09eaf6d4cbb9f326932"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_classes" DROP CONSTRAINT "FK_250de2754beaff18091a60a6654"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_classes" DROP CONSTRAINT "FK_09b94eccbdedd86b77d54daaeb8"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "students" DROP CONSTRAINT "FK_fb3eff90b11bddf7285f9b4e281"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_attendance" DROP CONSTRAINT "FK_bca9e89585bf979755e936a62d2"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_attendance" DROP CONSTRAINT "FK_384a47e1b2b4274e039383def09"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_transfers" DROP CONSTRAINT "FK_b8da28f97181ec03ca270dbbd8a"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_transfers" DROP CONSTRAINT "FK_1f7b7aed95430087cf2af83a91b"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_transfers" DROP CONSTRAINT "FK_937706f4ec7f289c620f1000d86"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_results" DROP CONSTRAINT "FK_2ab229464f61751c37720261dcf"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_results" DROP CONSTRAINT "FK_053245407efdbd008dbfe227053"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_promotions" DROP CONSTRAINT "FK_b99d4b2364e460808da39548bd0"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_promotions" DROP CONSTRAINT "FK_dc4204329210a246f88d339984f"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_promotions" DROP CONSTRAINT "FK_5bb49b0b9f660e400bba2875d07"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "payments" DROP CONSTRAINT "FK_addd19c06574aa904472b8c82bd"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "payments" DROP CONSTRAINT "FK_65e5a00b99fea251e787cf46f3f"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "refunds" DROP CONSTRAINT "FK_c1cf8b20996c8a602311aac45e8"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "refunds" DROP CONSTRAINT "FK_7f48aa5d56c42aeb495db016683"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_fees" DROP CONSTRAINT "FK_a84c5d5305c800b81f39f3f91da"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_fees" DROP CONSTRAINT "FK_e8e31608d1095702a3e5bd5c6d6"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_fees" DROP CONSTRAINT "FK_9e8969b8c743de99403b16b592c"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "invoice_items" DROP CONSTRAINT "FK_16d2616b182aa05502747596a53"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "invoice_items" DROP CONSTRAINT "FK_dc991d555664682cfe892eea2c1"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "invoices" DROP CONSTRAINT "FK_0a19069218ffe36a4e4b41c4870"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "discounts" DROP CONSTRAINT "FK_e74f762ec7d736345b1906da4eb"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "discounts" DROP CONSTRAINT "FK_ff01fb15e6cf299b093900e500b"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_subjects" DROP CONSTRAINT "FK_37ece249a758b7bc5a8a9ae1263"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "assessment_subjects" DROP CONSTRAINT "FK_32c0056f4a8acc773ab38fb3e5f"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_complaint_history" DROP CONSTRAINT "FK_52a0b364d5851f3fb88e13e4317"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_complaint_history" DROP CONSTRAINT "FK_4d212f739e47c5f2151985ed8de"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_complaints" DROP CONSTRAINT "FK_04342a18ea7141b9069f460eb1f"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "grade_complaints" DROP CONSTRAINT "FK_34d2b5c89e1a3b4f458dcbc9c70"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "parents" DROP CONSTRAINT "FK_c94c3cea9b43a18c81269ded41d"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_parents" DROP CONSTRAINT "FK_d4d691ddbc51607ae462b68e16c"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "student_parents" DROP CONSTRAINT "FK_ab5687be754283635fffe3692ee"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "staff" DROP CONSTRAINT "FK_cec9365d9fc3a3409158b645f2e"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "teachers" DROP CONSTRAINT "FK_4668d4752e6766682d1be0b346f"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "teaching_assignments" DROP CONSTRAINT "FK_074e7e672063e0b76786f67cd00"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "teaching_assignments" DROP CONSTRAINT "FK_7eb84b6d68b1db6cc46b5fcea98"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "terms" DROP CONSTRAINT "FK_8ccf58120321db1b8293c4f3575"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_f35ef96bfb3a84b712722d6db7"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_6675136306b9111126bbdbbaba"`,
+    );
+    await queryRunner.query(`DROP TABLE "teacher_subjects"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_badb99ed7e07532bba1315a8af"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_3b07adacd173ba71adf8f298f2"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_8d7506ab698a814d61dfe76deb"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_bd617cd8b316446a126b3bf4bd"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_2571db93a0db49ff99d74209c5"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_ce3f433e47fdd8f072964293c8"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_b5349807aae71193d0cc0f52e3"`,
+    );
+    await queryRunner.query(`DROP TABLE "event_participants"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."event_participants_status_enum"`,
+    );
+    await queryRunner.query(
+      `DROP TYPE "public"."event_participants_role_enum"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_025ced9578ae03010d9f514d0a"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_2779d8be750d7cec26b119ea80"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_8b64033006237a624458e5123a"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_778965e321e262f254d5f93366"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_1a259861a2ce114f074b366eed"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_fa8af7a830b5923f72cb6cd64c"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_ce5225c17497c5adddc1819c69"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_2411ea245f7bb91d20d940793f"`,
+    );
+    await queryRunner.query(`DROP TABLE "events"`);
+    await queryRunner.query(`DROP TYPE "public"."events_event_type_enum"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_9dacd47ded63b88095e262feec"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_d9b15cab5293a8ef52771c3a40"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_54e3a5ad25a60e1dd7ca8f0991"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_bc47153018268d8a0903fc3f05"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_6f592a24e991c80fabe3f3b844"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_82b11ba087125514207fa541c3"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_54d3ddcc757a7639a1ca4ea159"`,
+    );
+    await queryRunner.query(`DROP TABLE "timetables"`);
+    await queryRunner.query(`DROP TYPE "public"."timetables_day_of_week_enum"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_4fa390b8f47deea93efa22a435"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_b5bdacce0ad3e8beb4b9b7b688"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_a34d3bba841b20d7eded27dd88"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_d77654290c921a8809637d6f24"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_2f25b31abd6f91023f8e714df1"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_1b17b7ac59b75b6c6917b3618b"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_4d3f2eba8748be7b392f1f5dec"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_6b4d459a8835bbf4b5954eb638"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_a6eafb0aa2a552bcd979a7123e"`,
+    );
+    await queryRunner.query(`DROP TABLE "grade_freeze_periods"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."grade_freeze_periods_status_enum"`,
+    );
+    await queryRunner.query(
+      `DROP TYPE "public"."grade_freeze_periods_scope_enum"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_949e337542feac3095503a3693"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_35e24da9b85a5fa69de3e049b7"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_fa6c13bd0f1077f9bd02235112"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_44e86abcddcbf3cbdb90502c69"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_f89c041cfd106e6c7ef36d934f"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_2b73c535109b7f105941e83b81"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_0fc9facafe432c9a5fcb6a00d4"`,
+    );
+    await queryRunner.query(`DROP TABLE "assessments"`);
+    await queryRunner.query(`DROP TYPE "public"."assessments_type_enum"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_dee47052e53b6e5ee7478ee5e8"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_4d59ffb9398e4ee8de1c9c1eea"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_63f5bd4ac6b108de31cebd95d8"`,
+    );
+    await queryRunner.query(`DROP TABLE "assessment_versions"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."assessment_versions_type_enum"`,
+    );
+    await queryRunner.query(
+      `DROP TYPE "public"."assessment_versions_version_action_enum"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_99dddf68bda3b92f23f0039c36"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_9d8971acdcc64a1703357a0075"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_433f93dd22b685e59c285726a1"`,
+    );
+    await queryRunner.query(`DROP TABLE "class_subjects"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_bebfac8b20c611dc0a5ffeca97"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_7f3d4d1ac00ffae553798f09d1"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_cf7491878e0fca859943862998"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_1f3940af28a76098f31004f03c"`,
+    );
+    await queryRunner.query(`DROP TABLE "classes"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_57121e4285ce95dcb67dce5f77"`,
+    );
+    await queryRunner.query(`DROP TABLE "class_category"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_de18b50a2bd4b317616cec9756"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_7b802701077a468bdd5b3962ed"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_0f3d7aaa500b257483674cc898"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_fe3b07f79392a7333d197c8852"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_250de2754beaff18091a60a665"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_09b94eccbdedd86b77d54daaeb"`,
+    );
+    await queryRunner.query(`DROP TABLE "student_classes"`);
+    await queryRunner.query(`DROP TYPE "public"."student_classes_status_enum"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_f02c3d198bd4cfafea78366b65"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_72985b50b5a897ee0ea6a3536c"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_fb3eff90b11bddf7285f9b4e28"`,
+    );
+    await queryRunner.query(`DROP TABLE "students"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_c4593f7d91140d6fcc31d1abbf"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_bca9e89585bf979755e936a62d"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_384a47e1b2b4274e039383def0"`,
+    );
+    await queryRunner.query(`DROP TABLE "assessment_attendance"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."assessment_attendance_status_enum"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_f6e9a5010b0ce0cbefc9a16113"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_0a213343eafc5d8f456d4f4c5e"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_b7d41bad633c2a0dd26b6809a9"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_b8da28f97181ec03ca270dbbd8"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_1f7b7aed95430087cf2af83a91"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_937706f4ec7f289c620f1000d8"`,
+    );
+    await queryRunner.query(`DROP TABLE "student_transfers"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."student_transfers_reason_enum"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_fe3eef76d2c914c686d29ccde7"`,
+    );
+    await queryRunner.query(`DROP TABLE "assessment_results"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."assessment_results_status_enum"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_3c0fdbba2b5ad35458ddac8af5"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_b897ed65b14f94884075483b73"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_1f6fecc9cb339fdf3baa72106f"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_8b5a02b2d1bd921d1343e0751e"`,
+    );
+    await queryRunner.query(`DROP TABLE "student_promotions"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_20c7aea6112bef71528210f631"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_ace513fa30d485cfd25c11a9e4"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_97672ac88f789774dd47f7c8be"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_fe0bb3f6520ee0469504521e71"`,
+    );
+    await queryRunner.query(`DROP TABLE "users"`);
+    await queryRunner.query(`DROP TYPE "public"."users_role_enum"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_addd19c06574aa904472b8c82b"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_65e5a00b99fea251e787cf46f3"`,
+    );
+    await queryRunner.query(`DROP TABLE "payments"`);
+    await queryRunner.query(`DROP TYPE "public"."payments_status_enum"`);
+    await queryRunner.query(`DROP TYPE "public"."payments_method_enum"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_c1cf8b20996c8a602311aac45e"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_7f48aa5d56c42aeb495db01668"`,
+    );
+    await queryRunner.query(`DROP TABLE "refunds"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_a84c5d5305c800b81f39f3f91d"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_e8e31608d1095702a3e5bd5c6d"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_9e8969b8c743de99403b16b592"`,
+    );
+    await queryRunner.query(`DROP TABLE "student_fees"`);
+    await queryRunner.query(`DROP TYPE "public"."student_fees_status_enum"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_16d2616b182aa05502747596a5"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_dc991d555664682cfe892eea2c"`,
+    );
+    await queryRunner.query(`DROP TABLE "invoice_items"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_d8f8d3788694e1b3f96c42c36f"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_0a19069218ffe36a4e4b41c487"`,
+    );
+    await queryRunner.query(`DROP TABLE "invoices"`);
+    await queryRunner.query(`DROP TYPE "public"."invoices_status_enum"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_e74f762ec7d736345b1906da4e"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_ff01fb15e6cf299b093900e500"`,
+    );
+    await queryRunner.query(`DROP TABLE "discounts"`);
+    await queryRunner.query(`DROP TYPE "public"."discounts_type_enum"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_76bf5373849c44d3bda84d2941"`,
+    );
+    await queryRunner.query(`DROP TABLE "fee_types"`);
+    await queryRunner.query(`DROP TYPE "public"."fee_types_frequency_enum"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_37ece249a758b7bc5a8a9ae126"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_32c0056f4a8acc773ab38fb3e5"`,
+    );
+    await queryRunner.query(`DROP TABLE "assessment_subjects"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."assessment_subjects_file_type_enum"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_52a0b364d5851f3fb88e13e431"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_4d212f739e47c5f2151985ed8d"`,
+    );
+    await queryRunner.query(`DROP TABLE "grade_complaint_history"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_f9f21013dce950782fced82b00"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_04342a18ea7141b9069f460eb1"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_34d2b5c89e1a3b4f458dcbc9c7"`,
+    );
+    await queryRunner.query(`DROP TABLE "grade_complaints"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."grade_complaints_status_enum"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_c94c3cea9b43a18c81269ded41"`,
+    );
+    await queryRunner.query(`DROP TABLE "parents"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_b2d8a4832d31fa641ec667374b"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_d4d691ddbc51607ae462b68e16"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_ab5687be754283635fffe3692e"`,
+    );
+    await queryRunner.query(`DROP TABLE "student_parents"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."student_parents_relationship_enum"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_7390f81e2272a8da0aa825ce58"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_cd84afbdfaeefe66740ec2fa27"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_a9de5f1c1623ab6169408ed415"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_cec9365d9fc3a3409158b645f2"`,
+    );
+    await queryRunner.query(`DROP TABLE "staff"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_bc8ceddb4c4419b52ff7ff5c3b"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_4da9777c79b35eb3a0fcdcd833"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_4668d4752e6766682d1be0b346"`,
+    );
+    await queryRunner.query(`DROP TABLE "teachers"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_542cbba74dde3c82ab49c57310"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_47a287fe64bd0e1027e603c335"`,
+    );
+    await queryRunner.query(`DROP TABLE "subjects"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_360b1f9ed98b16ad3f076084cf"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_e0f83525a7bfd679c02107652c"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_074e7e672063e0b76786f67cd0"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_7eb84b6d68b1db6cc46b5fcea9"`,
+    );
+    await queryRunner.query(`DROP TABLE "teaching_assignments"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_a24ac15b9a8c74a4c7e8fdfb22"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_e5f8a2f92f738911997eebc794"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_6811439bf289b3bb6de197648b"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_c7ac94655c7dc1edd0b5b01547"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_79b56b84207dc3c5510bb093d3"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_3ee8b061e5cb4972f9a2953a95"`,
+    );
+    await queryRunner.query(`DROP TABLE "terms"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_5e9b2616fdad7b0d3c33c93fe0"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_478a2d98422fb3b99dcb31b6e6"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_975c55d642528a2f478e8d7666"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_687611dadc1a5966e0365e4f49"`,
+    );
+    await queryRunner.query(`DROP TABLE "school_years"`);
+  }
+}

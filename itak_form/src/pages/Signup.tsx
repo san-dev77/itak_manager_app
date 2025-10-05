@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import Button from "../components/ui/Button";
 import {
-  GraduationCap,
   ArrowLeft,
   Eye,
   EyeOff,
@@ -16,6 +15,7 @@ import {
   Phone,
   Users,
 } from "lucide-react";
+import logo from "../assets/logo itak.png";
 import type { AuthFormData, User as UserType } from "../types";
 import { apiService } from "../services/api";
 
@@ -130,19 +130,13 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
           {/* Header */}
           <div className="text-center mb-10">
             <div className="flex items-center justify-center space-x-4 mb-8">
-              <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl">
-                  <GraduationCap className="w-9 h-9 text-white" />
-                </div>
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
-              </div>
+              <img
+                src={logo}
+                alt="ITAK Academy"
+                className="w-16 h-16 object-contain"
+              />
               <div>
-                <span className="text-4xl font-black bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent">
-                  ITAK
-                </span>
-                <div className="text-sm text-blue-300 font-medium tracking-wider">
-                  ACADEMY
-                </div>
+                <span className="text-4xl font-black text-white">ITAK</span>
               </div>
             </div>
 
@@ -173,10 +167,12 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
               <div className="group">
                 <label
                   htmlFor="username"
-                  className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                  className="block text-sm font-semibold text-white/90 mb-3"
                 >
-                  <User className="w-4 h-4 mr-2 text-blue-400" />
-                  Nom d'utilisateur
+                  <span className="flex items-center">
+                    <User className="w-4 h-4 mr-2 text-blue-400" />
+                    Nom d'utilisateur
+                  </span>
                 </label>
                 <div className="relative">
                   <input
@@ -190,7 +186,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                     required
                     disabled={isLoading}
                   />
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
               </div>
 
@@ -199,7 +195,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                 <div className="group">
                   <label
                     htmlFor="first_name"
-                    className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                    className="block text-sm font-semibold text-white/90 mb-3"
                   >
                     <User className="w-4 h-4 mr-2 text-green-400" />
                     Prénom
@@ -223,9 +219,9 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                 <div className="group">
                   <label
                     htmlFor="last_name"
-                    className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                    className="block text-sm font-semibold text-white/90 mb-3"
                   >
-                    <User className="w-4 h-4 mr-2 text-purple-400" />
+                    <User className="w-4 h-4 mr-2 text-blue-400" />
                     Nom
                   </label>
                   <div className="relative">
@@ -235,12 +231,12 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                       name="last_name"
                       value={formData.last_name}
                       onChange={handleInputChange}
-                      className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-4 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-300 backdrop-blur-sm"
+                      className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-4 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm"
                       placeholder="Nom"
                       required
                       disabled={isLoading}
                     />
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                   </div>
                 </div>
               </div>
@@ -249,9 +245,9 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
               <div className="group">
                 <label
                   htmlFor="email"
-                  className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                  className="block text-sm font-semibold text-white/90 mb-3"
                 >
-                  <Mail className="w-4 h-4 mr-2 text-purple-400" />
+                  <Mail className="w-4 h-4 mr-2 text-blue-400" />
                   Adresse email
                 </label>
                 <div className="relative">
@@ -266,7 +262,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                     required
                     disabled={isLoading}
                   />
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
               </div>
 
@@ -275,7 +271,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                 <div className="group">
                   <label
                     htmlFor="role"
-                    className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                    className="block text-sm font-semibold text-white/90 mb-3"
                   >
                     <Users className="w-4 h-4 mr-2 text-blue-400" />
                     Rôle
@@ -296,14 +292,14 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                       <option value="parent">Parent</option>
                       <option value="admin">Administrateur</option>
                     </select>
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                   </div>
                 </div>
 
                 <div className="group">
                   <label
                     htmlFor="gender"
-                    className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                    className="block text-sm font-semibold text-white/90 mb-3"
                   >
                     <User className="w-4 h-4 mr-2 text-pink-400" />
                     Genre
@@ -322,7 +318,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                       <option value="female">Féminin</option>
                       <option value="other">Autre</option>
                     </select>
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-pink-500/20 to-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                   </div>
                 </div>
               </div>
@@ -332,7 +328,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                 <div className="group">
                   <label
                     htmlFor="birth_date"
-                    className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                    className="block text-sm font-semibold text-white/90 mb-3"
                   >
                     <Calendar className="w-4 h-4 mr-2 text-green-400" />
                     Date de naissance
@@ -354,9 +350,9 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                 <div className="group">
                   <label
                     htmlFor="phone"
-                    className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                    className="block text-sm font-semibold text-white/90 mb-3"
                   >
-                    <Phone className="w-4 h-4 mr-2 text-purple-400" />
+                    <Phone className="w-4 h-4 mr-2 text-blue-400" />
                     Téléphone
                   </label>
                   <div className="relative">
@@ -366,11 +362,11 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-4 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-300 backdrop-blur-sm"
+                      className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-4 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm"
                       placeholder="+33 6 12 34 56 78"
                       disabled={isLoading}
                     />
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                   </div>
                 </div>
               </div>
@@ -379,9 +375,9 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
               <div className="group">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                  className="block text-sm font-semibold text-white/90 mb-3"
                 >
-                  <Lock className="w-4 h-4 mr-2 text-pink-400" />
+                  <Lock className="w-4 h-4 mr-2 text-blue-400" />
                   Mot de passe
                 </label>
                 <div className="relative">
@@ -391,7 +387,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-4 focus:ring-pink-500/30 focus:border-pink-400 transition-all duration-300 backdrop-blur-sm pr-16"
+                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-4 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm pr-16"
                     placeholder="••••••••"
                     required
                     disabled={isLoading}
@@ -404,7 +400,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-pink-500/20 to-red-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
 
                 {/* Password strength indicator */}
@@ -452,7 +448,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
               <div className="group">
                 <label
                   htmlFor="confirmPassword"
-                  className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                  className="block text-sm font-semibold text-white/90 mb-3"
                 >
                   <Shield className="w-4 h-4 mr-2 text-green-400" />
                   Confirmer le mot de passe
@@ -499,7 +495,7 @@ const Signup: React.FC<SignupProps> = ({ onLogin, onNavigate }) => {
                 variant="primary"
                 size="lg"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-2xl hover:shadow-blue-500/50 transform hover:-translate-y-1 transition-all duration-300 text-lg py-4 rounded-2xl border-0 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-2xl hover:shadow-blue-500/50 transform hover:-translate-y-1 transition-all duration-300 text-lg py-4 rounded-2xl border-0 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">
