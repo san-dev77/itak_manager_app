@@ -1,0 +1,37 @@
+import { User } from './user.entity';
+import { StudentClass } from './student-class.entity';
+import { StudentParent } from './student-parent.entity';
+import { StudentPromotion } from './student-promotion.entity';
+import { AssessmentResult } from './assessment-result.entity';
+import { GradeComplaint } from './grade-complaint.entity';
+import { StudentTransfer } from './student-transfer.entity';
+import { AssessmentAttendance } from './assessment-attendance.entity';
+import { StudentFee } from './student-fee.entity';
+import { Invoice } from './invoice.entity';
+export declare class Student {
+    id: string;
+    userId: string;
+    matricule: string;
+    enrollmentDate: Date;
+    photo?: string;
+    maritalStatus?: string;
+    fatherName?: string;
+    motherName?: string;
+    tutorName?: string;
+    tutorPhone?: string;
+    address?: string;
+    emergencyContact?: string;
+    notes?: string;
+    createdAt: Date;
+    updatedAt: Date;
+    user: User;
+    studentClasses: StudentClass[];
+    studentParents: StudentParent[];
+    promotions: StudentPromotion[];
+    assessmentResults: AssessmentResult[];
+    gradeComplaints: GradeComplaint[];
+    transfers: StudentTransfer[];
+    assessmentAttendances: AssessmentAttendance[];
+    studentFees: StudentFee[];
+    invoices: Invoice[];
+}
