@@ -22,7 +22,6 @@ import {
   ClassSubjectResponseDto,
 } from './dto/class-subject.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('class-subjects')
 @ApiBearerAuth()
@@ -32,7 +31,6 @@ export class ClassSubjectController {
   constructor(private readonly classSubjectService: ClassSubjectService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Créer une nouvelle association classe-matière' })
   @ApiResponse({
     status: 201,
@@ -54,7 +52,6 @@ export class ClassSubjectController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Récupérer toutes les associations classe-matière' })
   @ApiResponse({
     status: 200,
@@ -66,7 +63,6 @@ export class ClassSubjectController {
   }
 
   @Get('class/:classId')
-  @Public()
   @ApiOperation({ summary: "Récupérer les matières d'une classe" })
   @ApiResponse({
     status: 200,
@@ -78,7 +74,6 @@ export class ClassSubjectController {
   }
 
   @Get('subject/:subjectId')
-  @Public()
   @ApiOperation({ summary: 'Récupérer les classes pour une matière' })
   @ApiResponse({
     status: 200,
@@ -90,7 +85,6 @@ export class ClassSubjectController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer une association par ID' })
   @ApiResponse({
     status: 200,
@@ -106,7 +100,6 @@ export class ClassSubjectController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour une association classe-matière' })
   @ApiResponse({
     status: 200,
@@ -128,7 +121,6 @@ export class ClassSubjectController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer une association classe-matière' })
   @ApiResponse({
     status: 200,

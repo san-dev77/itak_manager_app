@@ -22,7 +22,6 @@ import {
   DiscountResponseDto,
 } from './dto/discount.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('discounts')
 @ApiBearerAuth()
@@ -32,7 +31,6 @@ export class DiscountController {
   constructor(private readonly discountService: DiscountService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Créer une nouvelle réduction' })
   @ApiResponse({
     status: 201,
@@ -52,7 +50,6 @@ export class DiscountController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Récupérer toutes les réductions' })
   @ApiResponse({
     status: 200,
@@ -64,7 +61,6 @@ export class DiscountController {
   }
 
   @Get('student-fee/:studentFeeId')
-  @Public()
   @ApiOperation({
     summary: 'Récupérer les réductions pour des frais spécifiques',
   })
@@ -84,7 +80,6 @@ export class DiscountController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer une réduction par ID' })
   @ApiResponse({
     status: 200,
@@ -100,7 +95,6 @@ export class DiscountController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour une réduction' })
   @ApiResponse({
     status: 200,
@@ -119,7 +113,6 @@ export class DiscountController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer une réduction' })
   @ApiResponse({
     status: 200,

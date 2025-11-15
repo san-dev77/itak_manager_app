@@ -22,7 +22,6 @@ import {
   InvoiceResponseDto,
 } from './dto/invoice.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('invoices')
 @ApiBearerAuth()
@@ -32,7 +31,6 @@ export class InvoiceController {
   constructor(private readonly invoiceService: InvoiceService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Créer une nouvelle facture' })
   @ApiResponse({
     status: 201,
@@ -56,7 +54,6 @@ export class InvoiceController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Récupérer toutes les factures' })
   @ApiResponse({
     status: 200,
@@ -68,7 +65,6 @@ export class InvoiceController {
   }
 
   @Get('generate-number')
-  @Public()
   @ApiOperation({ summary: 'Générer un nouveau numéro de facture' })
   @ApiResponse({
     status: 200,
@@ -80,7 +76,6 @@ export class InvoiceController {
   }
 
   @Get('student/:studentId')
-  @Public()
   @ApiOperation({ summary: "Récupérer les factures d'un étudiant" })
   @ApiResponse({
     status: 200,
@@ -96,7 +91,6 @@ export class InvoiceController {
   }
 
   @Get('number/:invoiceNumber')
-  @Public()
   @ApiOperation({ summary: 'Récupérer une facture par son numéro' })
   @ApiResponse({
     status: 200,
@@ -112,7 +106,6 @@ export class InvoiceController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer une facture par ID' })
   @ApiResponse({
     status: 200,
@@ -128,7 +121,6 @@ export class InvoiceController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour une facture' })
   @ApiResponse({
     status: 200,
@@ -151,7 +143,6 @@ export class InvoiceController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer une facture' })
   @ApiResponse({
     status: 200,

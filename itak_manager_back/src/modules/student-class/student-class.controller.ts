@@ -22,7 +22,6 @@ import {
   StudentClassResponseDto,
 } from './dto/student-class.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('student-classes')
 @ApiBearerAuth()
@@ -32,7 +31,6 @@ export class StudentClassController {
   constructor(private readonly studentClassService: StudentClassService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Créer une nouvelle inscription étudiant-classe' })
   @ApiResponse({
     status: 201,
@@ -54,7 +52,6 @@ export class StudentClassController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({
     summary: 'Récupérer toutes les inscriptions étudiant-classe',
   })
@@ -68,7 +65,6 @@ export class StudentClassController {
   }
 
   @Get('student/:studentId')
-  @Public()
   @ApiOperation({ summary: "Récupérer les classes d'un étudiant" })
   @ApiResponse({
     status: 200,
@@ -80,7 +76,6 @@ export class StudentClassController {
   }
 
   @Get('class/:classId')
-  @Public()
   @ApiOperation({ summary: "Récupérer les étudiants d'une classe" })
   @ApiResponse({
     status: 200,
@@ -92,7 +87,6 @@ export class StudentClassController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer une inscription par ID' })
   @ApiResponse({
     status: 200,
@@ -108,7 +102,6 @@ export class StudentClassController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour une inscription étudiant-classe' })
   @ApiResponse({
     status: 200,
@@ -130,7 +123,6 @@ export class StudentClassController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer une inscription étudiant-classe' })
   @ApiResponse({
     status: 200,

@@ -48,17 +48,18 @@ export class StudentFeeService {
       );
     }
 
-    // Vérifier s'il n'y a pas déjà des frais de ce type pour cet étudiant
+    // Vérifier s'il n'y a pas déjà des frais de ce type pour cet étudiant ET cette année scolaire
     const existingFee = await this.studentFeeRepository.findOne({
       where: {
         studentId: createStudentFeeDto.studentId,
         feeTypeId: createStudentFeeDto.feeTypeId,
+        academicYearId: createStudentFeeDto.academicYearId,
       },
     });
 
     if (existingFee) {
       throw new ConflictException(
-        `Des frais de type "${feeType.name}" existent déjà pour cet étudiant`,
+        `Des frais de type "${feeType.name}" existent déjà pour cet étudiant pour cette année scolaire`,
       );
     }
 
@@ -154,8 +155,73 @@ export class StudentFeeService {
   ): Promise<StudentFee> {
     const studentFee = await this.findOne(id);
 
+    // Vérifier que l'étudiant existe si studentId est modifié
+    if (
+      updateStudentFeeDto.studentId &&
+      updateStudentFeeDto.studentId !== studentFee.studentId
+    ) {
+      const student = await this.studentRepository.findOne({
+        where: { id: updateStudentFeeDto.studentId },
+      });
+      if (!student) {
+        throw new NotFoundException(
+          `Étudiant avec l'ID ${updateStudentFeeDto.studentId} non trouvé`,
+        );
+      }
+    }
+
+    // Vérifier que le type de frais existe si feeTypeId est modifié
+    if (
+      updateStudentFeeDto.feeTypeId &&
+      updateStudentFeeDto.feeTypeId !== studentFee.feeTypeId
+    ) {
+      const feeType = await this.feeTypeRepository.findOne({
+        where: { id: updateStudentFeeDto.feeTypeId },
+      });
+      if (!feeType) {
+        throw new NotFoundException(
+          `Type de frais avec l'ID ${updateStudentFeeDto.feeTypeId} non trouvé`,
+        );
+      }
+    }
+
+    // Vérifier les conflits si on change studentId, feeTypeId ou academicYearId
+    if (
+      (updateStudentFeeDto.studentId &&
+        updateStudentFeeDto.studentId !== studentFee.studentId) ||
+      (updateStudentFeeDto.feeTypeId &&
+        updateStudentFeeDto.feeTypeId !== studentFee.feeTypeId) ||
+      (updateStudentFeeDto.academicYearId &&
+        updateStudentFeeDto.academicYearId !== studentFee.academicYearId)
+    ) {
+      const finalStudentId =
+        updateStudentFeeDto.studentId || studentFee.studentId;
+      const finalFeeTypeId =
+        updateStudentFeeDto.feeTypeId || studentFee.feeTypeId;
+      const finalAcademicYearId =
+        updateStudentFeeDto.academicYearId || studentFee.academicYearId;
+
+      const existingFee = await this.studentFeeRepository.findOne({
+        where: {
+          studentId: finalStudentId,
+          feeTypeId: finalFeeTypeId,
+          academicYearId: finalAcademicYearId,
+        },
+      });
+
+      if (existingFee && existingFee.id !== id) {
+        throw new ConflictException(
+          `Des frais de ce type existent déjà pour cet étudiant pour cette année scolaire`,
+        );
+      }
+    }
+
+    // Mettre à jour les champs
     Object.assign(studentFee, updateStudentFeeDto);
-    return await this.studentFeeRepository.save(studentFee);
+    const updatedFee = await this.studentFeeRepository.save(studentFee);
+
+    // Recharger avec les relations pour retourner un objet complet
+    return await this.findOne(updatedFee.id);
   }
 
   payFee(id: string, payStudentFeeDto: PayStudentFeeDto): never {

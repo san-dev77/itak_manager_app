@@ -25,7 +25,6 @@ import {
   WeeklyTimetableDto,
 } from './dto/timetable.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('timetables')
 @ApiBearerAuth()
@@ -35,7 +34,6 @@ export class TimetableController {
   constructor(private readonly timetableService: TimetableService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Créer un nouvel emploi du temps' })
   @ApiResponse({
     status: 201,
@@ -59,7 +57,6 @@ export class TimetableController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Récupérer tous les emplois du temps' })
   @ApiResponse({
     status: 200,
@@ -71,7 +68,6 @@ export class TimetableController {
   }
 
   @Get('class/:classId')
-  @Public()
   @ApiOperation({ summary: "Récupérer l'emploi du temps d'une classe" })
   @ApiQuery({
     name: 'academicYearId',
@@ -95,7 +91,6 @@ export class TimetableController {
   }
 
   @Get('teacher/:teacherId')
-  @Public()
   @ApiOperation({ summary: "Récupérer l'emploi du temps d'un enseignant" })
   @ApiQuery({
     name: 'academicYearId',
@@ -119,7 +114,6 @@ export class TimetableController {
   }
 
   @Get('weekly/:classId')
-  @Public()
   @ApiOperation({
     summary: "Récupérer l'emploi du temps hebdomadaire d'une classe",
   })
@@ -148,7 +142,6 @@ export class TimetableController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer un emploi du temps par ID' })
   @ApiResponse({
     status: 200,
@@ -164,7 +157,6 @@ export class TimetableController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour un emploi du temps' })
   @ApiResponse({
     status: 200,
@@ -187,7 +179,6 @@ export class TimetableController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer un emploi du temps' })
   @ApiResponse({
     status: 200,

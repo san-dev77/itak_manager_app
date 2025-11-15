@@ -23,7 +23,6 @@ import {
   PaymentSummaryDto,
 } from './dto/payment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('payments')
 @ApiBearerAuth()
@@ -33,7 +32,6 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Enregistrer un nouveau paiement' })
   @ApiResponse({
     status: 201,
@@ -53,7 +51,6 @@ export class PaymentController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Récupérer tous les paiements' })
   @ApiResponse({
     status: 200,
@@ -65,7 +62,6 @@ export class PaymentController {
   }
 
   @Get('summary')
-  @Public()
   @ApiOperation({ summary: 'Récupérer le résumé des paiements' })
   @ApiResponse({
     status: 200,
@@ -77,7 +73,6 @@ export class PaymentController {
   }
 
   @Get('student-fee/:studentFeeId')
-  @Public()
   @ApiOperation({
     summary: 'Récupérer les paiements pour des frais spécifiques',
   })
@@ -97,7 +92,6 @@ export class PaymentController {
   }
 
   @Get('user/:userId')
-  @Public()
   @ApiOperation({ summary: 'Récupérer les paiements reçus par un utilisateur' })
   @ApiResponse({
     status: 200,
@@ -113,7 +107,6 @@ export class PaymentController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer un paiement par ID' })
   @ApiResponse({
     status: 200,
@@ -129,7 +122,6 @@ export class PaymentController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour un paiement' })
   @ApiResponse({
     status: 200,
@@ -148,7 +140,6 @@ export class PaymentController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer un paiement' })
   @ApiResponse({
     status: 200,

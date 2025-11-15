@@ -23,7 +23,6 @@ import {
   RefundSummaryDto,
 } from './dto/refund.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('refunds')
 @ApiBearerAuth()
@@ -33,7 +32,6 @@ export class RefundController {
   constructor(private readonly refundService: RefundService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Créer un nouveau remboursement' })
   @ApiResponse({
     status: 201,
@@ -53,7 +51,6 @@ export class RefundController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Récupérer tous les remboursements' })
   @ApiResponse({
     status: 200,
@@ -65,7 +62,6 @@ export class RefundController {
   }
 
   @Get('summary')
-  @Public()
   @ApiOperation({ summary: 'Récupérer le résumé des remboursements' })
   @ApiResponse({
     status: 200,
@@ -77,7 +73,6 @@ export class RefundController {
   }
 
   @Get('payment/:paymentId')
-  @Public()
   @ApiOperation({ summary: 'Récupérer les remboursements pour un paiement' })
   @ApiResponse({
     status: 200,
@@ -93,7 +88,6 @@ export class RefundController {
   }
 
   @Get('user/:userId')
-  @Public()
   @ApiOperation({
     summary: 'Récupérer les remboursements traités par un utilisateur',
   })
@@ -111,7 +105,6 @@ export class RefundController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer un remboursement par ID' })
   @ApiResponse({
     status: 200,
@@ -127,7 +120,6 @@ export class RefundController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour un remboursement' })
   @ApiResponse({
     status: 200,
@@ -146,7 +138,6 @@ export class RefundController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer un remboursement' })
   @ApiResponse({
     status: 200,

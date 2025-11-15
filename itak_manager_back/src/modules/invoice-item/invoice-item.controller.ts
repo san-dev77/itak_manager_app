@@ -22,7 +22,6 @@ import {
   InvoiceItemResponseDto,
 } from './dto/invoice-item.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('invoice-items')
 @ApiBearerAuth()
@@ -32,7 +31,6 @@ export class InvoiceItemController {
   constructor(private readonly invoiceItemService: InvoiceItemService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Créer une nouvelle ligne de facture' })
   @ApiResponse({
     status: 201,
@@ -48,7 +46,6 @@ export class InvoiceItemController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Récupérer toutes les lignes de facture' })
   @ApiResponse({
     status: 200,
@@ -60,7 +57,6 @@ export class InvoiceItemController {
   }
 
   @Get('invoice/:invoiceId')
-  @Public()
   @ApiOperation({ summary: "Récupérer les lignes d'une facture" })
   @ApiResponse({
     status: 200,
@@ -76,7 +72,6 @@ export class InvoiceItemController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer une ligne de facture par ID' })
   @ApiResponse({
     status: 200,
@@ -92,7 +87,6 @@ export class InvoiceItemController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour une ligne de facture' })
   @ApiResponse({
     status: 200,
@@ -111,7 +105,6 @@ export class InvoiceItemController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer une ligne de facture' })
   @ApiResponse({
     status: 200,

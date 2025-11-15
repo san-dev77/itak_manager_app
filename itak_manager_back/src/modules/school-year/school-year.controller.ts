@@ -9,6 +9,7 @@ import {
   HttpStatus,
   HttpException,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,7 +17,9 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SchoolYearService } from './school-year.service';
 import {
   CreateSchoolYearDto,
@@ -25,6 +28,8 @@ import {
 } from './dto/school-year.dto';
 
 @ApiTags('Années Scolaires')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('school-years')
 export class SchoolYearController {
   constructor(private readonly schoolYearService: SchoolYearService) {}

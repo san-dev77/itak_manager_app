@@ -27,7 +27,6 @@ import {
 } from './dto/event.dto';
 import { EventType } from '../../entities/event.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('events')
 @ApiBearerAuth()
@@ -37,7 +36,6 @@ export class EventController {
   constructor(private readonly eventService: EventService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Créer un nouvel événement' })
   @ApiResponse({
     status: 201,
@@ -57,7 +55,6 @@ export class EventController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Récupérer tous les événements' })
   @ApiResponse({
     status: 200,
@@ -69,7 +66,6 @@ export class EventController {
   }
 
   @Get('class/:classId')
-  @Public()
   @ApiOperation({ summary: "Récupérer les événements d'une classe" })
   @ApiQuery({
     name: 'academicYearId',
@@ -93,7 +89,6 @@ export class EventController {
   }
 
   @Get('date-range')
-  @Public()
   @ApiOperation({ summary: 'Récupérer les événements dans une plage de dates' })
   @ApiQuery({
     name: 'startDate',
@@ -135,7 +130,6 @@ export class EventController {
   }
 
   @Get('type/:eventType')
-  @Public()
   @ApiOperation({ summary: 'Récupérer les événements par type' })
   @ApiQuery({
     name: 'academicYearId',
@@ -165,7 +159,6 @@ export class EventController {
   }
 
   @Get('calendar/:year/:month')
-  @Public()
   @ApiOperation({
     summary: 'Récupérer les événements pour un calendrier mensuel',
   })
@@ -199,7 +192,6 @@ export class EventController {
   }
 
   @Get('upcoming')
-  @Public()
   @ApiOperation({ summary: 'Récupérer les événements à venir' })
   @ApiQuery({
     name: 'academicYearId',
@@ -234,7 +226,6 @@ export class EventController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer un événement par ID' })
   @ApiResponse({
     status: 200,
@@ -250,7 +241,6 @@ export class EventController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour un événement' })
   @ApiResponse({
     status: 200,
@@ -273,7 +263,6 @@ export class EventController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer un événement' })
   @ApiResponse({
     status: 200,

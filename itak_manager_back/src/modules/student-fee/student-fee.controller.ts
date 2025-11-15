@@ -25,7 +25,6 @@ import {
   StudentFeesSummaryDto,
 } from './dto/student-fee.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('student-fees')
 @ApiBearerAuth()
@@ -35,7 +34,6 @@ export class StudentFeeController {
   constructor(private readonly studentFeeService: StudentFeeService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Assigner des frais à un étudiant' })
   @ApiResponse({
     status: 201,
@@ -55,7 +53,6 @@ export class StudentFeeController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Récupérer tous les frais des étudiants' })
   @ApiResponse({
     status: 200,
@@ -67,7 +64,6 @@ export class StudentFeeController {
   }
 
   @Get('overdue')
-  @Public()
   @ApiOperation({ summary: 'Récupérer tous les frais en retard' })
   @ApiResponse({
     status: 200,
@@ -79,7 +75,6 @@ export class StudentFeeController {
   }
 
   @Post('mark-overdue')
-  @Public()
   @ApiOperation({ summary: 'Marquer les frais en retard' })
   @ApiResponse({
     status: 200,
@@ -91,7 +86,6 @@ export class StudentFeeController {
   }
 
   @Get('student/:studentId')
-  @Public()
   @ApiOperation({ summary: "Récupérer les frais d'un étudiant" })
   @ApiResponse({
     status: 200,
@@ -107,7 +101,6 @@ export class StudentFeeController {
   }
 
   @Get('student/:studentId/summary')
-  @Public()
   @ApiOperation({ summary: "Récupérer le résumé des frais d'un étudiant" })
   @ApiResponse({
     status: 200,
@@ -125,7 +118,6 @@ export class StudentFeeController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer des frais par ID' })
   @ApiResponse({
     status: 200,
@@ -141,7 +133,6 @@ export class StudentFeeController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour des frais' })
   @ApiResponse({
     status: 200,
@@ -160,7 +151,6 @@ export class StudentFeeController {
   }
 
   @Post(':id/pay')
-  @Public()
   @ApiOperation({ summary: 'Effectuer un paiement sur des frais' })
   @ApiResponse({
     status: 200,
@@ -183,7 +173,6 @@ export class StudentFeeController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer des frais' })
   @ApiResponse({
     status: 200,

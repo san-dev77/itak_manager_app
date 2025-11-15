@@ -22,7 +22,6 @@ import {
   TeachingAssignmentResponseDto,
 } from './dto/teaching-assignment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('teaching-assignments')
 @ApiBearerAuth()
@@ -34,7 +33,6 @@ export class TeachingAssignmentController {
   ) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: "Créer une nouvelle affectation d'enseignement" })
   @ApiResponse({
     status: 201,
@@ -58,7 +56,6 @@ export class TeachingAssignmentController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: "Récupérer toutes les affectations d'enseignement" })
   @ApiResponse({
     status: 200,
@@ -70,7 +67,6 @@ export class TeachingAssignmentController {
   }
 
   @Get('teacher/:teacherId')
-  @Public()
   @ApiOperation({ summary: "Récupérer les affectations d'un professeur" })
   @ApiResponse({
     status: 200,
@@ -84,7 +80,6 @@ export class TeachingAssignmentController {
   }
 
   @Get('class-subject/:classSubjectId')
-  @Public()
   @ApiOperation({
     summary: 'Récupérer les affectations pour une association classe-matière',
   })
@@ -102,7 +97,6 @@ export class TeachingAssignmentController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer une affectation par ID' })
   @ApiResponse({
     status: 200,
@@ -118,7 +112,6 @@ export class TeachingAssignmentController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: "Mettre à jour une affectation d'enseignement" })
   @ApiResponse({
     status: 200,
@@ -144,7 +137,6 @@ export class TeachingAssignmentController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: "Supprimer une affectation d'enseignement" })
   @ApiResponse({
     status: 200,

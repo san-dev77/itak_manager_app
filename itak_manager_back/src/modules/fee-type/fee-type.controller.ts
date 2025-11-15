@@ -22,7 +22,6 @@ import {
   FeeTypeResponseDto,
 } from './dto/fee-type.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('fee-types')
 @ApiBearerAuth()
@@ -32,7 +31,6 @@ export class FeeTypeController {
   constructor(private readonly feeTypeService: FeeTypeService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Créer un nouveau type de frais' })
   @ApiResponse({
     status: 201,
@@ -48,7 +46,6 @@ export class FeeTypeController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Récupérer tous les types de frais' })
   @ApiResponse({
     status: 200,
@@ -60,7 +57,6 @@ export class FeeTypeController {
   }
 
   @Get('recurring')
-  @Public()
   @ApiOperation({ summary: 'Récupérer tous les types de frais récurrents' })
   @ApiResponse({
     status: 200,
@@ -72,7 +68,6 @@ export class FeeTypeController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Récupérer un type de frais par ID' })
   @ApiResponse({
     status: 200,
@@ -88,7 +83,6 @@ export class FeeTypeController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Mettre à jour un type de frais' })
   @ApiResponse({
     status: 200,
@@ -111,7 +105,6 @@ export class FeeTypeController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Supprimer un type de frais' })
   @ApiResponse({
     status: 200,

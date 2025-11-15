@@ -202,17 +202,30 @@ export class TermService {
       }
 
       // Vérifier l'année scolaire si elle est modifiée
+      let schoolYear: SchoolYear | null = term.schoolYear;
+      const finalSchoolYearId = updateTermDto.schoolYearId || term.schoolYearId;
+      
       if (
         updateTermDto.schoolYearId &&
         updateTermDto.schoolYearId !== term.schoolYearId
       ) {
-        const schoolYear = await this.schoolYearRepository.findOne({
+        const newSchoolYear = await this.schoolYearRepository.findOne({
           where: { id: updateTermDto.schoolYearId },
         });
 
-        if (!schoolYear) {
+        if (!newSchoolYear) {
           throw new NotFoundException('Année scolaire non trouvée');
         }
+        schoolYear = newSchoolYear;
+      } else if (!schoolYear) {
+        // Si la relation n'est pas chargée, la charger
+        const loadedSchoolYear = await this.schoolYearRepository.findOne({
+          where: { id: term.schoolYearId },
+        });
+        if (!loadedSchoolYear) {
+          throw new NotFoundException('Année scolaire non trouvée');
+        }
+        schoolYear = loadedSchoolYear;
       }
 
       // Vérifier les dates si elles sont fournies
@@ -227,8 +240,28 @@ export class TermService {
         }
 
         // Vérifier que les dates sont dans la période de l'année scolaire
-        const schoolYear = term.schoolYear;
-        if (startDate < schoolYear.startDate || endDate > schoolYear.endDate) {
+        if (schoolYear && (startDate < schoolYear.startDate || endDate > schoolYear.endDate)) {
+          throw new BadRequestException(
+            "Les dates du trimestre doivent être comprises dans la période de l'année scolaire",
+          );
+        }
+      } else if (updateTermDto.startDate || updateTermDto.endDate) {
+        // Si une seule date est fournie, utiliser les dates existantes pour la validation
+        const startDate = updateTermDto.startDate
+          ? new Date(updateTermDto.startDate)
+          : term.startDate;
+        const endDate = updateTermDto.endDate
+          ? new Date(updateTermDto.endDate)
+          : term.endDate;
+
+        if (startDate >= endDate) {
+          throw new BadRequestException(
+            'La date de début doit être antérieure à la date de fin',
+          );
+        }
+
+        // Vérifier que les dates sont dans la période de l'année scolaire
+        if (schoolYear && (startDate < schoolYear.startDate || endDate > schoolYear.endDate)) {
           throw new BadRequestException(
             "Les dates du trimestre doivent être comprises dans la période de l'année scolaire",
           );
@@ -239,22 +272,22 @@ export class TermService {
       if (updateTermDto.name && updateTermDto.name !== term.name) {
         const existingTerm = await this.termRepository.findOne({
           where: {
-            schoolYearId: term.schoolYearId,
+            schoolYearId: finalSchoolYearId,
             name: updateTermDto.name,
           },
         });
 
-        if (existingTerm) {
+        if (existingTerm && existingTerm.id !== id) {
           throw new ConflictException(
             'Un trimestre avec ce nom existe déjà dans cette année scolaire',
           );
         }
       }
 
-      // Si ce trimestre est marqué comme actif, désactiver les autres
+      // Si ce trimestre est marqué comme actif, désactiver les autres de la même année scolaire
       if (updateTermDto.isActive && !term.isActive) {
         await this.termRepository.update(
-          { schoolYearId: term.schoolYearId },
+          { schoolYearId: finalSchoolYearId },
           { isActive: false },
         );
       }

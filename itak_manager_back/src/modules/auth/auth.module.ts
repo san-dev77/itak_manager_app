@@ -13,6 +13,7 @@ import jwtConfig from '../../config/jwt.config';
   imports: [
     UserModule,
     PassportModule,
+    ConfigModule.forFeature(jwtConfig),
     JwtModule.registerAsync({
       imports: [ConfigModule.forFeature(jwtConfig)],
       useFactory: (configService: ConfigService) => configService.get('jwt')!,
