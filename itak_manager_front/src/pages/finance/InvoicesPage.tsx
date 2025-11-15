@@ -5,7 +5,7 @@ import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import FormModal from "../../components/ui/FormModal";
-import { apiService } from "../../services/api";
+import { apiService, type User } from "../../services/api";
 
 interface Invoice {
   id: string;
@@ -34,7 +34,7 @@ interface Invoice {
 
 const InvoicesPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,6 +44,7 @@ const InvoicesPage: React.FC = () => {
 
   const [formData, setFormData] = useState({
     studentId: "",
+    invoiceNumber: `INV-${Date.now()}`,
     totalAmount: 0,
     issuedDate: new Date().toISOString().split("T")[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -60,6 +61,7 @@ const InvoicesPage: React.FC = () => {
         setUser(JSON.parse(userData));
         loadInvoices();
       } catch (error) {
+        console.log(error);
         navigate("/login");
       }
     } else {
@@ -73,7 +75,11 @@ const InvoicesPage: React.FC = () => {
       const response = await apiService.getAllInvoices();
 
       if (response.success && response.data) {
-        setInvoices(response.data);
+        // Filtrer les factures qui ont un student valide
+        const validInvoices = response.data.filter(
+          (inv) => inv.student && inv.student.firstName && inv.student.lastName
+        ) as Invoice[];
+        setInvoices(validInvoices);
       } else {
         console.error(
           "Erreur lors du chargement des factures:",
@@ -255,6 +261,7 @@ const InvoicesPage: React.FC = () => {
     setEditingInvoice(invoice);
     setFormData({
       studentId: invoice.studentId,
+      invoiceNumber: invoice.invoiceNumber,
       totalAmount: invoice.totalAmount,
       issuedDate: invoice.issuedDate,
       dueDate: invoice.dueDate,
@@ -284,6 +291,7 @@ const InvoicesPage: React.FC = () => {
   const resetForm = () => {
     setFormData({
       studentId: "",
+      invoiceNumber: `INV-${Date.now()}`,
       totalAmount: 0,
       issuedDate: new Date().toISOString().split("T")[0],
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)

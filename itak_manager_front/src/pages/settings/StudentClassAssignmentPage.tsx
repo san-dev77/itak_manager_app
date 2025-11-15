@@ -157,7 +157,7 @@ const StudentClassAssignmentPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await apiService.deleteStudentClass(parseInt(id));
+      const response = await apiService.deleteStudentClass(id);
       if (response.success) {
         // Recharger les données
         const assignmentsRes = await apiService.getAllStudentClasses();
@@ -171,12 +171,20 @@ const StudentClassAssignmentPage: React.FC = () => {
           message: "Affectation supprimée avec succès",
           isVisible: true,
         });
+      } else {
+        setNotification({
+          type: "error",
+          title: "Erreur",
+          message: response.error || "Erreur lors de la suppression",
+          isVisible: true,
+        });
       }
-    } catch {
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
       setNotification({
         type: "error",
         title: "Erreur",
-        message: "Erreur lors de la suppression",
+        message: error instanceof Error ? error.message : "Erreur lors de la suppression",
         isVisible: true,
       });
     }
@@ -591,6 +599,7 @@ const StudentClassAssignmentPage: React.FC = () => {
                         type="date"
                         value={startDate}
                         onChange={handleStartDateChange}
+                        max={new Date().toISOString().split('T')[0]}
                         required
                       />
                     </div>

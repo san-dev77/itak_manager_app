@@ -3,15 +3,11 @@ import { type ReactNode } from "react";
 interface CardProps {
   children: ReactNode;
   className?: string;
-  hover?: boolean;
-  delay?: number;
 }
 
 const Card = ({
   children,
   className = "",
-  hover = true,
-  delay = 0,
 }: CardProps) => {
   return (
     <div

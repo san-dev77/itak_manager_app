@@ -4,6 +4,7 @@ import Layout from "../../components/layout/Layout";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Notification from "../../components/ui/Notification";
+import ErrorModal from "../../components/ui/ErrorModal";
 import {
   apiService,
   type User,
@@ -31,29 +32,47 @@ const SubjectClassAssignmentPage: React.FC = () => {
     message: string;
     isVisible: boolean;
   } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    show: boolean;
+    assignmentId: string | null;
+    assignmentInfo: string;
+  }>({
+    show: false,
+    assignmentId: null,
+    assignmentInfo: "",
+  });
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    message: string;
+    details?: string;
+    statusCode?: number;
+  }>({
+    isOpen: false,
+    message: "",
+  });
 
   // États pour les onglets et la recherche
   const [activeTab, setActiveTab] = useState<"create" | "list">("create");
   const [subjectSearchTerm, setSubjectSearchTerm] = useState("");
   const [classSearchTerm, setClassSearchTerm] = useState("");
 
-  // États pour la modal de détails de classe
-  const [selectedClassDetails, setSelectedClassDetails] = useState<{
-    show: boolean;
-    class: Class | null;
-    students: any[];
-    teachers: any[];
-    subjects: any[];
-  }>({
-    show: false,
-    class: null,
-    students: [],
-    teachers: [],
-    subjects: [],
-  });
-  const [classDetailsTab, setClassDetailsTab] = useState<
-    "students" | "teachers" | "subjects"
-  >("students");
+  // États pour la modal de détails de classe (non utilisés pour le moment)
+  // const [selectedClassDetails, setSelectedClassDetails] = useState<{
+  //   show: boolean;
+  //   class: Class | null;
+  //   students: any[];
+  //   teachers: any[];
+  //   subjects: any[];
+  // }>({
+  //   show: false,
+  //   class: null,
+  //   students: [],
+  //   teachers: [],
+  //   subjects: [],
+  // });
+  // const [classDetailsTab, setClassDetailsTab] = useState<
+  //   "students" | "teachers" | "subjects"
+  // >("students");
 
   useEffect(() => {
     const userData =
@@ -158,47 +177,116 @@ const SubjectClassAssignmentPage: React.FC = () => {
         setCoefficient("1");
         setWeeklyHours("");
         setIsOptional(false);
+      } else {
+        // Détecter spécifiquement les erreurs 409 (Conflict) et afficher la modale
+        if (response.statusCode === 409) {
+          setErrorModal({
+            isOpen: true,
+            message: response.error || "Conflit détecté lors de la création",
+            details: response.error,
+            statusCode: 409,
+          });
+        } else {
+          // Autres erreurs - afficher aussi dans la modale pour plus de visibilité
+          setErrorModal({
+            isOpen: true,
+            message: response.error || "Erreur lors de la création",
+            details: response.error,
+            statusCode: response.statusCode,
+          });
+        }
       }
     } catch (error) {
       console.error("Erreur lors de la création:", error);
-      setNotification({
-        type: "error",
-        title: "Erreur",
-        message: "Erreur lors de la création",
-        isVisible: true,
+      setErrorModal({
+        isOpen: true,
+        message:
+          error instanceof Error ? error.message : "Erreur lors de la création",
+        details: error instanceof Error ? error.stack : undefined,
+        statusCode: undefined,
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // const handleDelete = async (id: string) => {
-  //   try {
-  //     const response = await apiService.deleteClassSubject(id);
-  //     if (response.success) {
-  //       // Recharger les données
-  //       const assignmentsRes = await apiService.getAllClassSubjects();
-  //       if (assignmentsRes.success) {
-  //         setAssignments(assignmentsRes.data || []);
-  //       }
+  const handleDeleteClick = (id: string, assignment: ClassSubject) => {
+    const subjectName = assignment.subject?.name || "Matière inconnue";
+    const className = assignment.class?.name || "Classe inconnue";
+    const assignmentInfo = `${subjectName} → ${className}`;
 
-  //       setNotification({
-  //         type: "success",
-  //         title: "Succès",
-  //         message: "Affectation supprimée avec succès",
-  //         isVisible: true,
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error("Erreur lors de la suppression:", error);
-  //     setNotification({
-  //       type: "error",
-  //       title: "Erreur",
-  //       message: "Erreur lors de la suppression",
-  //       isVisible: true,
-  //     });
-  //   }
-  // };
+    setDeleteConfirm({
+      show: true,
+      assignmentId: id,
+      assignmentInfo: assignmentInfo,
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm.assignmentId) return;
+
+    try {
+      const response = await apiService.deleteClassSubject(
+        deleteConfirm.assignmentId
+      );
+      if (response.success) {
+        // Fermer la modale de confirmation
+        setDeleteConfirm({
+          show: false,
+          assignmentId: null,
+          assignmentInfo: "",
+        });
+
+        // Recharger les données
+        const assignmentsRes = await apiService.getAllClassSubjects();
+        if (assignmentsRes.success) {
+          setAssignments(assignmentsRes.data || []);
+        }
+
+        setNotification({
+          type: "success",
+          title: "Succès",
+          message: "Affectation supprimée avec succès",
+          isVisible: true,
+        });
+      } else {
+        // Détecter spécifiquement les erreurs 409 (Conflict) et afficher la modale
+        if (response.statusCode === 409) {
+          setErrorModal({
+            isOpen: true,
+            message: response.error || "Conflit détecté lors de la suppression",
+            details: response.error,
+            statusCode: 409,
+          });
+        } else {
+          // Autres erreurs - afficher aussi dans la modale
+          setErrorModal({
+            isOpen: true,
+            message: response.error || "Erreur lors de la suppression",
+            details: response.error,
+            statusCode: response.statusCode,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      setErrorModal({
+        isOpen: true,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la suppression",
+        details: error instanceof Error ? error.stack : undefined,
+        statusCode: undefined,
+      });
+    } finally {
+      setDeleteConfirm({
+        show: false,
+        assignmentId: null,
+        assignmentInfo: "",
+      });
+    }
+  };
 
   if (!user) {
     return (
@@ -798,16 +886,12 @@ const SubjectClassAssignmentPage: React.FC = () => {
                           {/* Bouton de suppression */}
                           <div className="ml-4 flex-shrink-0">
                             <Button
-                              onClick={() => {
-                                // handleDelete(assignment.id);
-                                console.log(
-                                  "Suppression de l'affectation:",
-                                  assignment.id
-                                );
-                              }}
+                              onClick={() =>
+                                handleDeleteClick(assignment.id, assignment)
+                              }
                               variant="outline"
                               size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 opacity-0 group-hover:opacity-100"
                             >
                               <svg
                                 className="w-4 h-4 mr-1"
@@ -835,6 +919,80 @@ const SubjectClassAssignmentPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmation de suppression */}
+      {deleteConfirm.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Confirmer la suppression
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Êtes-vous sûr de vouloir supprimer cette affectation ?
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                <p className="text-sm font-medium text-gray-900">
+                  {deleteConfirm.assignmentInfo}
+                </p>
+              </div>
+              <p className="text-xs text-red-600 mb-6">
+                Cette action est irréversible.
+              </p>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <Button
+                onClick={() =>
+                  setDeleteConfirm({
+                    show: false,
+                    assignmentId: null,
+                    assignmentInfo: "",
+                  })
+                }
+                variant="outline"
+                size="sm"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleDeleteConfirm}
+                variant="outline"
+                size="sm"
+                className="bg-red-600 text-white hover:bg-red-700 border-red-600"
+              >
+                Supprimer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modale d'erreur */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ isOpen: false, message: "" })}
+        title="Erreur"
+        message={errorModal.message}
+        details={errorModal.details}
+        statusCode={errorModal.statusCode}
+      />
     </Layout>
   );
 };

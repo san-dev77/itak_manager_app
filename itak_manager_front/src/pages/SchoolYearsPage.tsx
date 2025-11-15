@@ -13,12 +13,15 @@ import {
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Notification from "../components/ui/Notification";
+import ErrorModal from "../components/ui/ErrorModal";
 import {
   apiService,
   type SchoolYear,
   type CreateSchoolYearDto,
+  type UpdateSchoolYearDto,
   type Term,
   type CreateTermDto,
+  type UpdateTermDto,
 } from "../services/api";
 
 const SchoolYearsPage: React.FC = () => {
@@ -28,16 +31,30 @@ const SchoolYearsPage: React.FC = () => {
   const [allTerms, setAllTerms] = useState<Term[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [selectedSchoolYear, setSelectedSchoolYear] =
     useState<SchoolYear | null>(null);
+  const [editingSchoolYear, setEditingSchoolYear] = useState<SchoolYear | null>(
+    null
+  );
   const [terms, setTerms] = useState<Term[]>([]);
   const [loadingTerms, setLoadingTerms] = useState(false);
+  const [editingTerm, setEditingTerm] = useState<Term | null>(null);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [notificationType, setNotificationType] = useState<"success" | "error">(
     "success"
   );
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    message: string;
+    details?: string;
+    statusCode?: number;
+  }>({
+    isOpen: false,
+    message: "",
+  });
 
   // Formulaire de création d'année scolaire
   const [formData, setFormData] = useState<CreateSchoolYearDto>({
@@ -47,8 +64,26 @@ const SchoolYearsPage: React.FC = () => {
     isActive: true,
   });
 
+  // Formulaire de modification d'année scolaire
+  const [editFormData, setEditFormData] = useState<UpdateSchoolYearDto>({
+    name: "",
+    startDate: "",
+    endDate: "",
+    isActive: true,
+  });
+
   // Formulaire de création de trimestre
   const [termFormData, setTermFormData] = useState<CreateTermDto>({
+    schoolYearId: "",
+    name: "",
+    startDate: "",
+    endDate: "",
+    isActive: true,
+    orderNumber: 1,
+  });
+
+  // Formulaire de modification de trimestre
+  const [editTermFormData, setEditTermFormData] = useState<UpdateTermDto>({
     schoolYearId: "",
     name: "",
     startDate: "",
@@ -170,6 +205,111 @@ const SchoolYearsPage: React.FC = () => {
           : "Erreur lors de la création de l'année scolaire",
         "error"
       );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditSchoolYear = (schoolYear: SchoolYear) => {
+    setEditingSchoolYear(schoolYear);
+    // Convertir les dates en format YYYY-MM-DD pour les inputs
+    const startDate =
+      schoolYear.startDate instanceof Date
+        ? schoolYear.startDate.toISOString().split("T")[0]
+        : new Date(schoolYear.startDate).toISOString().split("T")[0];
+    const endDate =
+      schoolYear.endDate instanceof Date
+        ? schoolYear.endDate.toISOString().split("T")[0]
+        : new Date(schoolYear.endDate).toISOString().split("T")[0];
+
+    setEditFormData({
+      name: schoolYear.name,
+      startDate: startDate,
+      endDate: endDate,
+      isActive: schoolYear.isActive,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateSchoolYear = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editingSchoolYear) return;
+
+    if (
+      !editFormData.name ||
+      !editFormData.startDate ||
+      !editFormData.endDate
+    ) {
+      showNotificationMessage("Veuillez remplir tous les champs", "error");
+      return;
+    }
+
+    if (new Date(editFormData.startDate) >= new Date(editFormData.endDate)) {
+      showNotificationMessage(
+        "La date de fin doit être postérieure à la date de début",
+        "error"
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await apiService.updateSchoolYear(
+        editingSchoolYear.id,
+        editFormData
+      );
+
+      if (response.success && response.data) {
+        setSchoolYears(
+          schoolYears.map((year) =>
+            year.id === editingSchoolYear.id ? response.data! : year
+          )
+        );
+        setShowEditModal(false);
+        setEditingSchoolYear(null);
+        setEditFormData({
+          name: "",
+          startDate: "",
+          endDate: "",
+          isActive: true,
+        });
+        showNotificationMessage(
+          "Année scolaire mise à jour avec succès",
+          "success"
+        );
+      } else {
+        // Détecter spécifiquement les erreurs 404 et autres
+        if (response.statusCode === 404) {
+          setErrorModal({
+            isOpen: true,
+            message: response.error || "L'année scolaire n'a pas été trouvée",
+            details: response.error,
+            statusCode: 404,
+          });
+        } else {
+          setErrorModal({
+            isOpen: true,
+            message:
+              response.message ||
+              response.error ||
+              "Erreur lors de la mise à jour de l'année scolaire",
+            details: response.error,
+            statusCode: response.statusCode,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("❌ Exception capturée:", error);
+      setErrorModal({
+        isOpen: true,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la mise à jour de l'année scolaire",
+        details: error instanceof Error ? error.stack : undefined,
+        statusCode: undefined,
+      });
     } finally {
       setLoading(false);
     }
@@ -344,6 +484,217 @@ const SchoolYearsPage: React.FC = () => {
     }
   };
 
+  const handleEditTerm = (term: Term) => {
+    setEditingTerm(term);
+    // Convertir les dates en format YYYY-MM-DD pour les inputs
+    let startDate = "";
+    let endDate = "";
+
+    if (term.startDate) {
+      if (term.startDate instanceof Date) {
+        startDate = term.startDate.toISOString().split("T")[0];
+      } else if (typeof term.startDate === "string") {
+        // Si c'est déjà une string au format ISO ou autre
+        const date = new Date(term.startDate);
+        if (!isNaN(date.getTime())) {
+          startDate = date.toISOString().split("T")[0];
+        }
+      }
+    }
+
+    if (term.endDate) {
+      if (term.endDate instanceof Date) {
+        endDate = term.endDate.toISOString().split("T")[0];
+      } else if (typeof term.endDate === "string") {
+        // Si c'est déjà une string au format ISO ou autre
+        const date = new Date(term.endDate);
+        if (!isNaN(date.getTime())) {
+          endDate = date.toISOString().split("T")[0];
+        }
+      }
+    }
+
+    setEditTermFormData({
+      schoolYearId: term.schoolYearId,
+      name: term.name || "",
+      startDate: startDate,
+      endDate: endDate,
+      isActive: term.isActive ?? true,
+      orderNumber: term.orderNumber ?? 1,
+    });
+  };
+
+  const handleUpdateTerm = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editingTerm) return;
+
+    if (
+      !editTermFormData.name ||
+      !editTermFormData.startDate ||
+      !editTermFormData.endDate ||
+      editTermFormData.startDate.trim() === "" ||
+      editTermFormData.endDate.trim() === ""
+    ) {
+      showNotificationMessage(
+        "Veuillez remplir tous les champs obligatoires",
+        "error"
+      );
+      return;
+    }
+
+    // Vérifier que les dates sont valides
+    const startDateObj = new Date(editTermFormData.startDate);
+    const endDateObj = new Date(editTermFormData.endDate);
+
+    if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
+      showNotificationMessage("Les dates saisies ne sont pas valides", "error");
+      return;
+    }
+
+    if (
+      new Date(editTermFormData.startDate) >= new Date(editTermFormData.endDate)
+    ) {
+      showNotificationMessage(
+        "La date de fin doit être postérieure à la date de début",
+        "error"
+      );
+      return;
+    }
+
+    // Vérifier si le numéro d'ordre existe déjà (sauf pour le trimestre en cours d'édition)
+    const orderNumberExists = terms.some(
+      (term) =>
+        term.orderNumber === editTermFormData.orderNumber &&
+        term.id !== editingTerm.id
+    );
+
+    if (orderNumberExists) {
+      showNotificationMessage(
+        `Le numéro d'ordre ${editTermFormData.orderNumber} est déjà utilisé. Veuillez choisir un autre numéro.`,
+        "error"
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // S'assurer que les dates sont au format string valide
+      // Utiliser le même format que lors de la création (YYYY-MM-DD)
+      const dataToSend: UpdateTermDto = {
+        name: editTermFormData.name || editingTerm.name,
+        startDate: editTermFormData.startDate, // Format YYYY-MM-DD comme dans la création
+        endDate: editTermFormData.endDate, // Format YYYY-MM-DD comme dans la création
+        schoolYearId: editTermFormData.schoolYearId || editingTerm.schoolYearId,
+        isActive:
+          editTermFormData.isActive !== undefined
+            ? editTermFormData.isActive
+            : editingTerm.isActive,
+        orderNumber:
+          editTermFormData.orderNumber !== undefined
+            ? editTermFormData.orderNumber
+            : editingTerm.orderNumber,
+      };
+
+      // Vérifier que les dates requises sont présentes et non vides
+      if (
+        !dataToSend.startDate ||
+        !dataToSend.endDate ||
+        dataToSend.startDate.trim() === "" ||
+        dataToSend.endDate.trim() === ""
+      ) {
+        showNotificationMessage(
+          "Les dates de début et de fin sont requises",
+          "error"
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Vérifier que toutes les propriétés requises sont présentes
+      if (
+        !dataToSend.name ||
+        !dataToSend.startDate ||
+        !dataToSend.endDate ||
+        !dataToSend.schoolYearId
+      ) {
+        console.error("❌ Données incomplètes:", dataToSend);
+        showNotificationMessage(
+          "Les données du formulaire sont incomplètes. Veuillez réessayer.",
+          "error"
+        );
+        setLoading(false);
+        return;
+      }
+
+      console.log(
+        "📤 Données envoyées pour la mise à jour du trimestre:",
+        JSON.stringify(dataToSend, null, 2)
+      );
+      console.log("📤 ID du trimestre:", editingTerm.id);
+      console.log("📤 Trimestre en cours d'édition:", editingTerm);
+
+      const response = await apiService.updateTerm(editingTerm.id, dataToSend);
+
+      if (response.success && response.data) {
+        const updatedTerms = terms.map((term) =>
+          term.id === editingTerm.id ? response.data! : term
+        );
+        setTerms(updatedTerms);
+
+        // Mettre à jour aussi allTerms pour le compteur global
+        setAllTerms(
+          allTerms.map((term) =>
+            term.id === editingTerm.id ? response.data! : term
+          )
+        );
+
+        setEditingTerm(null);
+        setEditTermFormData({
+          schoolYearId: "",
+          name: "",
+          startDate: "",
+          endDate: "",
+          isActive: true,
+          orderNumber: 1,
+        });
+        showNotificationMessage("Trimestre mis à jour avec succès", "success");
+      } else {
+        // Détecter spécifiquement les erreurs 404 et autres
+        if (response.statusCode === 404) {
+          setErrorModal({
+            isOpen: true,
+            message: response.error || "Le trimestre n'a pas été trouvé",
+            details: response.error,
+            statusCode: 404,
+          });
+        } else {
+          setErrorModal({
+            isOpen: true,
+            message:
+              response.message || "Erreur lors de la mise à jour du trimestre",
+            details: response.error,
+            statusCode: response.statusCode,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("❌ Exception capturée:", error);
+      setErrorModal({
+        isOpen: true,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la mise à jour du trimestre",
+        details: error instanceof Error ? error.stack : undefined,
+        statusCode: undefined,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDeleteTerm = async (id: string) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer ce trimestre ?")) {
       try {
@@ -494,6 +845,7 @@ const SchoolYearsPage: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => handleEditSchoolYear(schoolYear)}
                         className="text-orange-600 hover:text-orange-700"
                       >
                         <Edit className="w-4 h-4" />
@@ -616,6 +968,135 @@ const SchoolYearsPage: React.FC = () => {
           </div>
         )}
 
+        {/* Modal de modification d'année scolaire */}
+        {showEditModal && editingSchoolYear && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Modifier l'année scolaire
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingSchoolYear(null);
+                      setEditFormData({
+                        name: "",
+                        startDate: "",
+                        endDate: "",
+                        isActive: true,
+                      });
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                <form onSubmit={handleUpdateSchoolYear} className="space-y-4">
+                  <Input
+                    label="Nom de l'année scolaire"
+                    value={editFormData.name}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, name: e.target.value })
+                    }
+                    placeholder="Ex: Année scolaire 2024-2025"
+                    required
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="Date de début"
+                      type="date"
+                      value={editFormData.startDate}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          startDate: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                    <Input
+                      label="Date de fin"
+                      type="date"
+                      value={editFormData.endDate}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          endDate: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="editIsActive"
+                      checked={editFormData.isActive}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          isActive: e.target.checked,
+                        })
+                      }
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor="editIsActive"
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      Année scolaire active
+                    </label>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditingSchoolYear(null);
+                        setEditFormData({
+                          name: "",
+                          startDate: "",
+                          endDate: "",
+                          isActive: true,
+                        });
+                      }}
+                      className="flex-1"
+                    >
+                      Annuler
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    >
+                      {loading ? "Mise à jour..." : "Mettre à jour"}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal de configuration des trimestres */}
         {showTermsModal && selectedSchoolYear && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -660,17 +1141,33 @@ const SchoolYearsPage: React.FC = () => {
                   {/* Formulaire de création */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Ajouter un trimestre
+                      {editingTerm
+                        ? "Modifier le trimestre"
+                        : "Ajouter un trimestre"}
                     </h3>
-                    <form onSubmit={handleCreateTerm} className="space-y-4">
+                    <form
+                      onSubmit={
+                        editingTerm ? handleUpdateTerm : handleCreateTerm
+                      }
+                      className="space-y-4"
+                    >
                       <Input
-                        label="Nom du trimestre"
-                        value={termFormData.name}
+                        label="Nom du trimestre ou du semestre"
+                        value={
+                          editingTerm
+                            ? editTermFormData.name
+                            : termFormData.name
+                        }
                         onChange={(e) =>
-                          setTermFormData({
-                            ...termFormData,
-                            name: e.target.value,
-                          })
+                          editingTerm
+                            ? setEditTermFormData({
+                                ...editTermFormData,
+                                name: e.target.value,
+                              })
+                            : setTermFormData({
+                                ...termFormData,
+                                name: e.target.value,
+                              })
                         }
                         placeholder="Ex: Trimestre 1"
                         required
@@ -680,24 +1177,42 @@ const SchoolYearsPage: React.FC = () => {
                         <Input
                           label="Date de début"
                           type="date"
-                          value={termFormData.startDate}
+                          value={
+                            editingTerm
+                              ? editTermFormData.startDate
+                              : termFormData.startDate
+                          }
                           onChange={(e) =>
-                            setTermFormData({
-                              ...termFormData,
-                              startDate: e.target.value,
-                            })
+                            editingTerm
+                              ? setEditTermFormData({
+                                  ...editTermFormData,
+                                  startDate: e.target.value,
+                                })
+                              : setTermFormData({
+                                  ...termFormData,
+                                  startDate: e.target.value,
+                                })
                           }
                           required
                         />
                         <Input
                           label="Date de fin"
                           type="date"
-                          value={termFormData.endDate}
+                          value={
+                            editingTerm
+                              ? editTermFormData.endDate
+                              : termFormData.endDate
+                          }
                           onChange={(e) =>
-                            setTermFormData({
-                              ...termFormData,
-                              endDate: e.target.value,
-                            })
+                            editingTerm
+                              ? setEditTermFormData({
+                                  ...editTermFormData,
+                                  endDate: e.target.value,
+                                })
+                              : setTermFormData({
+                                  ...termFormData,
+                                  endDate: e.target.value,
+                                })
                           }
                           required
                         />
@@ -708,51 +1223,72 @@ const SchoolYearsPage: React.FC = () => {
                           <label className="block text-sm font-medium text-gray-700">
                             Numéro d'ordre
                           </label>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const usedNumbers = terms
-                                .map((t) => t.orderNumber)
-                                .sort((a, b) => a - b);
-                              let nextNumber = 1;
-                              for (const num of usedNumbers) {
-                                if (num === nextNumber) {
-                                  nextNumber++;
-                                } else {
-                                  break;
+                          {!editingTerm && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const usedNumbers = terms
+                                  .map((t) => t.orderNumber)
+                                  .sort((a, b) => a - b);
+                                let nextNumber = 1;
+                                for (const num of usedNumbers) {
+                                  if (num === nextNumber) {
+                                    nextNumber++;
+                                  } else {
+                                    break;
+                                  }
                                 }
-                              }
-                              setTermFormData({
-                                ...termFormData,
-                                orderNumber: nextNumber,
-                              });
-                            }}
-                            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                          >
-                            Suggérer auto
-                          </button>
+                                setTermFormData({
+                                  ...termFormData,
+                                  orderNumber: nextNumber,
+                                });
+                              }}
+                              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              Suggérer auto
+                            </button>
+                          )}
                         </div>
                         <Input
                           type="number"
-                          value={termFormData.orderNumber || ""}
+                          value={
+                            editingTerm
+                              ? editTermFormData.orderNumber || ""
+                              : termFormData.orderNumber || ""
+                          }
                           onChange={(e) =>
-                            setTermFormData({
-                              ...termFormData,
-                              orderNumber: parseInt(e.target.value) || 1,
-                            })
+                            editingTerm
+                              ? setEditTermFormData({
+                                  ...editTermFormData,
+                                  orderNumber: parseInt(e.target.value) || 1,
+                                })
+                              : setTermFormData({
+                                  ...termFormData,
+                                  orderNumber: parseInt(e.target.value) || 1,
+                                })
                           }
                           min="1"
                           required
                           className={
                             terms.some(
-                              (t) => t.orderNumber === termFormData.orderNumber
+                              (t) =>
+                                t.orderNumber ===
+                                  (editingTerm
+                                    ? editTermFormData.orderNumber
+                                    : termFormData.orderNumber) &&
+                                t.id !== editingTerm?.id
                             )
                               ? "border-red-500 focus:ring-red-500"
                               : ""
                           }
                         />
                         {terms.some(
-                          (t) => t.orderNumber === termFormData.orderNumber
+                          (t) =>
+                            t.orderNumber ===
+                              (editingTerm
+                                ? editTermFormData.orderNumber
+                                : termFormData.orderNumber) &&
+                            t.id !== editingTerm?.id
                         ) && (
                           <p className="text-xs text-red-600 mt-1">
                             ⚠️ Ce numéro est déjà utilisé
@@ -769,20 +1305,72 @@ const SchoolYearsPage: React.FC = () => {
                         )}
                       </div>
 
-                      <Button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                      >
-                        {loading ? "Ajout..." : "Ajouter le trimestre"}
-                      </Button>
+                      {editingTerm && (
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id="editTermIsActive"
+                            checked={editTermFormData.isActive}
+                            onChange={(e) =>
+                              setEditTermFormData({
+                                ...editTermFormData,
+                                isActive: e.target.checked,
+                              })
+                            }
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <label
+                            htmlFor="editTermIsActive"
+                            className="ml-2 block text-sm text-gray-700"
+                          >
+                            Trimestre actif
+                          </label>
+                        </div>
+                      )}
+
+                      <div className="flex gap-3">
+                        {editingTerm && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingTerm(null);
+                              setEditTermFormData({
+                                name: "",
+                                startDate: "",
+                                endDate: "",
+                                isActive: true,
+                                orderNumber: 1,
+                              });
+                            }}
+                            className="flex-1"
+                          >
+                            Annuler
+                          </Button>
+                        )}
+                        <Button
+                          type="submit"
+                          disabled={loading}
+                          className={`w-full bg-blue-600 hover:bg-blue-700 ${
+                            editingTerm ? "flex-1" : ""
+                          }`}
+                        >
+                          {loading
+                            ? editingTerm
+                              ? "Mise à jour..."
+                              : "Ajout..."
+                            : editingTerm
+                            ? "Mettre à jour"
+                            : "Ajouter le trimestre"}
+                        </Button>
+                      </div>
                     </form>
                   </div>
 
                   {/* Liste des trimestres */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Trimestres existants ({terms.length})
+                      Trimestres ou semestres existants ({terms.length})
                     </h3>
                     <div className="space-y-3">
                       {loadingTerms ? (
@@ -841,6 +1429,7 @@ const SchoolYearsPage: React.FC = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  onClick={() => handleEditTerm(term)}
                                   className="text-orange-600 hover:text-orange-700"
                                 >
                                   <Edit className="w-3 h-3" />
@@ -875,6 +1464,16 @@ const SchoolYearsPage: React.FC = () => {
             onClose={() => setShowNotification(false)}
           />
         )}
+
+        {/* Modale d'erreur */}
+        <ErrorModal
+          isOpen={errorModal.isOpen}
+          onClose={() => setErrorModal({ isOpen: false, message: "" })}
+          title="Erreur"
+          message={errorModal.message}
+          details={errorModal.details}
+          statusCode={errorModal.statusCode}
+        />
       </div>
     </Layout>
   );

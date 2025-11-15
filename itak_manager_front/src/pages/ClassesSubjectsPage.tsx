@@ -202,16 +202,19 @@ const ClassesSubjectsPage = () => {
     e.preventDefault();
     if (!editingClass) return;
 
-    // Validation de la catégorie
-    if (!classForm.classCategoryId) {
-      showNotificationMessage("Veuillez sélectionner une catégorie", "error");
-      return;
-    }
+    // En mode mise à jour, on utilise la catégorie existante si elle n'est pas modifiée
+    // Pas besoin de valider la catégorie en mode mise à jour car elle existe déjà
+    const dataToUpdate = {
+      ...classForm,
+      // S'assurer que la catégorie est préservée si elle n'est pas modifiée
+      classCategoryId:
+        classForm.classCategoryId || editingClass.classCategoryId,
+    };
 
     try {
       const response = await apiService.updateClass(
-        parseInt(editingClass.id),
-        classForm
+        editingClass.id,
+        dataToUpdate
       );
       if (response.success && response.data) {
         setClasses(
@@ -236,18 +239,20 @@ const ClassesSubjectsPage = () => {
     }
   };
 
-  const handleDeleteClass = async (id: number) => {
+  const handleDeleteClass = async (id: string) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette classe ?"))
       return;
 
     try {
-      const response = await apiService.deleteClass(id);
+      // Convertir l'ID string en number si nécessaire, sinon utiliser directement
+      const idToUse = isNaN(Number(id)) ? id : Number(id);
+      const response = await apiService.deleteClass(idToUse as number);
       if (response.success) {
-        setClasses(classes.filter((c) => c.id !== id.toString()));
+        setClasses(classes.filter((c) => c.id !== id));
         showNotificationMessage("Classe supprimée avec succès", "success");
       } else {
         showNotificationMessage(
-          response.message || "Erreur lors de la suppression",
+          response.message || response.error || "Erreur lors de la suppression",
           "error"
         );
       }
@@ -377,7 +382,7 @@ const ClassesSubjectsPage = () => {
 
     try {
       const response = await apiService.updateSubject(
-        parseInt(editingSubject.id),
+        editingSubject.id,
         subjectForm
       );
       if (response.success && response.data) {
@@ -403,18 +408,18 @@ const ClassesSubjectsPage = () => {
     }
   };
 
-  const handleDeleteSubject = async (id: number) => {
+  const handleDeleteSubject = async (id: string) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette matière ?"))
       return;
 
     try {
       const response = await apiService.deleteSubject(id);
       if (response.success) {
-        setSubjects(subjects.filter((s) => s.id !== id.toString()));
+        setSubjects(subjects.filter((s) => s.id !== id));
         showNotificationMessage("Matière supprimée avec succès", "success");
       } else {
         showNotificationMessage(
-          response.message || "Erreur lors de la suppression",
+          response.message || response.error || "Erreur lors de la suppression",
           "error"
         );
       }
@@ -505,7 +510,7 @@ const ClassesSubjectsPage = () => {
 
   // Fonction pour obtenir le texte du bouton selon l'onglet actif
   const getNewButtonText = () => {
-    return activeTab === "classes" ? "Nouvelle Classe" : "Nouvelle Matière";
+    return activeTab === "classes" ? "Nouvelle" : "Nouvelle";
   };
 
   if (!user) {
@@ -693,11 +698,17 @@ const ClassesSubjectsPage = () => {
                               </span>
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div
+                            className="flex gap-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => {
+                              onClick={(
+                                e?: React.MouseEvent<HTMLButtonElement>
+                              ) => {
+                                e?.stopPropagation();
                                 openEditClassModal(classItem);
                               }}
                             >
@@ -706,8 +717,11 @@ const ClassesSubjectsPage = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => {
-                                handleDeleteClass(parseInt(classItem.id));
+                              onClick={(
+                                e?: React.MouseEvent<HTMLButtonElement>
+                              ) => {
+                                e?.stopPropagation();
+                                handleDeleteClass(classItem.id);
                               }}
                               className="text-red-600 hover:text-red-700 hover:border-red-300"
                             >
@@ -807,9 +821,12 @@ const ClassesSubjectsPage = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() =>
-                                handleDeleteSubject(parseInt(subject.id))
-                              }
+                              onClick={(
+                                e?: React.MouseEvent<HTMLButtonElement>
+                              ) => {
+                                e?.stopPropagation();
+                                handleDeleteSubject(subject.id);
+                              }}
                               className="text-red-600 hover:text-red-700 hover:border-red-300"
                             >
                               <Trash2 className="w-4 h-4" />

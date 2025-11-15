@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../../components/layout/Layout";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
-import { apiService } from "../../services/api";
+import { apiService, type User, type StudentFee } from "../../services/api";
+import { User as UserIcon } from "lucide-react";
 import {
-  User,
   DollarSign,
   Calendar,
   Search,
@@ -79,12 +79,13 @@ interface AcademicYear {
 
 const StudentFeeAssignmentPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<typeof User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [studentClasses, setStudentClasses] = useState<StudentClass[]>([]);
   const [feeTypes, setFeeTypes] = useState<FeeType[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
-  const [studentFees, setStudentFees] = useState<[]>([]);
+  // État pour les frais étudiants (chargé mais non utilisé dans l'affichage actuel)
+  const [, setStudentFees] = useState<StudentFee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -149,11 +150,6 @@ const StudentFeeAssignmentPage: React.FC = () => {
     return studentClass?.class || null;
   };
 
-  const parseAmount = (value: string): number => {
-    const cleanValue = value.replace(/[\s.]/g, "");
-    return parseInt(cleanValue) || 0;
-  };
-
   useEffect(() => {
     const userData =
       localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
@@ -169,6 +165,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
     } else {
       navigate("/login");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   const loadAllData = async () => {
@@ -555,7 +552,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
                   {isBulkMode ? (
                     <Users className="w-5 h-5 text-purple-600 mr-2" />
                   ) : (
-                    <User className="w-5 h-5 text-blue-600 mr-2" />
+                    <UserIcon className="w-5 h-5 text-blue-600 mr-2" />
                   )}
                   <h2 className="text-xl font-semibold text-gray-900">
                     1. Sélectionner{" "}
@@ -572,7 +569,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
                     }}
                     className="text-sm"
                   >
-                    <User className="w-4 h-4 mr-1" />
+                    <UserIcon className="w-4 h-4 mr-1" />
                     Mode unique
                   </Button>
                   <Button
@@ -596,7 +593,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-blue-600" />
+                        <UserIcon className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
                         <h3 className="font-medium text-gray-900">

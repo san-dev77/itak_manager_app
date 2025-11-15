@@ -454,7 +454,7 @@ const EventsPage: React.FC = () => {
                   onChange={(e) => setSelectedClass(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 >
-                  <option value="">Toutes les classes</option>
+                  <option value="">Selectionnez une classe</option>
                   {classes.map((cls) => (
                     <option key={cls.id} value={cls.id}>
                       {cls.name} - {cls.level}
@@ -800,7 +800,7 @@ const EventsPage: React.FC = () => {
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                       >
-                        <option value="">Toutes les classes</option>
+                        <option value="">Selectionnez une classe</option>
                         {classes.map((cls) => (
                           <option key={cls.id} value={cls.id}>
                             {cls.name} - {cls.level}

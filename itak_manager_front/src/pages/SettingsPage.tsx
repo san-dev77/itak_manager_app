@@ -2,10 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Settings,
-  UserPlus,
   BookMarked,
-  UserCheck,
-  Link,
   ArrowRight,
   Sparkles,
   Users,
@@ -17,7 +14,6 @@ import {
   Info,
   CheckCircle,
   Clock,
-  TrendingUp,
 } from "lucide-react";
 import Layout from "../components/layout/Layout";
 

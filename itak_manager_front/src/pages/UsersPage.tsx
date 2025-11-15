@@ -11,6 +11,9 @@ import {
   type StudentWithUser,
   type TeacherWithUser,
   type StaffWithUser,
+  type StudentProfileData,
+  type TeacherProfileData,
+  type StaffProfileData,
 } from "../services/api";
 import Notification, {
   type NotificationType,
@@ -39,6 +42,10 @@ const UsersPage = () => {
   const [selectedProfileType, setSelectedProfileType] = useState<
     "student" | "teacher" | "staff"
   >("student");
+  const [preselectedUser, setPreselectedUser] = useState<User | null>(null);
+  const [existingProfileData, setExistingProfileData] = useState<
+    StudentProfileData | TeacherProfileData | StaffProfileData | null
+  >(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // États pour les compteurs et profils
@@ -61,7 +68,6 @@ const UsersPage = () => {
     setLoading,
     setSearchTerm,
     setSelectedRole,
-    addUser,
   } = useUserStore();
 
   // Utiliser le hook pour les effets
@@ -264,15 +270,21 @@ const UsersPage = () => {
     profileType: "student" | "teacher" | "staff"
   ) => {
     setSelectedProfileType(profileType);
+    setPreselectedUser(null);
+    setExistingProfileData(null);
     setShowProfileAssignmentModal(true);
   };
 
   const handleProfileAssignment = async (
     user: User,
-    profileData: Record<string, unknown>
+    profileData: StudentProfileData | TeacherProfileData | StaffProfileData
   ) => {
     try {
-      // Validation du rôle avant la création du profil
+      // Vérifier si c'est une mise à jour (le profil existe déjà)
+      const isUpdate =
+        existingProfileData?.id && existingProfileData.id !== "0";
+
+      // Validation du rôle avant la création/mise à jour du profil
       if (selectedProfileType === "student" && user.role !== "student") {
         showNotification(
           "error",
@@ -307,12 +319,11 @@ const UsersPage = () => {
         selectedProfileType === "student" &&
         "enrollmentDate" in profileData
       ) {
-        // Préparer les données pour l'API (nouveau format)
+        // Préparer les données pour l'API
         const studentData = {
-          userId: user.id, // ID de l'utilisateur sélectionné
           matricule: String(profileData.matricule || ""),
           enrollmentDate: String(profileData.enrollmentDate || ""),
-          photo: undefined, // Optionnel
+          photo: profileData.photo,
           maritalStatus: String(profileData.maritalStatus || ""),
           fatherName: String(profileData.fatherName || ""),
           motherName: String(profileData.motherName || ""),
@@ -323,97 +334,162 @@ const UsersPage = () => {
           notes: String(profileData.notes || ""),
         };
 
-        // Appel API vers /api/students
-        const response = await apiService.createStudentProfile(studentData);
+        let response;
+        if (isUpdate && existingProfileData.id) {
+          // Mise à jour du profil existant
+          response = await apiService.updateStudentProfile(
+            existingProfileData.id,
+            studentData
+          );
+        } else {
+          // Création d'un nouveau profil
+          const createData = {
+            ...studentData,
+            userId: user.id,
+          };
+          response = await apiService.createStudentProfile(createData);
+        }
 
         if (response.success) {
           showNotification(
             "success",
             "Succès",
-            `Profil étudiant assigné avec succès à ${user.firstName} ${user.lastName}`
+            `Profil étudiant ${
+              isUpdate ? "mis à jour" : "assigné"
+            } avec succès à ${user.firstName} ${user.lastName}`
           );
 
           // Rafraîchir la liste des utilisateurs pour mettre à jour les compteurs
-          fetchUsers();
+          await fetchUsers();
           // Déclencher le rechargement des tables
           setRefreshTrigger((prev) => prev + 1);
-          // Déclencher le rechargement des tables
-          setRefreshTrigger((prev) => prev + 1);
+          // Fermer la modale
+          setShowProfileAssignmentModal(false);
+          setPreselectedUser(null);
+          setExistingProfileData(null);
         } else {
           showNotification(
             "error",
             "Erreur",
-            response.error || "Erreur lors de l'assignation du profil étudiant"
+            response.error ||
+              `Erreur lors de la ${
+                isUpdate ? "mise à jour" : "création"
+              } du profil étudiant`
           );
         }
       } else if (
         selectedProfileType === "teacher" &&
         "hireDate" in profileData
       ) {
-        // Préparer les données pour l'API enseignants (nouveau format)
+        // Préparer les données pour l'API enseignants
         const teacherData = {
-          userId: user.id, // ID de l'utilisateur sélectionné
           matricule: String(profileData.matricule || ""),
           hireDate: String(profileData.hireDate || ""),
-          photo: undefined, // Optionnel
+          photo: profileData.photo,
           maritalStatus: String(profileData.maritalStatus || ""),
-          diplomas: String(profileData.diplomas || ""),
+          diplomas: String(
+            "diplomas" in profileData ? profileData.diplomas || "" : ""
+          ),
           address: String(profileData.address || ""),
           emergencyContact: String(profileData.emergencyContact || ""),
           notes: String(profileData.notes || ""),
         };
 
-        // Appel API vers /api/teachers
-        const response = await apiService.createTeacherProfile(teacherData);
+        let response;
+        if (isUpdate && existingProfileData.id) {
+          // Mise à jour du profil existant
+          response = await apiService.updateTeacherProfile(
+            existingProfileData.id,
+            teacherData
+          );
+        } else {
+          // Création d'un nouveau profil
+          const createData = {
+            ...teacherData,
+            userId: user.id,
+          };
+          response = await apiService.createTeacherProfile(createData);
+        }
 
         if (response.success) {
           showNotification(
             "success",
             "Succès",
-            `Profil enseignant assigné avec succès à ${user.firstName} ${user.lastName}`
+            `Profil enseignant ${
+              isUpdate ? "mis à jour" : "assigné"
+            } avec succès à ${user.firstName} ${user.lastName}`
           );
-          fetchUsers();
+          await fetchUsers();
           // Déclencher le rechargement des tables
           setRefreshTrigger((prev) => prev + 1);
+          // Fermer la modale
+          setShowProfileAssignmentModal(false);
+          setPreselectedUser(null);
+          setExistingProfileData(null);
         } else {
           showNotification(
             "error",
             "Erreur",
             response.error ||
-              "Erreur lors de l'assignation du profil enseignant"
+              `Erreur lors de la ${
+                isUpdate ? "mise à jour" : "création"
+              } du profil enseignant`
           );
         }
       } else if (selectedProfileType === "staff" && "hireDate" in profileData) {
-        // Préparer les données pour l'API personnel (nouveau format)
+        // Préparer les données pour l'API personnel
         const staffData = {
-          userId: user.id, // ID de l'utilisateur sélectionné
           matricule: String(profileData.matricule || ""),
           hireDate: String(profileData.hireDate || ""),
-          position: String(profileData.position || ""),
-          photo: undefined, // Optionnel
+          position: String(
+            "position" in profileData ? profileData.position || "" : ""
+          ),
+          photo: profileData.photo,
           maritalStatus: String(profileData.maritalStatus || ""),
           address: String(profileData.address || ""),
           emergencyContact: String(profileData.emergencyContact || ""),
           notes: String(profileData.notes || ""),
         };
 
-        // Appel API vers /api/staff
-        const response = await apiService.createStaffProfile(staffData);
+        let response;
+        if (isUpdate && existingProfileData.id) {
+          // Mise à jour du profil existant
+          response = await apiService.updateStaffProfile(
+            existingProfileData.id,
+            staffData
+          );
+        } else {
+          // Création d'un nouveau profil
+          const createData = {
+            ...staffData,
+            userId: user.id,
+          };
+          response = await apiService.createStaffProfile(createData);
+        }
 
         if (response.success) {
           showNotification(
             "success",
             "Succès",
-            `Profil personnel assigné avec succès à ${user.firstName} ${user.lastName}`
+            `Profil personnel ${
+              isUpdate ? "mis à jour" : "assigné"
+            } avec succès à ${user.firstName} ${user.lastName}`
           );
-          fetchUsers();
+          await fetchUsers();
           // Déclencher le rechargement des tables
           setRefreshTrigger((prev) => prev + 1);
+          // Fermer la modale
+          setShowProfileAssignmentModal(false);
+          setPreselectedUser(null);
+          setExistingProfileData(null);
         } else {
           showNotification(
             "error",
             "Erreur",
-            response.error || "Erreur lors de l'assignation du profil personnel"
+            response.error ||
+              `Erreur lors de la ${
+                isUpdate ? "mise à jour" : "création"
+              } du profil personnel`
           );
         }
       }
@@ -428,27 +504,169 @@ const UsersPage = () => {
   };
 
   const handleEditStudentProfile = (student: StudentWithUser) => {
-    // Ouvrir la modal d'édition avec les données existantes
+    // Chercher l'utilisateur complet dans la liste des utilisateurs filtrés
+    const fullUser = filteredUsers.find((u) => u.id === student.user.id);
+    const user =
+      fullUser ||
+      ({
+        ...student.user,
+        isActive: true,
+        gender: undefined,
+        birthDate: undefined,
+        phone: undefined,
+        createdAt: undefined,
+        updatedAt: undefined,
+      } as User);
+
     setSelectedProfileType("student");
+    setPreselectedUser(user);
+
+    // Si l'utilisateur a déjà un profil (id !== "0"), charger les données existantes
+    if (student.id !== "0") {
+      const profileData: StudentProfileData = {
+        id: student.id,
+        userId: student.userId,
+        matricule: student.matricule,
+        enrollmentDate: student.enrollmentDate,
+        photo: student.photo,
+        maritalStatus: student.maritalStatus,
+        fatherName: student.fatherName,
+        motherName: student.motherName,
+        tutorName: student.tutorName,
+        tutorPhone: student.tutorPhone,
+        address: student.address,
+        emergencyContact: student.emergencyContact,
+        notes: student.notes,
+      };
+      setExistingProfileData(profileData);
+    } else {
+      // Nouveau profil, pas de données existantes
+      setExistingProfileData(null);
+    }
+
     setShowProfileAssignmentModal(true);
-    // TODO: Passer les données existantes à la modal pour édition
-    console.log("Édition du profil étudiant:", student);
   };
 
   const handleEditTeacherProfile = (teacher: TeacherWithUser) => {
-    // Ouvrir la modal d'édition avec les données existantes
+    // Chercher l'utilisateur complet dans la liste des utilisateurs filtrés
+    const fullUser = filteredUsers.find((u) => u.id === teacher.user.id);
+    const user =
+      fullUser ||
+      ({
+        ...teacher.user,
+        isActive: true,
+        gender: undefined,
+        birthDate: undefined,
+        phone: undefined,
+        createdAt: undefined,
+        updatedAt: undefined,
+      } as User);
+
     setSelectedProfileType("teacher");
+    setPreselectedUser(user);
+
+    // Si l'utilisateur a déjà un profil (id !== "0"), charger les données existantes
+    if (teacher.id !== "0") {
+      const profileData: TeacherProfileData = {
+        id: teacher.id,
+        userId: teacher.userId,
+        matricule: teacher.matricule,
+        hireDate: teacher.hireDate,
+        photo: teacher.photo,
+        maritalStatus: teacher.maritalStatus,
+        diplomas: teacher.diplomas,
+        address: teacher.address,
+        emergencyContact: teacher.emergencyContact,
+        notes: teacher.notes,
+      };
+      setExistingProfileData(profileData);
+    } else {
+      // Nouveau profil, pas de données existantes
+      setExistingProfileData(null);
+    }
+
     setShowProfileAssignmentModal(true);
-    // TODO: Passer les données existantes à la modal pour édition
-    console.log("Édition du profil enseignant:", teacher);
   };
 
   const handleEditStaffProfile = (staff: StaffWithUser) => {
-    // Ouvrir la modal d'édition avec les données existantes
+    // Chercher l'utilisateur complet dans la liste des utilisateurs filtrés
+    const fullUser = filteredUsers.find((u) => u.id === staff.user.id);
+    const user =
+      fullUser ||
+      ({
+        ...staff.user,
+        isActive: true,
+        gender: undefined,
+        birthDate: undefined,
+        phone: undefined,
+        createdAt: undefined,
+        updatedAt: undefined,
+      } as User);
+
     setSelectedProfileType("staff");
+    setPreselectedUser(user);
+
+    // Si l'utilisateur a déjà un profil (id !== "0"), charger les données existantes
+    if (staff.id !== "0") {
+      const profileData: StaffProfileData = {
+        id: staff.id,
+        userId: staff.userId,
+        matricule: staff.matricule,
+        hireDate: staff.hireDate,
+        position: staff.position,
+        photo: staff.photo,
+        maritalStatus: staff.maritalStatus,
+        address: staff.address,
+        emergencyContact: staff.emergencyContact,
+        notes: staff.notes,
+      };
+      setExistingProfileData(profileData);
+    } else {
+      // Nouveau profil, pas de données existantes
+      setExistingProfileData(null);
+    }
+
     setShowProfileAssignmentModal(true);
-    // TODO: Passer les données existantes à la modal pour édition
-    console.log("Édition du profil personnel:", staff);
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    // Demander confirmation avant de supprimer
+    if (
+      !window.confirm(
+        "Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await apiService.deleteUser(userId);
+
+      if (response.success) {
+        showNotification(
+          "success",
+          "Succès",
+          "Utilisateur supprimé avec succès !"
+        );
+        // Rafraîchir la liste des utilisateurs
+        await fetchUsers();
+        // Déclencher le refresh des tables de profils
+        setRefreshTrigger((prev) => prev + 1);
+        // Recalculer les compteurs
+        setTimeout(() => {
+          calculateUserCounts();
+        }, 500);
+      } else {
+        showNotification(
+          "error",
+          "Erreur",
+          response.error || "Erreur lors de la suppression de l'utilisateur"
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      showNotification("error", "Erreur", "Erreur de connexion au serveur");
+    }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -489,10 +707,17 @@ const UsersPage = () => {
         showNotification("success", "Succès", "Utilisateur créé avec succès !");
         setShowCreateModal(false);
         resetForm();
-        // Add user to store and refresh
-        if (response.data) {
-          addUser(response.data);
-        }
+
+        // Forcer un refresh complet depuis l'API pour garantir la cohérence des données
+        await fetchUsers();
+
+        // Déclencher le refresh des tables de profils
+        setRefreshTrigger((prev) => prev + 1);
+
+        // Recalculer les compteurs après le refresh
+        setTimeout(() => {
+          calculateUserCounts();
+        }, 500);
       } else {
         showNotification(
           "error",
@@ -778,7 +1003,11 @@ const UsersPage = () => {
                             <button className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors">
                               <Edit className="w-4 h-4" />
                             </button>
-                            <button className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
+                            <button
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Supprimer l'utilisateur"
+                            >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -856,7 +1085,6 @@ const UsersPage = () => {
                     <option value="student">Élève</option>
                     <option value="teacher">Enseignant/Enseignante</option>
                     <option value="staff">Personnel administratif</option>
-                    <option value="parent">Parent</option>
                     <option value="admin">
                       Administrateur/Administratrice
                     </option>
@@ -1021,10 +1249,16 @@ const UsersPage = () => {
       {showProfileAssignmentModal && (
         <ProfileAssignmentModal
           isOpen={showProfileAssignmentModal}
-          onClose={() => setShowProfileAssignmentModal(false)}
+          onClose={() => {
+            setShowProfileAssignmentModal(false);
+            setPreselectedUser(null);
+            setExistingProfileData(null);
+          }}
           profileType={selectedProfileType}
           onAssignProfile={handleProfileAssignment}
           existingUsers={filteredUsers}
+          preselectedUser={preselectedUser}
+          existingProfileData={existingProfileData}
         />
       )}{" "}
       <Notification

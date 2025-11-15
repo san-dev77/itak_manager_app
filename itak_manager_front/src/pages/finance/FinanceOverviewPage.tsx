@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../../components/layout/Layout";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
-import { apiService } from "../../services/api";
+import { apiService, type User } from "../../services/api";
 
 interface FinanceStats {
   totalRevenue: number;
@@ -16,7 +16,7 @@ interface FinanceStats {
 
 const FinanceOverviewPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<FinanceStats>({
     totalRevenue: 0,
     pendingPayments: 0,
@@ -36,6 +36,8 @@ const FinanceOverviewPage: React.FC = () => {
         // TODO: Charger les statistiques depuis l'API
         loadFinanceStats();
       } catch (error) {
+        console.log(error);
+
         navigate("/login");
       }
     } else {
@@ -48,7 +50,15 @@ const FinanceOverviewPage: React.FC = () => {
       const response = await apiService.getFinanceStats();
 
       if (response.success && response.data) {
-        setStats(response.data);
+        // Mapper les données de l'API vers l'interface locale
+        setStats({
+          totalRevenue: response.data.totalRevenue,
+          pendingPayments: response.data.totalPending || 0,
+          overduePayments: response.data.totalOverdue || 0,
+          totalInvoices: 0, // Non disponible dans l'API
+          paidInvoices: response.data.totalPaid || 0,
+          pendingInvoices: response.data.totalPending || 0,
+        });
       } else {
         console.error(
           "Erreur lors du chargement des statistiques:",

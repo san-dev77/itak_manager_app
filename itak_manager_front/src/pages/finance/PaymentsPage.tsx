@@ -3,11 +3,15 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../../components/layout/Layout";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
-import { apiService } from "../../services/api";
+import {
+  apiService,
+  type Payment as ApiPayment,
+  type User,
+} from "../../services/api";
 import Input from "../../components/ui/Input";
 import InvoiceModal from "../../components/ui/InvoiceModal";
 import {
-  User,
+  User as UserIcon,
   DollarSign,
   ChevronDown,
   ChevronRight,
@@ -21,21 +25,15 @@ import {
   Receipt,
 } from "lucide-react";
 
-interface Payment {
-  id: string;
-  studentFeeId: string;
-  paymentDate: string;
-  amount: number;
-  method: "cash" | "bank_transfer" | "mobile_money" | "card";
-  provider?: string;
-  transactionRef?: string;
-  receivedBy: string;
-  status: "successful" | "failed" | "pending";
-  createdAt: string;
+// Utiliser le type Payment de l'API
+type Payment = ApiPayment;
+
+// Type pour InvoiceModal (avec studentFee obligatoire et types string pour amountAssigned/amountPaid)
+type InvoiceModalPayment = Omit<Payment, "studentFee" | "receivedByUser"> & {
   studentFee: {
     id: string;
-    studentId: string; // ID de l'étudiant
-    feeTypeId: string; // ID du type de frais
+    studentId: string;
+    feeTypeId: string;
     academicYearId: string;
     amountAssigned: string;
     amountPaid: string;
@@ -48,14 +46,34 @@ interface Payment {
     lastName: string;
     role: string;
   };
-}
+};
 
 const PaymentsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [feeTypes, setFeeTypes] = useState<any[]>([]);
-  const [studentClasses, setStudentClasses] = useState<any[]>([]);
+  const [feeTypes, setFeeTypes] = useState<
+    Array<{ id: string; name: string; amountDefault: number }>
+  >([]);
+  const [studentClasses, setStudentClasses] = useState<
+    Array<{
+      studentId: string;
+      student?: {
+        id: string;
+        userId?: string;
+        matricule?: string;
+        user?: {
+          id: string;
+          firstName: string;
+          lastName: string;
+        };
+      };
+      class?: {
+        name: string;
+      };
+      endDate?: string | null;
+    }>
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -84,6 +102,7 @@ const PaymentsPage: React.FC = () => {
     } else {
       navigate("/login");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   const loadAllData = async () => {
@@ -208,33 +227,47 @@ const PaymentsPage: React.FC = () => {
 
   // Fonction helper pour obtenir les infos de l'étudiant qui a payé
   const getStudentInfo = (studentId: string) => {
-    // Trouver l'étudiant dans les classes (qui contient student + class)
-    let studentClass = studentClasses.find(
-      (sc) => sc.studentId === studentId && !sc.endDate
-    );
+    try {
+      // Trouver l'étudiant dans les classes (qui contient student + class)
+      let studentClass = studentClasses.find(
+        (sc) => sc.studentId === studentId && !sc.endDate
+      );
 
-    // Si pas trouvé, essayer sans vérifier endDate
-    if (!studentClass) {
-      studentClass = studentClasses.find((sc) => sc.studentId === studentId);
-    }
+      // Si pas trouvé, essayer sans vérifier endDate
+      if (!studentClass) {
+        studentClass = studentClasses.find((sc) => sc.studentId === studentId);
+      }
 
-    if (!studentClass) {
+      if (!studentClass || !studentClass.student) {
+        return {
+          name: "Données non disponibles",
+          matricule: "Non disponible",
+          class: "Non assigné",
+        };
+      }
+
+      const student = studentClass.student;
+      // Utiliser directement student.user comme dans StudentFeeAssignmentPage
+      const user = student.user;
+
       return {
-        name: "Étudiant inconnu",
-        matricule: "N/A",
+        name: user
+          ? `${user.firstName} ${user.lastName}`
+          : "Données non disponibles",
+        matricule: student.matricule || "Non disponible",
+        class: studentClass.class?.name || "Non assigné",
+      };
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des infos étudiant:",
+        error
+      );
+      return {
+        name: "Données non disponibles",
+        matricule: "Non disponible",
         class: "Non assigné",
       };
     }
-
-    const student = studentClass.student;
-    // Utiliser directement student.user comme dans StudentFeeAssignmentPage
-    const user = student.user;
-
-    return {
-      name: user ? `${user.firstName} ${user.lastName}` : "Nom inconnu",
-      matricule: student.matricule || "N/A",
-      class: studentClass.class.name || "Non assigné",
-    };
   };
 
   // Fonction pour basculer l'expansion d'un étudiant
@@ -252,6 +285,7 @@ const PaymentsPage: React.FC = () => {
   const groupPaymentsByStudent = (payments: Payment[]) => {
     const grouped = payments.reduce(
       (acc, payment) => {
+        if (!payment.studentFee) return acc;
         const studentId = payment.studentFee.studentId;
         if (!acc[studentId]) {
           acc[studentId] = {
@@ -596,9 +630,11 @@ const PaymentsPage: React.FC = () => {
                                   </div>
                                   <div>
                                     <div className="text-sm font-bold text-gray-900">
-                                      {getFeeTypeName(
-                                        payment.studentFee.feeTypeId
-                                      )}
+                                      {payment.studentFee
+                                        ? getFeeTypeName(
+                                            payment.studentFee.feeTypeId
+                                          )
+                                        : "Type inconnu"}
                                     </div>
                                     <div className="text-xs text-gray-600 font-medium">
                                       {getMethodText(payment.method)}
@@ -642,14 +678,15 @@ const PaymentsPage: React.FC = () => {
                                 <div className="text-center">
                                   <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                                     <div className="flex items-center justify-center space-x-1 mb-1">
-                                      <User className="w-4 h-4 text-blue-600" />
+                                      <UserIcon className="w-4 h-4 text-blue-600" />
                                       <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
                                         Reçu par
                                       </span>
                                     </div>
                                     <div className="text-sm font-bold text-gray-900">
-                                      {payment.receivedByUser.firstName}{" "}
-                                      {payment.receivedByUser.lastName}
+                                      {payment.receivedByUser
+                                        ? `${payment.receivedByUser.firstName} ${payment.receivedByUser.lastName}`
+                                        : "Non disponible"}
                                     </div>
                                   </div>
                                 </div>
@@ -712,28 +749,43 @@ const PaymentsPage: React.FC = () => {
       </div>
 
       {/* Modal de facture */}
-      <InvoiceModal
-        isOpen={isInvoiceModalOpen}
-        onClose={handleCloseInvoice}
-        payment={selectedPaymentForInvoice}
-        studentInfo={
-          selectedPaymentForInvoice
-            ? getStudentInfo(selectedPaymentForInvoice.studentFee.studentId)
-            : null
-        }
-        feeTypeInfo={
-          selectedPaymentForInvoice
-            ? {
-                name: getFeeTypeName(
-                  selectedPaymentForInvoice.studentFee.feeTypeId
-                ),
-                amountDefault: Number(
+      {selectedPaymentForInvoice?.studentFee && (
+        <InvoiceModal
+          isOpen={isInvoiceModalOpen}
+          onClose={handleCloseInvoice}
+          payment={
+            {
+              ...selectedPaymentForInvoice,
+              studentFee: {
+                ...selectedPaymentForInvoice.studentFee,
+                amountAssigned: String(
                   selectedPaymentForInvoice.studentFee.amountAssigned
                 ),
-              }
-            : null
-        }
-      />
+                amountPaid: String(
+                  selectedPaymentForInvoice.studentFee.amountPaid
+                ),
+              },
+              receivedByUser: selectedPaymentForInvoice.receivedByUser || {
+                id: "",
+                firstName: "Non disponible",
+                lastName: "",
+                role: "",
+              },
+            } as InvoiceModalPayment
+          }
+          studentInfo={getStudentInfo(
+            selectedPaymentForInvoice.studentFee.studentId
+          )}
+          feeTypeInfo={{
+            name: getFeeTypeName(
+              selectedPaymentForInvoice.studentFee.feeTypeId
+            ),
+            amountDefault: Number(
+              selectedPaymentForInvoice.studentFee.amountAssigned
+            ),
+          }}
+        />
+      )}
     </Layout>
   );
 };

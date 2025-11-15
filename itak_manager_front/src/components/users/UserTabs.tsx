@@ -1,11 +1,5 @@
 import { motion } from "framer-motion";
-import {
-  Users,
-  GraduationCap,
-  Building,
-  UserCheck,
-  UserPlus,
-} from "lucide-react";
+import { Users, GraduationCap, Building, UserCheck } from "lucide-react";
 
 interface UserTabsProps {
   activeTab: string;
@@ -19,12 +13,7 @@ interface UserTabsProps {
   onAssignProfile?: (profileType: "student" | "teacher" | "staff") => void;
 }
 
-const UserTabs = ({
-  activeTab,
-  onTabChange,
-  userCounts,
-  onAssignProfile,
-}: UserTabsProps) => {
+const UserTabs = ({ activeTab, onTabChange, userCounts }: UserTabsProps) => {
   const tabs = [
     {
       id: "all",
@@ -111,20 +100,6 @@ const UserTabs = ({
                 {tab.count}
               </span>
             </button>
-
-            {/* Bouton d'assignation de profil pour les tabs spécifiques */}
-            {tab.id !== "all" && onAssignProfile && (
-              <button
-                onClick={() =>
-                  onAssignProfile(tab.id as "student" | "teacher" | "staff")
-                }
-                className="mt-2 p-2 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors flex items-center justify-center gap-1"
-                title={`Assigner un profil ${tab.label.toLowerCase()}`}
-              >
-                <UserPlus className="w-3 h-3" />
-                <span className="text-xs">Assigner</span>
-              </button>
-            )}
           </div>
         ))}
       </div>

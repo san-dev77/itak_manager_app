@@ -5,9 +5,13 @@ import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import FormModal from "../../components/ui/FormModal";
-import { apiService } from "../../services/api";
 import {
-  User,
+  apiService,
+  type Payment,
+  type StudentClass,
+  type User,
+} from "../../services/api";
+import {
   DollarSign,
   ChevronDown,
   ChevronRight,
@@ -73,10 +77,10 @@ interface AcademicYear {
 
 const StudentFeesPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [studentFees, setStudentFees] = useState<StudentFee[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [feeTypes, setFeeTypes] = useState<FeeType[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,8 +93,8 @@ const StudentFeesPage: React.FC = () => {
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
     new Set()
   );
-  const [payments, setPayments] = useState<any[]>([]);
-  const [studentClasses, setStudentClasses] = useState<any[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [studentClasses, setStudentClasses] = useState<StudentClass[]>([]);
 
   const [formData, setFormData] = useState({
     studentId: "",
@@ -224,11 +228,15 @@ const StudentFeesPage: React.FC = () => {
         loadAllData();
         loadUsers();
       } catch (error) {
+        console.log("====================================");
+        console.log(error);
+        console.log("====================================");
         navigate("/login");
       }
     } else {
       navigate("/login");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   const loadPayments = async () => {
@@ -297,7 +305,11 @@ const StudentFeesPage: React.FC = () => {
       if (response.success && response.data) {
         console.log("📥 Données reçues de l'API:", response.data);
         console.log("📥 Premier StudentFee:", response.data[0]);
-        setStudentFees(response.data);
+        // Filtrer les StudentFee qui ont un student valide
+        const validFees = response.data.filter(
+          (fee) => fee.student && fee.student.id
+        ) as StudentFee[];
+        setStudentFees(validFees);
       } else {
         console.error(
           "Erreur lors du chargement des frais étudiants:",
@@ -332,10 +344,19 @@ const StudentFeesPage: React.FC = () => {
 
   const loadStudents = async () => {
     try {
-      const response = await apiService.get("/users?role=student");
+      const response = await apiService.getAllUsers();
       if (response.success && response.data) {
-        console.log("📥 Étudiants reçus de l'API:", response.data);
-        setStudents(response.data);
+        // Filtrer les étudiants par rôle et convertir en format Student
+        const studentUsers = response.data
+          .filter((user: User) => user.role === "student")
+          .map((user: User) => ({
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            matricule: user.username || `STU${user.id}`, // Utiliser username comme matricule par défaut
+          }));
+        console.log("📥 Étudiants reçus de l'API:", studentUsers);
+        setStudents(studentUsers);
       } else {
         console.error(
           "Erreur lors du chargement des étudiants:",
@@ -420,16 +441,35 @@ const StudentFeesPage: React.FC = () => {
   };
 
   const handleEdit = (studentFee: StudentFee) => {
+    console.log("📝 Modification du frais:", studentFee);
+    console.log("📝 StudentId:", studentFee.studentId);
+    console.log("📝 Étudiants disponibles:", students);
+
     setEditingStudentFee(studentFee);
+
+    // Formater la date pour l'input date (format YYYY-MM-DD)
+    const dueDateFormatted = studentFee.dueDate
+      ? new Date(studentFee.dueDate).toISOString().split("T")[0]
+      : "";
+
     setFormData({
       studentId: studentFee.studentId,
       feeTypeId: studentFee.feeTypeId,
       academicYearId: studentFee.academicYearId,
       amountAssigned: studentFee.amountAssigned,
-      dueDate: studentFee.dueDate,
+      dueDate: dueDateFormatted,
     });
     setDisplayAmount(formatAmount(studentFee.amountAssigned));
     setIsModalOpen(true);
+
+    // Vérifier que l'étudiant est bien dans la liste
+    const studentExists = students.find((s) => s.id === studentFee.studentId);
+    if (!studentExists) {
+      console.warn(
+        "⚠️ L'étudiant n'a pas été trouvé dans la liste:",
+        studentFee.studentId
+      );
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -463,11 +503,12 @@ const StudentFeesPage: React.FC = () => {
     setDisplayAmount("");
   };
 
-  const openModal = () => {
-    setEditingStudentFee(null);
-    resetForm();
-    setIsModalOpen(true);
-  };
+  // Fonction openModal commentée car non utilisée
+  // const openModal = () => {
+  //   setEditingStudentFee(null);
+  //   resetForm();
+  //   setIsModalOpen(true);
+  // };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -617,7 +658,7 @@ const StudentFeesPage: React.FC = () => {
               </div>
             ) : (
               groupedStudentFees.map((group) => {
-                const studentUser = getStudentUser(group.student.userId);
+                const studentUser = getStudentUser(group.student.id);
                 const isExpanded = expandedStudents.has(group.student.id);
 
                 return (
@@ -977,26 +1018,47 @@ const StudentFeesPage: React.FC = () => {
           }
         >
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Étudiant
-              </label>
-              <select
-                value={formData.studentId}
-                onChange={(e) =>
-                  setFormData({ ...formData, studentId: e.target.value })
-                }
-                className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Sélectionner un étudiant</option>
-                {students.map((student) => (
-                  <option key={student.id} value={student.id}>
-                    {student.firstName} {student.lastName} ({student.matricule})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {editingStudentFee ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Étudiant
+                </label>
+                <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-gray-600" />
+                    <span className="text-gray-900 font-medium">
+                      {editingStudentFee.student.firstName}{" "}
+                      {editingStudentFee.student.lastName}
+                    </span>
+                    <span className="text-gray-500">
+                      ({editingStudentFee.student.matricule})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Étudiant
+                </label>
+                <select
+                  value={formData.studentId || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, studentId: e.target.value })
+                  }
+                  className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Sélectionner un étudiant</option>
+                  {students.map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.firstName} {student.lastName} (
+                      {student.matricule})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -15,10 +15,11 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
+import { type User } from "../../services/api";
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const userData =
@@ -27,6 +28,8 @@ const SettingsPage: React.FC = () => {
       try {
         setUser(JSON.parse(userData));
       } catch (error) {
+        console.log(error);
+
         navigate("/login");
       }
     } else {

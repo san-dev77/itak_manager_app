@@ -4,7 +4,9 @@ import Layout from "../../components/layout/Layout";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import FormModal from "../../components/ui/FormModal";
-import { apiService } from "../../services/api";
+import { apiService, type User } from "../../services/api";
+
+type FeeFrequency = "once" | "monthly" | "quarterly" | "yearly";
 
 interface FeeType {
   id: string;
@@ -12,7 +14,7 @@ interface FeeType {
   description?: string;
   amountDefault: number;
   isRecurring: boolean;
-  frequency: "once" | "monthly" | "quarterly" | "yearly";
+  frequency: FeeFrequency;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -27,12 +29,18 @@ const FeeTypesPage: React.FC = () => {
   const [editingFeeType, setEditingFeeType] = useState<FeeType | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    amountDefault: number;
+    isRecurring: boolean;
+    frequency: FeeFrequency;
+  }>({
     name: "",
     description: "",
     amountDefault: 0,
     isRecurring: false,
-    frequency: "once" as const,
+    frequency: "once",
   });
 
   const [displayAmount, setDisplayAmount] = useState("");

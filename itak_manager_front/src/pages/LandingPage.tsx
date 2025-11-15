@@ -1,11 +1,9 @@
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  Zap,
   Users,
   BookOpen,
   BarChart3,
-  Play,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import { Link } from "react-router-dom";

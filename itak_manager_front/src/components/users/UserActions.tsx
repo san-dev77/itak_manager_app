@@ -125,7 +125,7 @@ const UserActions = ({
           <div className="p-3 border-b border-blue-100">
             <h4 className="font-medium text-blue-900">Gérer le profil</h4>
             <p className="text-sm text-blue-600">
-              {user.first_name} {user.last_name}
+              {user.firstName} {user.lastName}
             </p>
           </div>
 

@@ -14,6 +14,11 @@ import {
   Grid3x3,
   List,
   Printer,
+  Info,
+  Calendar,
+  GraduationCap,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -346,7 +351,7 @@ const TimetablePage: React.FC = () => {
   return (
     <Layout user={user}>
       <div className="p-6 max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header avec design amélioré */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-6">
             <Button
@@ -358,23 +363,46 @@ const TimetablePage: React.FC = () => {
               <ArrowLeft className="w-4 h-4" />
               Retour
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Emplois du temps
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Gérez les emplois du temps par année scolaire et par classe
-              </p>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                  <Calendar className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    Emplois du temps
+                  </h1>
+                  <p className="text-gray-600 mt-1">
+                    Créez et gérez les emplois du temps de vos classes
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Filtres */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="grid md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Année scolaire
+        {/* Section de sélection avec design amélioré et instructions claires */}
+        <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl shadow-lg border-2 border-blue-100 p-6 mb-6">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="p-2 bg-blue-500 rounded-lg">
+              <Info className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-1">
+                Sélectionnez une année scolaire et une classe
+              </h3>
+              <p className="text-sm text-gray-600">
+                Pour afficher ou créer un emploi du temps, vous devez d'abord
+                sélectionner une année scolaire et une classe.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-blue-200">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                <GraduationCap className="w-4 h-4 text-blue-600" />
+                Année scolaire *
               </label>
               <select
                 value={selectedSchoolYear}
@@ -385,120 +413,190 @@ const TimetablePage: React.FC = () => {
                     academicYearId: e.target.value,
                   }));
                 }}
-                className="w-full px-3 text-black py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                  selectedSchoolYear
+                    ? "border-green-400 bg-green-50 text-black"
+                    : "border-gray-300 bg-white text-black"
+                }`}
               >
-                <option value="">Toutes les années</option>
+                <option value="">-- Sélectionnez une année --</option>
                 {schoolYears.map((year) => (
                   <option key={year.id} value={year.id}>
-                    {year.name} {year.isActive && "(Active)"}
+                    {year.name} {year.isActive && "⭐ (Active)"}
                   </option>
                 ))}
               </select>
+              {selectedSchoolYear && (
+                <div className="flex items-center gap-2 mt-2 text-xs text-green-600">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Année sélectionnée
+                </div>
+              )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Classe
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-blue-200">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                <Users className="w-4 h-4 text-blue-600" />
+                Classe *
               </label>
               <select
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                disabled={!selectedSchoolYear}
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                  !selectedSchoolYear
+                    ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : selectedClass
+                    ? "border-green-400 bg-green-50 text-black"
+                    : "border-gray-300 bg-white text-black"
+                }`}
               >
-                <option value="">Toutes les classes</option>
+                <option value="">
+                  {!selectedSchoolYear
+                    ? "Sélectionnez d'abord une année"
+                    : "-- Sélectionnez une classe --"}
+                </option>
                 {classes.map((cls) => (
                   <option key={cls.id} value={cls.id}>
                     {cls.name} - {cls.level}
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div className="flex items-end gap-2">
-              <div className="flex gap-1 border border-gray-300 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`px-3 py-2 rounded-md transition-colors ${
-                    viewMode === "list"
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                  title="Vue liste"
-                >
-                  <List className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`px-3 py-2 rounded-md transition-colors ${
-                    viewMode === "grid"
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                  title="Vue grille"
-                >
-                  <Grid3x3 className="w-4 h-4" />
-                </button>
-              </div>
-
-              {viewMode === "grid" && filteredTimetables.length > 0 && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handlePrint}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <Printer className="w-4 h-4" />
-                </Button>
+              {selectedClass && (
+                <div className="flex items-center gap-2 mt-2 text-xs text-green-600">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Classe sélectionnée
+                </div>
               )}
-
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                disabled={!selectedSchoolYear || !selectedClass}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-              >
-                <Plus className="w-4 h-4" />
-                Ajouter
-              </Button>
+              {!selectedSchoolYear && (
+                <div className="flex items-center gap-2 mt-2 text-xs text-amber-600">
+                  <AlertCircle className="w-3 h-3" />
+                  Sélectionnez d'abord une année scolaire
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Actions et contrôles */}
+          {selectedSchoolYear && selectedClass && (
+            <div className="mt-4 pt-4 border-t border-blue-200 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Prêt à afficher l'emploi du temps
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1 border border-gray-300 rounded-lg p-1 bg-white">
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`px-3 py-2 rounded-md transition-all ${
+                      viewMode === "list"
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                    title="Vue liste"
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`px-3 py-2 rounded-md transition-all ${
+                      viewMode === "grid"
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                    title="Vue grille"
+                  >
+                    <Grid3x3 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {viewMode === "grid" && filteredTimetables.length > 0 && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handlePrint}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white shadow-md"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Imprimer
+                  </Button>
+                )}
+
+                <Button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
+                >
+                  <Plus className="w-4 h-4" />
+                  Ajouter un cours
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Emploi du temps */}
         {loading && filteredTimetables.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-500">Chargement des emplois du temps...</p>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 font-medium">
+              Chargement des emplois du temps...
+            </p>
+          </div>
+        ) : !selectedSchoolYear || !selectedClass ? (
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg border-2 border-amber-200 p-12 text-center">
+            <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-amber-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">
+              Sélection requise
+            </h3>
+            <p className="text-gray-700 mb-2 max-w-md mx-auto">
+              {!selectedSchoolYear && !selectedClass
+                ? "Pour afficher ou créer un emploi du temps, veuillez d'abord sélectionner une année scolaire et une classe dans la section ci-dessus."
+                : !selectedSchoolYear
+                ? "Veuillez sélectionner une année scolaire pour continuer."
+                : "Veuillez sélectionner une classe pour afficher l'emploi du temps."}
+            </p>
+            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-amber-700 bg-amber-100 px-4 py-2 rounded-lg">
+              <Info className="w-4 h-4" />
+              <span>Utilisez les sélecteurs en haut de la page</span>
+            </div>
           </div>
         ) : filteredTimetables.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Clock className="w-8 h-8 text-blue-600" />
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-lg border-2 border-blue-200 p-12 text-center">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Clock className="w-10 h-10 text-blue-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">
               Aucun cours programmé
             </h3>
-            <p className="text-gray-600 mb-6">
-              {!selectedSchoolYear && !selectedClass
-                ? "Sélectionnez une année scolaire et une classe pour voir l'emploi du temps"
-                : !selectedSchoolYear
-                ? "Sélectionnez une année scolaire"
-                : !selectedClass
-                ? "Sélectionnez une classe pour voir l'emploi du temps"
-                : "Commencez par ajouter des cours à l'emploi du temps"}
+            <p className="text-gray-700 mb-6 max-w-md mx-auto">
+              L'emploi du temps pour cette classe est vide. Commencez par
+              ajouter des cours pour créer l'emploi du temps.
             </p>
-            {selectedSchoolYear && selectedClass && (
+            <div className="flex items-center justify-center gap-4">
               <Button
                 onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg px-6 py-3"
               >
+                <Plus className="w-5 h-5 mr-2" />
                 Ajouter le premier cours
               </Button>
-            )}
+            </div>
           </div>
         ) : viewMode === "list" ? (
-          // Vue liste
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          // Vue liste améliorée
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
             <div className="p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Emploi du temps -{" "}
+                  {classes.find((c) => c.id === selectedClass)?.name}
+                </h2>
+                <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                  {filteredTimetables.length} cours
+                </span>
+              </div>
               <div className="grid gap-4">
                 {daysOfWeek.map((day) => {
                   const dayCourses = timetablesByDay[day.value] || [];
@@ -507,14 +605,18 @@ const TimetablePage: React.FC = () => {
                   return (
                     <div
                       key={day.value}
-                      className="border border-gray-200 rounded-lg overflow-hidden"
+                      className="border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                     >
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
-                        <h3 className="font-semibold text-gray-900">
+                      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-4">
+                        <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                          <Calendar className="w-5 h-5" />
                           {day.label}
+                          <span className="ml-auto text-sm font-normal bg-white/20 px-2 py-1 rounded-full">
+                            {dayCourses.length} cours
+                          </span>
                         </h3>
                       </div>
-                      <div className="divide-y divide-gray-200">
+                      <div className="divide-y divide-gray-100 bg-gray-50">
                         {dayCourses.map((tt) => {
                           const assignment = teachingAssignments.find(
                             (ta) => ta.id === tt.teachingAssignmentId
@@ -522,46 +624,55 @@ const TimetablePage: React.FC = () => {
                           return (
                             <div
                               key={tt.id}
-                              className="p-4 hover:bg-gray-50 transition-colors"
+                              className="p-5 hover:bg-white transition-all bg-white"
                             >
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1">
-                                  <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                                      <Clock className="w-4 h-4 text-gray-400" />
+                                  <div className="flex items-center gap-4 mb-3">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm">
+                                      <Clock className="w-4 h-4" />
                                       {formatTime(tt.startTime)} -{" "}
                                       {formatTime(tt.endTime)}
                                     </div>
                                     {tt.room && (
-                                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                                      <div className="flex items-center gap-1 text-sm text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg">
                                         <MapPin className="w-4 h-4" />
                                         {tt.room}
                                       </div>
                                     )}
                                   </div>
                                   {assignment && (
-                                    <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-                                      <span className="flex items-center gap-1 text-blue-600 font-medium">
-                                        <BookOpen className="w-4 h-4" />
-                                        {assignment.classSubject?.subject?.name}
-                                      </span>
-                                      <span className="flex items-center gap-1 text-gray-600">
-                                        <Users className="w-4 h-4" />
-                                        {assignment.classSubject?.class?.name}
-                                      </span>
-                                      <span className="text-gray-600">
-                                        Prof:{" "}
-                                        {assignment.teacher?.user?.firstName}{" "}
-                                        {assignment.teacher?.user?.lastName}
-                                      </span>
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <BookOpen className="w-5 h-5 text-blue-600" />
+                                        <span className="font-bold text-lg text-gray-900">
+                                          {
+                                            assignment.classSubject?.subject
+                                              ?.name
+                                          }
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                                        <span className="flex items-center gap-1">
+                                          <Users className="w-4 h-4" />
+                                          {assignment.classSubject?.class?.name}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                          <span className="font-medium">
+                                            Prof:
+                                          </span>
+                                          {assignment.teacher?.user?.firstName}{" "}
+                                          {assignment.teacher?.user?.lastName}
+                                        </span>
+                                      </div>
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2 ml-4">
+                                <div className="flex items-center gap-2">
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="text-orange-600 hover:text-orange-700"
+                                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200"
                                   >
                                     <Edit className="w-4 h-4" />
                                   </Button>
@@ -569,7 +680,7 @@ const TimetablePage: React.FC = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleDeleteTimetable(tt.id)}
-                                    className="text-red-600 hover:text-red-700"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
@@ -586,9 +697,18 @@ const TimetablePage: React.FC = () => {
             </div>
           </div>
         ) : (
-          // Vue grille (format tableau)
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          // Vue grille (format tableau) améliorée
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
             <div className="p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Emploi du temps -{" "}
+                  {classes.find((c) => c.id === selectedClass)?.name}
+                </h2>
+                <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                  {filteredTimetables.length} cours
+                </span>
+              </div>
               <div className="overflow-x-auto">
                 <div ref={printRef} className="print-container">
                   {/* En-tête pour l'impression */}

@@ -143,7 +143,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">
-                FACTURE DE PAIEMENT
+                Reçu de paiement
               </h2>
               <p className="text-xs text-gray-600">Reçu officiel UPCD ITAK</p>
               {studentInfo && (
@@ -195,9 +195,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
               </div>
               <div className="text-right flex items-center space-x-4">
                 <div>
-                  <div className="text-lg font-black text-gray-800">
-                    FACTURE
-                  </div>
+                  <div className="text-lg font-black text-gray-800">REÇU</div>
                   <div className="text-xs font-mono text-gray-600">
                     N° {payment.id.slice(-8).toUpperCase()}
                   </div>
@@ -209,7 +207,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                   <div className="flex flex-col items-center">
                     <img
                       src={qrCodeDataURL}
-                      alt="QR Code Facture"
+                      alt="QR Code Reçu"
                       className="w-16 h-16 border border-gray-300 rounded"
                     />
                     <div className="text-xs text-gray-500 mt-1">QR Code</div>

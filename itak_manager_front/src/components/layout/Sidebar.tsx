@@ -5,7 +5,6 @@ import {
   Users,
   BookOpen,
   Settings,
-  BarChart3,
   ChevronLeft,
   ChevronRight,
   DollarSign,
@@ -18,6 +17,7 @@ import {
   CalendarDays,
   GraduationCap,
 } from "lucide-react";
+import logoItak from "../../assets/logo itak.png";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -47,7 +47,6 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
       title: "Utilisateurs",
       path: "/users",
       icon: <Users className="w-5 h-5" />,
-      badge: 1247,
     },
     {
       title: "Classes & Matières",
@@ -99,11 +98,6 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
       ],
     },
 
-    {
-      title: "Rapports",
-      path: "/reports",
-      icon: <BarChart3 className="w-5 h-5" />,
-    },
     {
       title: "Affectations",
       path: "/settings",
@@ -241,19 +235,31 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
 
       {/* Header */}
       <div className="relative flex-shrink-0 flex items-center justify-between p-4 border-b border-white/10">
-        {!isCollapsed && (
+        {!isCollapsed ? (
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full"></div>
+            <div className="relative w-12 h-12 flex items-center justify-center">
+              <img
+                src={logoItak}
+                alt="ITAK Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-                Gestion
+                ITAK Manager
               </span>
               <span className="text-xs text-blue-300/70 font-medium">
-                école
+                Gestion scolaire
               </span>
             </div>
+          </div>
+        ) : (
+          <div className="relative w-10 h-10 flex items-center justify-center mx-auto">
+            <img
+              src={logoItak}
+              alt="ITAK Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
         )}
 

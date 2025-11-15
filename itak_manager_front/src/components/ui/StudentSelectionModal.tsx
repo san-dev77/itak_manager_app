@@ -57,11 +57,21 @@ const StudentSelectionModal: React.FC<StudentSelectionModalProps> = ({
   const loadStudents = async () => {
     try {
       setIsLoading(true);
-      const response = await apiService.get("/users?role=student");
+      const response = await apiService.getAllUsers();
       if (response.success && response.data) {
-        console.log("📥 Étudiants reçus de l'API:", response.data);
-        setStudents(response.data);
-        setFilteredStudents(response.data);
+        // Filtrer les étudiants par rôle
+        const studentUsers = response.data.filter((user: any) => user.role === "student");
+        // Convertir les utilisateurs en format Student
+        const studentsData: Student[] = studentUsers.map((user: any) => ({
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          studentNumber: user.username || `STU${user.id}`,
+          email: user.email,
+        }));
+        console.log("📥 Étudiants reçus de l'API:", studentsData);
+        setStudents(studentsData);
+        setFilteredStudents(studentsData);
       } else {
         console.error(
           "Erreur lors du chargement des étudiants:",

@@ -5,8 +5,8 @@ import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import {
   apiService,
+  type FeeType,
   type StudentClass,
-  type Payment,
 } from "../../services/api";
 import {
   Search,
@@ -56,6 +56,20 @@ interface User {
   role: string;
 }
 
+// Interface Payment étendue pour inclure studentFeeId
+interface PaymentWithStudentFee {
+  id: string;
+  studentFeeId: string;
+  paymentDate: string;
+  amount: number;
+  method: "cash" | "bank_transfer" | "mobile_money" | "card";
+  provider?: string;
+  transactionRef?: string;
+  receivedBy: string;
+  status: "successful" | "failed" | "pending";
+  createdAt: string;
+}
+
 const PaymentAssignmentPage: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -63,14 +77,12 @@ const PaymentAssignmentPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [staffs, setStaffs] = useState<User[]>([]);
   const [studentClasses, setStudentClasses] = useState<StudentClass[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [feeTypes, setFeeTypes] = useState<any[]>([]);
+  const [payments, setPayments] = useState<PaymentWithStudentFee[]>([]);
+  const [feeTypes, setFeeTypes] = useState<FeeType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // États pour la sélection
-  const [selectedStudentFee, setSelectedStudentFee] =
-    useState<StudentFee | null>(null);
   const [studentFeeSearchTerm, setStudentFeeSearchTerm] = useState("");
 
   // Nouveaux états pour le workflow amélioré
@@ -85,17 +97,15 @@ const PaymentAssignmentPage: React.FC = () => {
     paymentDate: new Date().toISOString().split("T")[0],
   });
 
-  // État pour le formulaire
-  const [formData, setFormData] = useState({
-    paymentDate: new Date().toISOString().split("T")[0],
-    amount: 0,
-    method: "cash" as const,
-    provider: "",
-    transactionRef: "",
-    receivedBy: "",
-  });
-
-  const [displayAmount, setDisplayAmount] = useState("");
+  // État pour le formulaire (non utilisé pour le moment)
+  // const [formData, setFormData] = useState({
+  //   paymentDate: new Date().toISOString().split("T")[0],
+  //   amount: 0,
+  //   method: "cash" as const,
+  //   provider: "",
+  //   transactionRef: "",
+  //   receivedBy: "",
+  // });
 
   // Fonctions utilitaires pour le formatage des montants
   const formatAmount = (amount: number): string => {
@@ -195,16 +205,11 @@ const PaymentAssignmentPage: React.FC = () => {
     return totalPaid;
   };
 
-  const parseAmount = (value: string): number => {
-    const cleanValue = value.replace(/[\s.]/g, "");
-    return parseInt(cleanValue) || 0;
-  };
-
-  const handleAmountChange = (value: string) => {
-    const numericValue = parseAmount(value);
-    setFormData({ ...formData, amount: numericValue });
-    setDisplayAmount(formatAmount(numericValue));
-  };
+  // Fonction parseAmount non utilisée (commentée)
+  // const parseAmount = (value: string): number => {
+  //   const cleanValue = value.replace(/[\s.]/g, "");
+  //   return parseInt(cleanValue) || 0;
+  // };
 
   // Fonction helper pour obtenir les données utilisateur d'un étudiant
   const getStudentUser = (userId: string) => {
@@ -225,6 +230,7 @@ const PaymentAssignmentPage: React.FC = () => {
     } else {
       navigate("/login");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   const loadFeeTypes = async () => {
@@ -283,7 +289,11 @@ const PaymentAssignmentPage: React.FC = () => {
             typeof response.data[0].amountPaid
           );
         }
-        setStudentFees(response.data);
+        // Filtrer les StudentFee qui ont un student valide
+        const validFees = response.data.filter(
+          (fee) => fee.student && fee.student.id && fee.student.matricule
+        ) as StudentFee[];
+        setStudentFees(validFees);
       } else {
         console.error(
           "Erreur lors du chargement des frais étudiants:",
@@ -845,7 +855,11 @@ const PaymentAssignmentPage: React.FC = () => {
                         onChange={(e) =>
                           setBulkFormData({
                             ...bulkFormData,
-                            method: e.target.value as any,
+                            method: e.target.value as
+                              | "cash"
+                              | "bank_transfer"
+                              | "mobile_money"
+                              | "card",
                           })
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"

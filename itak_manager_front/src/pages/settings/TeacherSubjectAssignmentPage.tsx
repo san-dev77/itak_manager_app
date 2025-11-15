@@ -4,6 +4,7 @@ import Layout from "../../components/layout/Layout";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Notification from "../../components/ui/Notification";
+import ErrorModal from "../../components/ui/ErrorModal";
 import { apiService } from "../../services/api";
 
 const TeacherSubjectAssignmentPage: React.FC = () => {
@@ -49,6 +50,15 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
     new Set()
   );
   const [notification, setNotification] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    message: string;
+    details?: string;
+    statusCode?: number;
+  }>({
+    isOpen: false,
+    message: "",
+  });
 
   // États pour les onglets et la recherche
   const [activeTab, setActiveTab] = useState<"create" | "list">("create");
@@ -155,13 +165,35 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
         setSelectedClassSubject(0);
         setStartDate("");
         setEndDate("");
+      } else {
+        // Détecter spécifiquement les erreurs 409 (Conflict) et afficher la modale
+        if (response.statusCode === 409) {
+          setErrorModal({
+            isOpen: true,
+            message: response.error || "Conflit détecté",
+            details: response.error,
+            statusCode: 409,
+          });
+        } else {
+          // Autres erreurs - afficher aussi dans la modale pour plus de visibilité
+          setErrorModal({
+            isOpen: true,
+            message: response.error || "Erreur lors de l'affectation",
+            details: response.error,
+            statusCode: response.statusCode,
+          });
+        }
       }
-    } catch {
-      setNotification({
-        type: "error",
-        title: "Erreur",
-        message: "Erreur lors de l'affectation",
-        isVisible: true,
+    } catch (error) {
+      console.error("Erreur lors de l'affectation:", error);
+      setErrorModal({
+        isOpen: true,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de l'affectation",
+        details: error instanceof Error ? error.stack : undefined,
+        statusCode: undefined,
       });
     } finally {
       setIsSubmitting(false);
@@ -193,6 +225,13 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
         deleteConfirm.assignmentId
       );
       if (response.success) {
+        // Fermer la modale de confirmation
+        setDeleteConfirm({
+          show: false,
+          assignmentId: null,
+          assignmentInfo: "",
+        });
+
         // Recharger les données
         const assignmentsRes = await apiService.getAllTeachingAssignments();
         if (assignmentsRes.success) {
@@ -205,13 +244,35 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
           message: "Affectation supprimée avec succès",
           isVisible: true,
         });
+      } else {
+        // Détecter spécifiquement les erreurs 409 (Conflict) et afficher la modale
+        if (response.statusCode === 409) {
+          setErrorModal({
+            isOpen: true,
+            message: response.error || "Conflit détecté lors de la suppression",
+            details: response.error,
+            statusCode: 409,
+          });
+        } else {
+          // Autres erreurs - afficher aussi dans la modale
+          setErrorModal({
+            isOpen: true,
+            message: response.error || "Erreur lors de la suppression",
+            details: response.error,
+            statusCode: response.statusCode,
+          });
+        }
       }
-    } catch {
-      setNotification({
-        type: "error",
-        title: "Erreur",
-        message: "Erreur lors de la suppression",
-        isVisible: true,
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      setErrorModal({
+        isOpen: true,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la suppression",
+        details: error instanceof Error ? error.stack : undefined,
+        statusCode: undefined,
       });
     } finally {
       setDeleteConfirm({
@@ -280,7 +341,22 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
 
-      if (successCount === bulkConfirm.classSubjectIds.length) {
+      // Vérifier s'il y a des erreurs 409 (Conflict)
+      const conflictErrors = results.filter(
+        (r) => !r.success && r.statusCode === 409
+      );
+
+      // Si une erreur 409 est détectée, afficher la modale
+      if (conflictErrors.length > 0) {
+        const firstConflictError = conflictErrors[0];
+        setErrorModal({
+          isOpen: true,
+          message:
+            firstConflictError.error || "Conflit détecté lors de la création",
+          details: firstConflictError.error,
+          statusCode: 409,
+        });
+      } else if (successCount === bulkConfirm.classSubjectIds.length) {
         setNotification({
           type: "success",
           title: "Succès",
@@ -299,20 +375,32 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
         const assignmentsRes = await apiService.getAllTeachingAssignments();
         if (assignmentsRes.success) setAssignments(assignmentsRes.data || []);
       } else {
-        setNotification({
-          type: "error",
-          title: "Erreur partielle",
-          message: `${successCount}/${bulkConfirm.classSubjectIds.length} affectation(s) créée(s) (${bulkConfirm.classSubjectIds.length} requête(s) envoyée(s))`,
-          isVisible: true,
+        // Erreurs autres que 409
+        const failedResults = results.filter((r) => !r.success);
+        const errorMessages = failedResults
+          .map((r) => r.error)
+          .filter((msg) => msg)
+          .join("; ");
+
+        setErrorModal({
+          isOpen: true,
+          message:
+            errorMessages ||
+            `${successCount}/${bulkConfirm.classSubjectIds.length} affectation(s) créée(s)`,
+          details: errorMessages,
+          statusCode: failedResults[0]?.statusCode,
         });
       }
     } catch (error) {
       console.error("Erreur lors de la création en lot:", error);
-      setNotification({
-        type: "error",
-        title: "Erreur",
-        message: "Erreur lors de la création des affectations",
-        isVisible: true,
+      setErrorModal({
+        isOpen: true,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la création des affectations",
+        details: error instanceof Error ? error.stack : undefined,
+        statusCode: undefined,
       });
     } finally {
       setIsSubmitting(false);
@@ -489,7 +577,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
               <button
                 onClick={() => setActiveTab("create")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === "create"
                     ? "border-blue-500 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -514,7 +602,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveTab("list")}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === "list"
                     ? "border-blue-500 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -590,7 +678,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                         <div
                           key={teacher.id}
                           onClick={() => setSelectedTeacher(teacher.id)}
-                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                          className={`p-3 rounded-lg cursor-pointer ${
                             selectedTeacher === teacher.id
                               ? "bg-blue-300 border-2 border-blue-200"
                               : "bg-gray-200 border-2 border-gray-500 hover:bg-gray-100"
@@ -651,7 +739,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div
                         onClick={() => setTeacherCategory("college")}
-                        className={`p-4 rounded-lg cursor-pointer transition-colors border-2 ${
+                        className={`p-4 rounded-lg cursor-pointer border-2 ${
                           teacherCategory === "college"
                             ? "bg-blue-50 border-blue-500"
                             : "bg-gray-50 border-gray-300 hover:bg-gray-100"
@@ -681,7 +769,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                       </div>
                       <div
                         onClick={() => setTeacherCategory("lycee")}
-                        className={`p-4 rounded-lg cursor-pointer transition-colors border-2 ${
+                        className={`p-4 rounded-lg cursor-pointer border-2 ${
                           teacherCategory === "lycee"
                             ? "bg-blue-50 border-blue-500"
                             : "bg-gray-50 border-gray-300 hover:bg-gray-100"
@@ -798,7 +886,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                                 setSelectedClassSubject(classSubject.id);
                               }
                             }}
-                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                            className={`p-3 rounded-lg cursor-pointer ${
                               isSelected
                                 ? "bg-green-300 border-2 border-green-200"
                                 : "bg-gray-200 border-2 border-gray-500 hover:bg-gray-100"
@@ -897,6 +985,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
+                        max={new Date().toISOString().split("T")[0]}
                         required
                       />
                     </div>
@@ -1025,7 +1114,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                           >
                             {/* En-tête du professeur - cliquable pour expansion */}
                             <div
-                              className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-colors"
+                              className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200 cursor-pointer hover:from-blue-100 hover:to-indigo-100"
                               onClick={() => toggleTeacherExpansion(teacherId)}
                             >
                               <div className="flex items-center justify-between">
@@ -1072,7 +1161,7 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                                   {/* Icône d'expansion */}
                                   <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm">
                                     <svg
-                                      className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${
+                                      className={`w-5 h-5 text-gray-600 ${
                                         isExpanded ? "rotate-180" : ""
                                       }`}
                                       fill="none"
@@ -1092,96 +1181,95 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
                             </div>
 
                             {/* Liste des matières - affichée seulement si étendu */}
-                            {isExpanded && (
-                              <div className="p-6 border-t border-gray-100">
-                                <div className="space-y-3">
-                                  {group.assignments.map(
-                                    (
-                                      assignment: any // eslint-disable-line @typescript-eslint/no-explicit-any
-                                    ) => (
-                                      <div
-                                        key={assignment.id}
-                                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors"
-                                      >
-                                        <div className="flex-1">
-                                          <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                                              <svg
-                                                className="w-4 h-4 text-white"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                              >
-                                                <path
-                                                  strokeLinecap="round"
-                                                  strokeLinejoin="round"
-                                                  strokeWidth={2}
-                                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                                />
-                                              </svg>
-                                            </div>
-                                            <div>
-                                              <h4 className="font-medium text-gray-900">
-                                                {assignment.classSubject
-                                                  ?.subject?.name ||
-                                                  "Matière inconnue"}
-                                              </h4>
-                                              <p className="text-sm text-gray-600">
-                                                Classe:{" "}
-                                                {assignment.classSubject?.class
-                                                  ?.name || "Classe inconnue"}
-                                                (
-                                                {assignment.classSubject?.class
-                                                  ?.level || "Niveau"}
-                                                )
-                                              </p>
-                                              <p className="text-xs text-gray-500">
-                                                Du{" "}
-                                                {new Date(
-                                                  assignment.startDate
-                                                ).toLocaleDateString("fr-FR")}
-                                                {assignment.endDate &&
-                                                  ` au ${new Date(
-                                                    assignment.endDate
-                                                  ).toLocaleDateString(
-                                                    "fr-FR"
-                                                  )}`}
-                                              </p>
-                                            </div>
+                            <div
+                              className={`p-6 border-t border-gray-100 ${
+                                isExpanded ? "" : "hidden"
+                              }`}
+                            >
+                              <div className="space-y-3">
+                                {group.assignments.map(
+                                  (
+                                    assignment: any // eslint-disable-line @typescript-eslint/no-explicit-any
+                                  ) => (
+                                    <div
+                                      key={`assignment-${assignment.id}`}
+                                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100"
+                                    >
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                            <svg
+                                              className="w-4 h-4 text-white"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                              />
+                                            </svg>
+                                          </div>
+                                          <div>
+                                            <h4 className="font-medium text-gray-900">
+                                              {assignment.classSubject?.subject
+                                                ?.name || "Matière inconnue"}
+                                            </h4>
+                                            <p className="text-sm text-gray-600">
+                                              Classe:{" "}
+                                              {assignment.classSubject?.class
+                                                ?.name || "Classe inconnue"}
+                                              (
+                                              {assignment.classSubject?.class
+                                                ?.level || "Niveau"}
+                                              )
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                              Du{" "}
+                                              {new Date(
+                                                assignment.startDate
+                                              ).toLocaleDateString("fr-FR")}
+                                              {assignment.endDate &&
+                                                ` au ${new Date(
+                                                  assignment.endDate
+                                                ).toLocaleDateString("fr-FR")}`}
+                                            </p>
                                           </div>
                                         </div>
-                                        <Button
-                                          onClick={() =>
-                                            handleDeleteClick(
-                                              assignment.id,
-                                              assignment
-                                            )
-                                          }
-                                          variant="outline"
-                                          size="sm"
-                                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                                        >
-                                          <svg
-                                            className="w-4 h-4 mr-1"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                          </svg>
-                                          Supprimer
-                                        </Button>
                                       </div>
-                                    )
-                                  )}
-                                </div>
+                                      <Button
+                                        onClick={() =>
+                                          handleDeleteClick(
+                                            assignment.id,
+                                            assignment
+                                          )
+                                        }
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                      >
+                                        <svg
+                                          className="w-4 h-4 mr-1"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                          />
+                                        </svg>
+                                        Supprimer
+                                      </Button>
+                                    </div>
+                                  )
+                                )}
                               </div>
-                            )}
+                            </div>
                           </div>
                         );
                       }
@@ -1327,6 +1415,16 @@ const TeacherSubjectAssignmentPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modale d'erreur */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ isOpen: false, message: "" })}
+        title="Erreur"
+        message={errorModal.message}
+        details={errorModal.details}
+        statusCode={errorModal.statusCode}
+      />
     </Layout>
   );
 };
