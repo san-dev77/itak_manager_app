@@ -352,6 +352,12 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
     await queryRunner.query(
       `CREATE INDEX "IDX_57121e4285ce95dcb67dce5f77" ON "class_category" ("name") `,
     );
+    // Données initiales pour les catégories de classes
+    await queryRunner.query(
+      `INSERT INTO "class_category" ("id", "name") VALUES 
+        (uuid_generate_v4(), 'Collège & Lycée'),
+        (uuid_generate_v4(), 'Faculté')`,
+    );
     await queryRunner.query(
       `CREATE TABLE "classes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(50) NOT NULL, "code" character varying(10) NOT NULL, "description" text, "level" character varying(20), "category_id" uuid NOT NULL, "capacity" integer, "order_level" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "class_category_id" uuid, CONSTRAINT "UQ_cf7491878e0fca8599438629988" UNIQUE ("code"), CONSTRAINT "PK_e207aa15404e9b2ce35910f9f7f" PRIMARY KEY ("id"))`,
     );
@@ -464,16 +470,10 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
       `CREATE TYPE "public"."timetables_day_of_week_enum" AS ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "timetables" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "class_id" uuid NOT NULL, "teacher_id" uuid NOT NULL, "subject_id" uuid NOT NULL, "academic_year_id" uuid NOT NULL, "day_of_week" "public"."timetables_day_of_week_enum" NOT NULL, "start_time" TIME NOT NULL, "end_time" TIME NOT NULL, "room" character varying(50), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_9dd7e50645bff59e9ac5b4725c0" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "timetables" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "teaching_assignment_id" uuid NOT NULL, "academic_year_id" uuid NOT NULL, "day_of_week" "public"."timetables_day_of_week_enum" NOT NULL, "start_time" TIME NOT NULL, "end_time" TIME NOT NULL, "room" character varying(50), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_9dd7e50645bff59e9ac5b4725c0" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE INDEX "IDX_54d3ddcc757a7639a1ca4ea159" ON "timetables" ("class_id") `,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_82b11ba087125514207fa541c3" ON "timetables" ("teacher_id") `,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_6f592a24e991c80fabe3f3b844" ON "timetables" ("subject_id") `,
+      `CREATE INDEX "IDX_timetable_teaching_assignment" ON "timetables" ("teaching_assignment_id")`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_bc47153018268d8a0903fc3f05" ON "timetables" ("academic_year_id") `,
@@ -482,10 +482,7 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
       `CREATE INDEX "IDX_54e3a5ad25a60e1dd7ca8f0991" ON "timetables" ("day_of_week") `,
     );
     await queryRunner.query(
-      `CREATE INDEX "IDX_d9b15cab5293a8ef52771c3a40" ON "timetables" ("teacher_id", "academic_year_id", "day_of_week", "start_time") `,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_9dacd47ded63b88095e262feec" ON "timetables" ("class_id", "teacher_id", "academic_year_id", "day_of_week", "start_time") `,
+      `CREATE INDEX "IDX_timetable_composite" ON "timetables" ("teaching_assignment_id", "academic_year_id", "day_of_week", "start_time")`,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."events_event_type_enum" AS ENUM('exam', 'homework', 'cultural_day', 'health_day', 'ball', 'other')`,
@@ -716,13 +713,7 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
       `ALTER TABLE "grade_freeze_periods" ADD CONSTRAINT "FK_d34d445832013a2e0451e313b44" FOREIGN KEY ("cancelled_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "timetables" ADD CONSTRAINT "FK_54d3ddcc757a7639a1ca4ea159c" FOREIGN KEY ("class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "timetables" ADD CONSTRAINT "FK_82b11ba087125514207fa541c3c" FOREIGN KEY ("teacher_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "timetables" ADD CONSTRAINT "FK_6f592a24e991c80fabe3f3b8447" FOREIGN KEY ("subject_id") REFERENCES "subjects"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+      `ALTER TABLE "timetables" ADD CONSTRAINT "FK_timetable_teaching_assignment" FOREIGN KEY ("teaching_assignment_id") REFERENCES "teaching_assignments"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "timetables" ADD CONSTRAINT "FK_bc47153018268d8a0903fc3f050" FOREIGN KEY ("academic_year_id") REFERENCES "school_years"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,

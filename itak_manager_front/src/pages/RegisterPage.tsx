@@ -173,7 +173,7 @@ const RegisterPage = () => {
           birthDate: formData.birthDate || undefined,
           phone: formData.phone || undefined,
           role: formData.role,
-          isActive: true, // Par défaut, les nouveaux utilisateurs sont actifs
+          // isActive est géré côté backend (pas envoyé depuis le front)
         };
 
         // Appel à l'API via le service
