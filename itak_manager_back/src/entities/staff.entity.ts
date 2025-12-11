@@ -19,9 +19,9 @@ export class Staff {
   @Index()
   userId: string;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
+  @Column({ type: 'varchar', length: 20, unique: true, nullable: true })
   @Index()
-  matricule: string;
+  matricule?: string;
 
   @Column({ type: 'date' })
   @Index()

@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Class } from '../../entities/class.entity';
+import { ClassCategory } from '../../entities/class-category.entity';
 import {
   ClassResponseDto,
   CreateClassDto,
@@ -17,6 +18,8 @@ export class ClassService {
   constructor(
     @InjectRepository(Class)
     private readonly classRepository: Repository<Class>,
+    @InjectRepository(ClassCategory)
+    private readonly classCategoryRepository: Repository<ClassCategory>,
   ) {}
 
   async createClass(createClassDto: CreateClassDto): Promise<ClassResponseDto> {
@@ -39,13 +42,32 @@ export class ClassService {
         throw new ConflictException('Une classe avec ce nom existe déjà');
       }
 
+      // Récupérer la catégorie de classe
+      const classCategory = await this.classCategoryRepository.findOne({
+        where: { id: createClassDto.classCategoryId },
+      });
+
+      if (!classCategory) {
+        throw new NotFoundException('Catégorie de classe non trouvée');
+      }
+
       const classEntity = this.classRepository.create({
         ...createClassDto,
-        categoryId: createClassDto.classCategoryId,
+        classCategory: classCategory,
       });
       const savedClass = await this.classRepository.save(classEntity);
 
-      return this.mapToClassResponseDto(savedClass);
+      // Récupérer la classe avec la relation classCategory
+      const classWithCategory = await this.classRepository.findOne({
+        where: { id: savedClass.id },
+        relations: ['classCategory'],
+      });
+
+      if (!classWithCategory) {
+        throw new Error('Erreur lors de la récupération de la classe créée');
+      }
+
+      return this.mapToClassResponseDto(classWithCategory);
     } catch (error) {
       if (error instanceof ConflictException) {
         throw error;
@@ -59,6 +81,7 @@ export class ClassService {
   async getAllClasses(): Promise<ClassResponseDto[]> {
     try {
       const classes = await this.classRepository.find({
+        relations: ['classCategory'],
         order: { createdAt: 'DESC' },
       });
 
@@ -76,6 +99,7 @@ export class ClassService {
     try {
       const classEntity = await this.classRepository.findOne({
         where: { id },
+        relations: ['classCategory'],
       });
 
       if (!classEntity) {
@@ -173,13 +197,24 @@ export class ClassService {
 
       const updateData: any = { ...updateClassDto };
       if (updateClassDto.classCategoryId) {
-        updateData.categoryId = updateClassDto.classCategoryId;
+        // Récupérer la catégorie de classe
+        const classCategory = await this.classCategoryRepository.findOne({
+          where: { id: updateClassDto.classCategoryId },
+        });
+
+        if (!classCategory) {
+          throw new NotFoundException('Catégorie de classe non trouvée');
+        }
+
+        updateData.classCategory = classCategory;
+        delete updateData.classCategoryId;
       }
 
       await this.classRepository.update(id, updateData);
 
       const updatedClass = await this.classRepository.findOne({
         where: { id },
+        relations: ['classCategory'],
       });
 
       if (!updatedClass) {
@@ -221,7 +256,8 @@ export class ClassService {
   async getClassesByCategory(categoryId: string): Promise<ClassResponseDto[]> {
     try {
       const classes = await this.classRepository.find({
-        where: { categoryId },
+        where: { classCategory: { id: categoryId } },
+        relations: ['classCategory'],
         order: { createdAt: 'DESC' },
       });
 
@@ -256,15 +292,23 @@ export class ClassService {
       id: classEntity.id,
       name: classEntity.name,
       code: classEntity.code,
-      classCategory: classEntity.classCategory,
+      classCategory: classEntity.classCategory
+        ? {
+            id: classEntity.classCategory.id,
+            name: classEntity.classCategory.name,
+            institutionId: classEntity.classCategory.institutionId,
+            createdAt: classEntity.classCategory.createdAt,
+            updatedAt: classEntity.classCategory.updatedAt,
+          }
+        : null,
       description: classEntity.description,
       level: classEntity.level,
       capacity: classEntity.capacity,
       orderLevel: classEntity.orderLevel,
       createdAt: classEntity.createdAt,
       updatedAt: classEntity.updatedAt,
-      classSubjects: classEntity.classSubjects,
-      studentClasses: classEntity.studentClasses,
+      classSubjects: classEntity.classSubjects || [],
+      studentClasses: classEntity.studentClasses || [],
     };
   }
 }

@@ -27,11 +27,20 @@ export class SchoolYearService {
     createSchoolYearDto: CreateSchoolYearDto,
   ): Promise<SchoolYearResponseDto> {
     try {
-      // Vérifier que les dates sont cohérentes
-      const startDate = new Date(createSchoolYearDto.startDate);
-      const endDate = new Date(createSchoolYearDto.endDate);
+      // Vérifier que les dates sont cohérentes si elles sont fournies
+      let startDate: Date | null = null;
+      let endDate: Date | null = null;
 
-      if (startDate >= endDate) {
+      if (createSchoolYearDto.startDate) {
+        startDate = new Date(createSchoolYearDto.startDate);
+      }
+
+      if (createSchoolYearDto.endDate) {
+        endDate = new Date(createSchoolYearDto.endDate);
+      }
+
+      // Si les deux dates sont fournies, vérifier qu'elles sont cohérentes
+      if (startDate && endDate && startDate >= endDate) {
         throw new BadRequestException(
           'La date de début doit être antérieure à la date de fin',
         );
@@ -106,7 +115,7 @@ export class SchoolYearService {
     try {
       const schoolYears = await this.schoolYearRepository.find({
         relations: ['terms'],
-        order: { startDate: 'DESC' },
+        order: { createdAt: 'DESC' },
       });
 
       return schoolYears.map((schoolYear) =>
@@ -192,6 +201,22 @@ export class SchoolYearService {
             'La date de début doit être antérieure à la date de fin',
           );
         }
+      } else if (
+        updateSchoolYearDto.startDate &&
+        schoolYear.endDate &&
+        new Date(updateSchoolYearDto.startDate) >= schoolYear.endDate
+      ) {
+        throw new BadRequestException(
+          'La date de début doit être antérieure à la date de fin',
+        );
+      } else if (
+        updateSchoolYearDto.endDate &&
+        schoolYear.startDate &&
+        schoolYear.startDate >= new Date(updateSchoolYearDto.endDate)
+      ) {
+        throw new BadRequestException(
+          'La date de début doit être antérieure à la date de fin',
+        );
       }
 
       // Vérifier l'unicité du nom si modifié
@@ -232,10 +257,14 @@ export class SchoolYearService {
         ...updateSchoolYearDto,
         startDate: updateSchoolYearDto.startDate
           ? new Date(updateSchoolYearDto.startDate)
-          : schoolYear.startDate,
+          : updateSchoolYearDto.startDate === null
+            ? null
+            : schoolYear.startDate,
         endDate: updateSchoolYearDto.endDate
           ? new Date(updateSchoolYearDto.endDate)
-          : schoolYear.endDate,
+          : updateSchoolYearDto.endDate === null
+            ? null
+            : schoolYear.endDate,
       });
 
       const updatedSchoolYear =

@@ -5,8 +5,8 @@ export class UserResponseDto {
   @ApiProperty({ description: "ID unique de l'utilisateur" })
   id: string;
 
-  @ApiProperty({ description: 'Adresse email' })
-  email: string;
+  @ApiProperty({ description: 'Adresse email', required: false })
+  email?: string;
 
   @ApiProperty({ description: 'Prénom' })
   firstName: string;

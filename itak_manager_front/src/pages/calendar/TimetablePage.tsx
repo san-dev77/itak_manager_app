@@ -76,7 +76,7 @@ const TimetablePage: React.FC = () => {
 
   useEffect(() => {
     const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
+      localStorage.getItem("user");
     if (userData) {
       try {
         setUser(JSON.parse(userData));
@@ -716,13 +716,13 @@ const TimetablePage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <img
-                          src="/src/assets/logo itak.png"
-                          alt="Logo ITAK"
+                          src="/src/assets/cyberschool.jpg"
+                          alt="Cyber School Logo"
                           className="w-16 h-16 object-contain bg-white rounded-lg p-2"
                         />
                         <div>
                           <h1 className="text-2xl font-bold">
-                            Institut Technique 'l'Antidote' de Kati
+                            Cyber School
                           </h1>
                           <p className="text-lg opacity-90">Emploi du temps</p>
                         </div>

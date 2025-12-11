@@ -18,12 +18,11 @@ import { Refund } from './refund.entity';
 import { Discount } from './discount.entity';
 
 export enum UserRole {
-  ADMIN = 'admin',
-  SUPER_ADMIN = 'super_admin',
-  TEACHER = 'teacher',
-  STUDENT = 'student',
-  STAFF = 'staff',
-  PARENT = 'parent',
+  SUPER_ADMIN = 'super_admin', // Président Honoraire / DG - Accès total
+  ADMIN = 'admin', // Admin - Vue globale avec moins de droits
+  SCOLARITE = 'scolarite', // Service Scolarité
+  FINANCE = 'finance', // Service Comptabilité/Finance
+  QUALITE = 'qualite', // Assurance Qualité & RP
 }
 
 @Entity('users')
@@ -35,9 +34,9 @@ export class User {
   @Index()
   username: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100, unique: true, nullable: true })
   @Index()
-  email: string;
+  email?: string;
 
   @Column({ type: 'varchar', length: 50 })
   firstName: string;
@@ -60,7 +59,7 @@ export class User {
   @Column({
     type: 'enum',
     enum: UserRole,
-    default: UserRole.STUDENT,
+    default: UserRole.SCOLARITE,
   })
   @Index()
   role: UserRole;

@@ -1,27 +1,16 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowLeft,
-  CheckCircle,
-  Shield,
-  Users,
-  BookOpen,
-} from "lucide-react";
-import Button from "../components/ui/Button";
-import Input from "../components/ui/Input";
-import { Link, useNavigate } from "react-router-dom";
-import logoItak from "../assets/logo itak.png";
+import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import logoCyberSchool from "../assets/cyberschool.jpg";
 import { apiService } from "../services/api";
+import { useAuth } from "../hooks/useAuth";
 import Notification, {
   type NotificationType,
 } from "../components/ui/Notification";
 
 const LoginPage = () => {
-  const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -31,7 +20,6 @@ const LoginPage = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // État pour les notifications
   const [notification, setNotification] = useState<{
     type: NotificationType;
     title: string;
@@ -49,12 +37,7 @@ const LoginPage = () => {
     title: string,
     message: string
   ) => {
-    setNotification({
-      type,
-      title,
-      message,
-      isVisible: true,
-    });
+    setNotification({ type, title, message, isVisible: true });
   };
 
   const hideNotification = () => {
@@ -67,7 +50,6 @@ const LoginPage = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -85,8 +67,7 @@ const LoginPage = () => {
     if (!formData.password) {
       newErrors.password = "Le mot de passe est requis";
     } else if (formData.password.length < 6) {
-      newErrors.password =
-        "Le mot de passe doit contenir au moins 6 caractères";
+      newErrors.password = "Minimum 6 caractères";
     }
 
     setErrors(newErrors);
@@ -99,52 +80,45 @@ const LoginPage = () => {
       setIsLoading(true);
 
       try {
-        // Appel à l'API via le service
         const response = await apiService.login({
           email: formData.email,
           password: formData.password,
         });
 
         if (response.success && response.data) {
-          // Stockage du token et des informations utilisateur
           const { user, access_token, refresh_token } = response.data;
 
-          // Stockage local (vous pouvez utiliser localStorage ou sessionStorage)
-          if (formData.rememberMe) {
-            localStorage.setItem("itak_access_token", access_token);
-            localStorage.setItem("refresh_token", refresh_token);
-            localStorage.setItem("itak_user", JSON.stringify(user));
-            console.log("✅ Token stocké dans localStorage:", access_token);
-          } else {
-            sessionStorage.setItem("itak_access_token", access_token);
-            sessionStorage.setItem("refresh_token", refresh_token);
-            sessionStorage.setItem("itak_user", JSON.stringify(user));
-            console.log("✅ Token stocké dans sessionStorage:", access_token);
-          }
+          // Stocker TOUJOURS dans localStorage pour la persistance
+          localStorage.setItem("user", JSON.stringify(user));
+          localStorage.setItem("token", access_token);
+          localStorage.setItem("refreshToken", refresh_token);
+          // Token déjà stocké via AuthContext
+
+          // Aussi mettre à jour le contexte
+          login(user, access_token, refresh_token);
 
           showNotification(
             "success",
-            "Connexion réussie !",
-            `Bienvenue ${user.firstName} ${user.lastName} !`
+            "Connexion réussie",
+            `Bienvenue ${user.firstName} !`
           );
 
-          // Redirection vers le tableau de bord après 2 secondes
+          // Redirection vers le dashboard après un court délai
           setTimeout(() => {
-            navigate("/dashboard"); // Vous devrez créer cette page
-          }, 2000);
+            window.location.href = "/dashboard";
+          }, 800);
         } else {
           showNotification(
             "error",
-            "Échec de la connexion",
+            "Échec",
             response.error || "Email ou mot de passe incorrect."
           );
         }
-      } catch (error) {
-        console.error("Login error:", error);
+      } catch {
         showNotification(
           "error",
-          "Erreur de connexion",
-          "Impossible de se connecter au serveur. Vérifiez votre connexion internet."
+          "Erreur",
+          "Impossible de se connecter au serveur."
         );
       } finally {
         setIsLoading(false);
@@ -152,121 +126,106 @@ const LoginPage = () => {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
-  const features = [
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Gestion des Utilisateurs",
-      description:
-        "Accès sécurisé pour tous les membres de votre établissement",
-    },
-    {
-      icon: <BookOpen className="w-6 h-6" />,
-      title: "Données Centralisées",
-      description: "Toutes vos informations scolaires en un seul endroit",
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Sécurité Maximale",
-      description:
-        "Protection de vos données avec chiffrement de niveau bancaire",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex">
-      {/* Left Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <motion.div
-          className="w-full max-w-md"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Header */}
-          <motion.div className="text-center mb-8" variants={itemVariants}>
+    <div className="min-h-screen bg-slate-900 relative overflow-hidden">
+      {/* Fond subtil */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)] bg-[length:40px_40px]" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/10 rounded-full blur-3xl" />
+
+      <div className="relative min-h-screen flex flex-col">
+        {/* Navigation */}
+        <nav className="w-full px-6 py-5">
+          <div className="max-w-6xl mx-auto">
             <Link
               to="/"
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+              className="inline-flex items-center gap-2 text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-lg transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Retour à l'accueil</span>
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Retour</span>
             </Link>
+          </div>
+        </nav>
 
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <img src={logoItak} alt="ITAK Manager" className="w-12 h-12" />
-              <span className="text-2xl font-bold text-blue-900">
-                School Manager
-              </span>
+        {/* Contenu */}
+        <div className="flex-1 flex items-center justify-center px-6 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="w-full max-w-md"
+          >
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="inline-block p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 mb-6">
+                <img
+                  src={logoCyberSchool}
+                  alt="Cyber School"
+                  className="w-16 h-16 object-contain"
+                />
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">Connexion</h1>
+              <p className="text-slate-400">Accédez à votre espace</p>
             </div>
 
-            <h1 className="text-3xl font-bold text-blue-900 mb-2">Connexion</h1>
-            <p className="text-blue-700">
-              Accédez à votre espace de gestion scolaire
-            </p>
-          </motion.div>
-
-          {/* Login Form */}
-          <motion.div
-            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-blue-100 p-8"
-            variants={itemVariants}
-          >
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <motion.div variants={itemVariants}>
-                <Input
-                  label="Adresse email"
-                  type="email"
-                  name="email"
-                  placeholder="votre@email.com"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  error={errors.email}
-                  icon={<Mail className="w-5 h-5" />}
-                />
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <div className="relative">
-                  <Input
-                    label="Mot de passe"
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    placeholder="Votre mot de passe"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    error={errors.password}
-                    icon={<Lock className="w-5 h-5" />}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-600 transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
+            {/* Formulaire */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="votre@email.com"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-11 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                  )}
                 </div>
-              </motion.div>
 
-              <motion.div variants={itemVariants}>
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Mot de passe
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      placeholder="Votre mot de passe"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-11 pr-12 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-red-400 text-sm mt-1">
+                      {errors.password}
+                    </p>
+                  )}
+                </div>
+
+                {/* Options */}
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -274,152 +233,46 @@ const LoginPage = () => {
                       name="rememberMe"
                       checked={formData.rememberMe}
                       onChange={handleInputChange}
-                      className="checkbox checkbox-primary checkbox-sm"
+                      className="w-4 h-4 bg-slate-800 border-slate-600 rounded text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
                     />
-                    <span className="text-sm text-blue-700">
+                    <span className="text-sm text-slate-400">
                       Se souvenir de moi
                     </span>
                   </label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm text-blue-600 hover:text-blue-700 transition-colors font-medium"
-                  >
-                    Mot de passe oublié ?
-                  </Link>
                 </div>
-              </motion.div>
 
-              <motion.div variants={itemVariants}>
-                <Button
+                {/* Submit */}
+                <button
                   type="submit"
-                  variant="primary"
-                  size="lg"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
                   disabled={isLoading}
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isLoading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Connexion en cours...
-                    </div>
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Connexion...
+                    </span>
                   ) : (
                     "Se connecter"
                   )}
-                </Button>
-              </motion.div>
-            </form>
+                </button>
+              </form>
+            </div>
 
-            {/* Divider */}
-            <motion.div className="divider my-6" variants={itemVariants}>
-              <span className="text-blue-400 text-sm">ou</span>
-            </motion.div>
-
-            {/* Demo credentials */}
-            <motion.div
-              className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4"
-              variants={itemVariants}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-800">
-                  Comptes de démonstration
-                </span>
-              </div>
-              <div className="text-xs text-blue-700 space-y-1">
-                <div>
-                  <strong>Admin:</strong> admin@school.com / admin123
-                </div>
-                <div>
-                  <strong>Enseignant:</strong> teacher@school.com / teacher123
-                </div>
-                <div>
-                  <strong>Élève:</strong> student@school.com / student123
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Footer */}
-          <motion.div className="text-center mt-6" variants={itemVariants}>
-            <p className="text-blue-600 text-sm">
+            {/* Footer */}
+            <p className="text-center text-slate-400 text-sm mt-6">
               Pas encore de compte ?{" "}
               <Link
                 to="/register"
-                className="text-blue-700 hover:text-blue-800 font-semibold transition-colors"
+                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
               >
                 Créer un compte
               </Link>
             </p>
           </motion.div>
-        </motion.div>
-      </div>
-
-      {/* Right Side - Features & Info */}
-      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white p-12">
-        <div className="w-full max-w-lg">
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="mb-12"
-          >
-            <h2 className="text-4xl font-bold mb-4">
-              Bienvenue sur School Manager
-            </h2>
-            <p className="text-xl text-blue-100 leading-relaxed">
-              La plateforme moderne qui révolutionne la gestion scolaire.
-              Simplifiez l'administration et améliorez l'expérience de tous.
-            </p>
-          </motion.div>
-
-          <div className="space-y-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 + index * 0.1 }}
-                className="flex items-start gap-4"
-              >
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  {feature.icon}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-blue-100 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="mt-12 pt-8 border-t border-white/20"
-          >
-            <div className="grid grid-cols-3 gap-6 text-center">
-              <div>
-                <div className="text-2xl font-bold">1000+</div>
-                <div className="text-blue-100 text-sm">Écoles</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">50k+</div>
-                <div className="text-blue-100 text-sm">Utilisateurs</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">99.9%</div>
-                <div className="text-blue-100 text-sm">Disponibilité</div>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </div>
+
       <Notification
         type={notification.type}
         title={notification.title}

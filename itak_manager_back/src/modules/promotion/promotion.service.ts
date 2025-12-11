@@ -41,10 +41,25 @@ export class PromotionService {
         throw new NotFoundException('Classe actuelle non trouvée');
       }
 
+      // S'assurer que la relation classCategory est chargée
+      if (!currentClass.classCategory) {
+        const classWithCategory = await this.classRepository.findOne({
+          where: { id: currentClass.id },
+          relations: ['classCategory'],
+        });
+        if (classWithCategory) {
+          currentClass.classCategory = classWithCategory.classCategory;
+        }
+      }
+
+      if (!currentClass.classCategory) {
+        throw new NotFoundException('Catégorie de classe non trouvée');
+      }
+
       // Trouver la classe supérieure dans la même catégorie
       const nextClass = await this.classRepository.findOne({
         where: {
-          categoryId: currentClass.categoryId,
+          classCategory: { id: currentClass.classCategory.id },
           orderLevel: currentClass.orderLevel + 1,
         },
         relations: ['classCategory'],
@@ -250,7 +265,7 @@ export class PromotionService {
   async getClassesByOrderLevel(categoryId: string): Promise<Class[]> {
     try {
       return await this.classRepository.find({
-        where: { categoryId },
+        where: { classCategory: { id: categoryId } },
         relations: ['classCategory'],
         order: { orderLevel: 'ASC' },
       });

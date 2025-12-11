@@ -15,11 +15,13 @@ export class CreateSchoolYearDto {
   })
   name: string;
 
+  @IsOptional()
   @IsDateString({}, { message: 'La date de début doit être une date valide' })
-  startDate: string;
+  startDate?: string;
 
+  @IsOptional()
   @IsDateString({}, { message: 'La date de fin doit être une date valide' })
-  endDate: string;
+  endDate?: string;
 
   @IsOptional()
   @IsBoolean({ message: 'isActive doit être un booléen' })
@@ -31,8 +33,8 @@ export class UpdateSchoolYearDto extends PartialType(CreateSchoolYearDto) {}
 export class SchoolYearResponseDto {
   id: string;
   name: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: Date | null;
+  endDate: Date | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

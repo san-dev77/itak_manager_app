@@ -14,9 +14,10 @@ export class CreateTeacherDto {
   @IsUUID('4', { message: 'userId doit être un UUID valide' })
   userId: string;
 
+  @IsOptional()
   @IsString({ message: 'Le matricule doit être une chaîne' })
   @MinLength(3, { message: 'Le matricule doit contenir au moins 3 caractères' })
-  matricule: string;
+  matricule?: string;
 
   @IsString({
     message: "La date d'embauche doit être une chaîne au format YYYY-MM-DD",
@@ -58,13 +59,17 @@ export class CreateTeacherDto {
   @IsOptional()
   @IsString({ message: 'Les notes doivent être une chaîne' })
   notes?: string;
+
+  @IsOptional()
+  @IsUUID('4', { message: 'institutionId doit être un UUID valide' })
+  institutionId?: string;
 }
 
 export class UpdateTeacherDto extends PartialType(CreateTeacherDto) {}
 
 export class TeacherResponseDto {
   id: string;
-  matricule: string;
+  matricule?: string;
   hireDate: Date;
   photo?: string;
   maritalStatus?: string;
@@ -73,6 +78,12 @@ export class TeacherResponseDto {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  institutionId?: string;
+  institution?: {
+    id: string;
+    name: string;
+    code: string;
+  };
   createdAt: Date;
   updatedAt: Date;
   user?: UserResponseDto;

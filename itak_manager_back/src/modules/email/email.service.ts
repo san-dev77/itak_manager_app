@@ -13,7 +13,7 @@ import { UserResponseDto } from '../user/dto/user.dto';
 export interface WelcomeEmailData {
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
   password: string;
   role: string;
   loginUrl: string;
@@ -28,13 +28,26 @@ export class EmailService {
     @InjectQueue('email') private emailQueue: Queue,
     private configService: ConfigService,
   ) {
+    // Lecture directe des variables d'environnement
+    const smtpHost = this.configService.get<string>(
+      'SMTP_HOST',
+      'smtp.gmail.com',
+    );
+    const smtpPort = this.configService.get<number>('SMTP_PORT', 587);
+    const smtpUser = this.configService.get<string>('SMTP_USER');
+    const smtpPass = this.configService.get<string>('SMTP_PASS');
+
+    this.logger.log(
+      `Configuring SMTP: ${smtpHost}:${smtpPort} with user ${smtpUser}`,
+    );
+
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get('app.smtpHost'),
-      port: this.configService.get('app.smtpPort'),
+      host: smtpHost,
+      port: smtpPort,
       secure: false,
       auth: {
-        user: this.configService.get('app.smtpUser'),
-        pass: this.configService.get('app.smtpPass'),
+        user: smtpUser,
+        pass: smtpPass,
       },
     });
 
@@ -107,9 +120,12 @@ export class EmailService {
       // Render email template
       const templateData = {
         ...data,
-        logoUrl: `${this.configService.get('app.frontendUrl')}/app-logo.png`,
-        appName: this.configService.get('app.name'),
-        supportEmail: this.configService.get('app.supportEmail'),
+        logoUrl: `${this.configService.get('FRONTEND_URL', 'http://localhost:5173')}/src/assets/logo%20itak.png`,
+        appName: this.configService.get('APP_NAME', 'UPCD-ITAK'),
+        supportEmail: this.configService.get(
+          'SUPPORT_EMAIL',
+          'support@upcd-itak.com',
+        ),
         currentYear: new Date().getFullYear(),
       };
 
@@ -118,14 +134,14 @@ export class EmailService {
 
       const mailOptions = {
         from: {
-          name: this.configService.get('app.name'),
+          name: this.configService.get('APP_NAME', 'UPCD-ITAK'),
           address: this.configService.get(
-            'app.smtpFrom',
-            this.configService.get('app.smtpUser'),
+            'SMTP_FROM',
+            this.configService.get('SMTP_USER'),
           ),
         },
         to: data.email,
-        subject: `${this.configService.get('app.name')} - Vos informations de connexion`,
+        subject: `${this.configService.get('APP_NAME', 'UPCD-ITAK')} - Vos informations de connexion`,
         html,
       };
 
@@ -176,7 +192,7 @@ export class EmailService {
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email)) {
+    if (data.email && !emailRegex.test(data.email)) {
       throw new Error(`Invalid email format: ${data.email}`);
     }
   }
@@ -246,7 +262,10 @@ export class EmailService {
         email: user.email,
         password: newPassword,
         role: user.role,
-        loginUrl: this.configService.get('app.loginUrl')!,
+        loginUrl: this.configService.get(
+          'LOGIN_URL',
+          'http://localhost:5173/login',
+        ),
       };
 
       // Send welcome email

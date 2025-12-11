@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: itak-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: itak
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: itak-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes
+
+  backend:
+    build: ./itak_manager_back
+    container_name: itak-manager-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./itak_manager_back/.env
+    environment:
+      - DB_HOST=itak-postgres
+      - REDIS_HOST=itak-redis
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    build: ./itak_manager_front
+    container_name: itak-manager-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:

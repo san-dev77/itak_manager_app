@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   ValidationPipe,
@@ -30,8 +31,10 @@ export class StudentController {
   }
 
   @Get()
-  async getAllStudents(): Promise<StudentResponseDto[]> {
-    return this.studentService.getAllStudents();
+  async getAllStudents(
+    @Query('institutionId') institutionId?: string,
+  ): Promise<StudentResponseDto[]> {
+    return this.studentService.getAllStudents(institutionId);
   }
 
   @Get(':id')

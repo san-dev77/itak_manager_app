@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Bell,
   Search,
@@ -7,9 +6,10 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  Sun,
-  Moon,
+  Building2,
 } from "lucide-react";
+import { useInstitution } from "../../hooks/useInstitution";
+import type { Institution } from "../../contexts/InstitutionContext";
 
 interface TopbarProps {
   onSidebarToggle: () => void;
@@ -23,31 +23,30 @@ interface TopbarProps {
 }
 
 const Topbar = ({ onSidebarToggle, user }: TopbarProps) => {
-  const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isInstitutionMenuOpen, setIsInstitutionMenuOpen] = useState(false);
+  const {
+    selectedInstitution,
+    institutions,
+    setSelectedInstitution,
+    isLoading: institutionsLoading,
+  } = useInstitution();
 
   const handleLogout = () => {
-    // Nettoyer le stockage
-    localStorage.removeItem("itak_access_token");
-    localStorage.removeItem("itak_refresh_token");
-    localStorage.removeItem("itak_user");
-    sessionStorage.removeItem("itak_access_token");
-    sessionStorage.removeItem("itak_refresh_token");
-    sessionStorage.removeItem("itak_user");
-
-    // Rediriger vers la page d'accueil
-    navigate("/");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    window.location.href = "/login";
   };
 
   const getRoleLabel = (role: string) => {
-    const roleLabels: { [key: string]: string } = {
-      student: "Élève",
-      teacher: "Enseignant/Enseignante",
-      staff: "Personnel administratif",
-      parent: "Parent",
-      admin: "Administrateur/Administratrice",
+    const roleLabels: Record<string, string> = {
+      super_admin: "Président / DG",
+      admin: "Administrateur",
+      scolarite: "Scolarité",
+      finance: "Comptabilité",
+      qualite: "Assurance Qualité",
     };
     return roleLabels[role] || role;
   };
@@ -65,141 +64,164 @@ const Topbar = ({ onSidebarToggle, user }: TopbarProps) => {
       title: "Rapport disponible",
       message: "Votre rapport mensuel est prêt",
       time: "Il y a 1 heure",
-      isRead: false,
-    },
-    {
-      id: 3,
-      title: "Mise à jour système",
-      message: "Nouvelle version disponible",
-      time: "Il y a 2 heures",
       isRead: true,
     },
   ];
 
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
   return (
-    <header className="relative bg-white/80 backdrop-blur-xl border-b border-white/20 px-6 py-4 flex items-center justify-between w-full shadow-lg">
-      {/* Background avec effet glassmorphism */}
-      <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-blue-50/80 to-indigo-50/90 backdrop-blur-xl"></div>
-
-      {/* Éléments décoratifs */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
-        <div className="absolute top-4 right-20 w-2 h-2 bg-blue-400/30 rounded-full blur-sm"></div>
-        <div className="absolute bottom-4 left-1/4 w-1 h-1 bg-indigo-400/30 rounded-full blur-sm"></div>
-      </div>
-
+    <header className="h-16 bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between">
       {/* Left Section */}
-      <div className="relative flex items-center gap-4">
+      <div className="flex items-center gap-4">
+        {/* Menu Toggle */}
         <button
           onClick={onSidebarToggle}
-          className="relative p-2.5 rounded-xl bg-white/20 backdrop-blur-sm text-slate-700 hover:text-slate-900 hover:bg-white/30 transition-all duration-300 border border-white/30 hover:border-white/50 shadow-sm hover:shadow-md"
+          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors lg:hidden"
         >
-          <div className="w-5 h-5 flex flex-col gap-1">
-            <div className="w-full h-0.5 bg-current rounded-full" />
-            <div className="w-full h-0.5 bg-current rounded-full" />
-            <div className="w-full h-0.5 bg-current rounded-full" />
+          <div className="w-5 h-5 flex flex-col justify-center gap-1">
+            <div className="w-5 h-0.5 bg-current rounded" />
+            <div className="w-5 h-0.5 bg-current rounded" />
+            <div className="w-5 h-0.5 bg-current rounded" />
           </div>
         </button>
 
-        {/* Search Bar */}
+        {/* Search */}
         <div className="relative hidden md:block">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-slate-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              className="w-80 pl-12 pr-4 py-2.5 border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400/50 text-slate-900 placeholder-slate-400 transition-all duration-300 bg-white/40 backdrop-blur-sm focus:bg-white/60 shadow-sm focus:shadow-md"
-            />
-          </div>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <input
+            type="text"
+            placeholder="Rechercher..."
+            className="w-72 pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+          />
         </div>
       </div>
 
       {/* Right Section */}
-      <div className="relative flex items-center gap-3">
-        {/* Theme Toggle */}
-        <button
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          className="relative p-2.5 rounded-xl bg-white/20 backdrop-blur-sm text-slate-700 hover:text-slate-900 hover:bg-white/30 transition-all duration-300 border border-white/30 hover:border-white/50 shadow-sm hover:shadow-md"
-        >
-          {isDarkMode ? (
-            <Sun className="h-5 w-5" />
-          ) : (
-            <Moon className="h-5 w-5" />
+      <div className="flex items-center gap-2">
+        {/* Affectation Selector */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setIsInstitutionMenuOpen(!isInstitutionMenuOpen);
+              setIsUserMenuOpen(false);
+              setIsNotificationsOpen(false);
+            }}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors border border-slate-700"
+          >
+            <Building2 className="w-4 h-4" />
+            <span className="hidden md:block text-sm font-medium">
+              {selectedInstitution ? selectedInstitution.name : "Sélectionner"}
+            </span>
+            <ChevronDown className="w-4 h-4" />
+          </button>
+
+          {/* Institution Dropdown */}
+          {isInstitutionMenuOpen && (
+            <div className="absolute right-0 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="p-3 border-b border-slate-700">
+                <h3 className="font-semibold text-white text-sm flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-blue-400" />
+                  Institution
+                </h3>
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {institutionsLoading ? (
+                  <div className="p-4 text-center text-slate-400 text-sm">
+                    Chargement...
+                  </div>
+                ) : institutions.length === 0 ? (
+                  <div className="p-4 text-center text-slate-400 text-sm">
+                    Aucune affectation
+                  </div>
+                ) : (
+                  institutions.map((institution: Institution) => (
+                    <button
+                      key={institution.id}
+                      onClick={() => {
+                        setSelectedInstitution(institution);
+                        setIsInstitutionMenuOpen(false);
+                        // Recharger la page pour appliquer le filtre
+                        window.location.reload();
+                      }}
+                      className={`w-full text-left p-3 hover:bg-slate-700 transition-colors ${
+                        selectedInstitution?.id === institution.id
+                          ? "bg-blue-500/20 border-l-2 border-blue-500"
+                          : ""
+                      }`}
+                    >
+                      <p className="text-sm font-medium text-white">
+                        {institution.name}
+                      </p>
+                      {institution.description && (
+                        <p className="text-xs text-slate-400 mt-1">
+                          {institution.description}
+                        </p>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
           )}
-        </button>
+        </div>
 
         {/* Notifications */}
         <div className="relative">
           <button
-            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="relative p-2.5 rounded-xl bg-white/20 backdrop-blur-sm text-slate-700 hover:text-slate-900 hover:bg-white/30 transition-all duration-300 border border-white/30 hover:border-white/50 shadow-sm hover:shadow-md"
+            onClick={() => {
+              setIsNotificationsOpen(!isNotificationsOpen);
+              setIsUserMenuOpen(false);
+            }}
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors relative"
           >
-            <Bell className="h-5 w-5" />
-            {notifications.filter((n) => !n.isRead).length > 0 && (
-              <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white">
-                {notifications.filter((n) => !n.isRead).length}
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                {unreadCount}
               </span>
             )}
           </button>
 
           {/* Notifications Dropdown */}
           {isNotificationsOpen && (
-            <div className="absolute right-0 mt-3 w-80 bg-white/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 overflow-hidden">
-              {/* Header */}
-              <div className="relative p-4 border-b border-white/20 bg-gradient-to-r from-blue-50/50 to-indigo-50/50">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
-                    <Bell className="w-4 h-4 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                    Notifications
-                  </h3>
-                  <div className="ml-auto w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full" />
-                </div>
+            <div className="absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="p-4 border-b border-slate-700">
+                <h3 className="font-semibold text-white flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-blue-400" />
+                  Notifications
+                </h3>
               </div>
-
-              {/* Notifications List */}
               <div className="max-h-64 overflow-y-auto">
-                {notifications.map((notification) => (
+                {notifications.map((notif) => (
                   <div
-                    key={notification.id}
-                    className={`relative p-4 border-b border-white/10 hover:bg-white/30 transition-all duration-200 ${
-                      !notification.isRead ? "bg-blue-50/50" : ""
+                    key={notif.id}
+                    className={`p-4 border-b border-slate-700/50 hover:bg-slate-700/50 transition-colors ${
+                      !notif.isRead ? "bg-blue-500/5" : ""
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div
-                        className={`w-3 h-3 rounded-full mt-2 ${
-                          !notification.isRead
-                            ? "bg-gradient-to-r from-blue-500 to-indigo-500"
-                            : "bg-slate-300"
-                        }`}
-                      />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-slate-900">
-                          {notification.title}
-                        </h4>
-                        <p className="text-sm text-slate-600 mt-1">
-                          {notification.message}
+                      {!notif.isRead && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
+                      )}
+                      <div className={!notif.isRead ? "" : "ml-5"}>
+                        <p className="text-sm font-medium text-white">
+                          {notif.title}
                         </p>
-                        <p className="text-xs text-slate-400 mt-2 font-medium">
-                          {notification.time}
+                        <p className="text-xs text-slate-400 mt-1">
+                          {notif.message}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-2">
+                          {notif.time}
                         </p>
                       </div>
-                      {!notification.isRead && (
-                        <div className="w-2 h-2 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full" />
-                      )}
                     </div>
                   </div>
                 ))}
               </div>
-
-              {/* Footer */}
-              <div className="p-3 border-t border-white/20 bg-gradient-to-r from-blue-50/30 to-indigo-50/30">
-                <button className="w-full text-center text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-2.5 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-                  Voir toutes les notifications
+              <div className="p-3 border-t border-slate-700">
+                <button className="w-full text-center text-sm text-blue-400 hover:text-blue-300 font-medium py-2 rounded-lg hover:bg-slate-700/50 transition-colors">
+                  Voir tout
                 </button>
               </div>
             </div>
@@ -209,77 +231,69 @@ const Topbar = ({ onSidebarToggle, user }: TopbarProps) => {
         {/* User Menu */}
         <div className="relative">
           <button
-            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="flex items-center gap-3 p-2.5 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 border border-white/30 hover:border-white/50 shadow-sm hover:shadow-md"
+            onClick={() => {
+              setIsUserMenuOpen(!isUserMenuOpen);
+              setIsNotificationsOpen(false);
+            }}
+            className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 transition-colors"
           >
-            <div className="relative w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg">
-              {user.firstName?.charAt(0) || "U"}
-              {user.lastName?.charAt(0) || "U"}
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full border-2 border-white" />
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+              {user.firstName?.[0]}
+              {user.lastName?.[0]}
             </div>
             <div className="hidden md:block text-left">
-              <div className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-medium text-white">
                 {user.firstName} {user.lastName}
-              </div>
-              <div className="text-xs text-slate-600 font-medium">
+              </p>
+              <p className="text-xs text-slate-400">
                 {getRoleLabel(user.role)}
-              </div>
+              </p>
             </div>
-            <ChevronDown className="h-4 w-4 text-slate-600" />
+            <ChevronDown className="w-4 h-4 text-slate-400 hidden md:block" />
           </button>
 
           {/* User Dropdown */}
           {isUserMenuOpen && (
-            <div className="absolute right-0 mt-3 w-72 bg-white/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 overflow-hidden">
-              {/* Header */}
-              <div className="relative p-5 border-b border-white/20 bg-gradient-to-r from-blue-50/50 to-indigo-50/50">
-                <div className="flex items-center gap-4">
-                  <div className="relative w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                    {user.firstName?.charAt(0) || "U"}
-                    {user.lastName?.charAt(0) || "U"}
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full border-2 border-white" />
+            <div className="absolute right-0 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+              {/* User Info */}
+              <div className="p-4 border-b border-slate-700 bg-slate-800/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                    {user.firstName?.[0]}
+                    {user.lastName?.[0]}
                   </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-slate-900 text-base">
+                  <div>
+                    <p className="font-medium text-white">
                       {user.firstName} {user.lastName}
-                    </div>
-                    <div className="text-sm text-slate-600 mt-1">
-                      {user.email}
-                    </div>
-                    <div className="text-xs bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold mt-2 px-3 py-1 rounded-full inline-block">
+                    </p>
+                    <p className="text-xs text-slate-400">{user.email}</p>
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full">
                       {getRoleLabel(user.role)}
-                    </div>
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Menu Items */}
               <div className="p-2">
-                <button className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 hover:bg-white/50 rounded-xl transition-all duration-200 group">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center group-hover:from-blue-500 group-hover:to-indigo-500 transition-all duration-300">
-                    <User className="h-4 w-4 text-blue-600 group-hover:text-white transition-colors duration-300" />
-                  </div>
-                  <span className="font-semibold">Mon Profil</span>
+                <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm">Mon Profil</span>
                 </button>
-
-                <button className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 hover:bg-white/50 rounded-xl transition-all duration-200 group">
-                  <div className="w-8 h-8 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center group-hover:from-indigo-500 group-hover:to-purple-500 transition-all duration-300">
-                    <Settings className="h-4 w-4 text-indigo-600 group-hover:text-white transition-colors duration-300" />
-                  </div>
-                  <span className="font-semibold">Paramètres</span>
+                <button className="w-full flex items-center gap-3 px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
+                  <Settings className="w-4 h-4" />
+                  <span className="text-sm">Paramètres</span>
                 </button>
               </div>
 
               {/* Logout */}
-              <div className="p-2 border-t border-white/20 bg-gradient-to-r from-red-50/30 to-pink-50/30">
+              <div className="p-2 border-t border-slate-700">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 hover:bg-red-50/50 rounded-xl transition-all duration-200 group"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
                 >
-                  <div className="w-8 h-8 bg-gradient-to-r from-red-100 to-pink-100 rounded-lg flex items-center justify-center group-hover:from-red-500 group-hover:to-pink-500 transition-all duration-300">
-                    <LogOut className="h-4 w-4 text-red-600 group-hover:text-white transition-colors duration-300" />
-                  </div>
-                  <span className="font-semibold">Se déconnecter</span>
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm">Déconnexion</span>
                 </button>
               </div>
             </div>

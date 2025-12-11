@@ -11,22 +11,25 @@ import { UserRole } from '../../../entities/user.entity';
 
 export class RegisterDto {
   @ApiProperty({
-    description: "Nom d'utilisateur unique",
+    description: "Nom d'utilisateur unique (généré automatiquement si non fourni)",
     example: 'johndoe',
-    minLength: 3,
+    required: false,
   })
+  @IsOptional()
   @IsString({ message: "Le nom d'utilisateur doit être une chaîne" })
   @MinLength(3, {
     message: "Le nom d'utilisateur doit contenir au moins 3 caractères",
   })
-  username: string;
+  username?: string;
 
   @ApiProperty({
-    description: 'Adresse email unique',
+    description: 'Adresse email unique (optionnel pour les étudiants)',
     example: 'john.doe@itak.com',
+    required: false,
   })
+  @IsOptional()
   @IsEmail({}, { message: 'Email invalide' })
-  email: string;
+  email?: string;
 
   @ApiProperty({
     description: 'Mot de passe sécurisé',
@@ -55,7 +58,7 @@ export class RegisterDto {
 
   @ApiProperty({
     description: "Rôle de l'utilisateur dans le système",
-    example: UserRole.STUDENT,
+    example: UserRole.SCOLARITE,
     enum: UserRole,
   })
   @IsEnum(UserRole, { message: 'Le rôle doit être valide' })

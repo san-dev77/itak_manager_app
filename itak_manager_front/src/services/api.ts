@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "/api";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -9,20 +9,34 @@ interface ApiResponse<T> {
 }
 
 // Type union pour les rôles utilisateur correspondant au backend
-export type UserRole = "student" | "teacher" | "staff" | "parent" | "admin";
+export type UserRole =
+  | "super_admin"
+  | "admin"
+  | "scolarite"
+  | "finance"
+  | "qualite";
 
 // Constantes pour les rôles
 export const USER_ROLES = {
-  STUDENT: "student" as const,
-  TEACHER: "teacher" as const,
-  STAFF: "staff" as const,
-  PARENT: "parent" as const,
-  ADMIN: "admin" as const,
+  SUPER_ADMIN: "super_admin" as const, // Président / DG
+  ADMIN: "admin" as const, // Administrateur
+  SCOLARITE: "scolarite" as const, // Service Scolarité
+  FINANCE: "finance" as const, // Service Comptabilité
+  QUALITE: "qualite" as const, // Assurance Qualité
 } as const;
+
+// Labels des rôles pour l'affichage
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  super_admin: "Président / DG",
+  admin: "Administrateur",
+  scolarite: "Scolarité",
+  finance: "Comptabilité",
+  qualite: "Assurance Qualité",
+};
 
 interface UserRegistrationData {
   username?: string;
-  email: string;
+  email?: string;
   password: string;
   firstName: string;
   lastName: string;
@@ -70,6 +84,12 @@ export interface StudentProfileData {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  institutionId?: string;
+  institution?: {
+    id: string;
+    name: string;
+    code: string;
+  };
   createdAt?: string | Date;
   updatedAt?: string | Date;
   user?: User;
@@ -95,6 +115,10 @@ export interface Payment {
     amountPaid: string | number;
     dueDate: string;
     status: string;
+    academicYear?: {
+      id: string;
+      name: string;
+    };
   };
   receivedByUser?: {
     id: string;
@@ -172,7 +196,7 @@ export interface CreateStudentFeeDto {
   feeTypeId: string;
   academicYearId: string;
   amountAssigned: number;
-  dueDate: string;
+  dueDate?: string;
 }
 
 export interface UpdateStudentFeeDto {
@@ -329,7 +353,7 @@ export interface FinanceStats {
   }>;
 }
 
-interface StudentWithUser {
+export interface StudentWithUser {
   id: string;
   userId: string;
   matricule: string;
@@ -343,6 +367,12 @@ interface StudentWithUser {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  institutionId?: string;
+  institution?: {
+    id: string;
+    name: string;
+    code: string;
+  };
   createdAt?: string | Date;
   updatedAt?: string | Date;
   user: {
@@ -358,7 +388,7 @@ interface StudentWithUser {
 export interface TeacherProfileData {
   id?: string;
   userId: string;
-  matricule: string;
+  matricule?: string;
   hireDate: string | Date;
   photo?: string;
   maritalStatus?: string;
@@ -366,6 +396,7 @@ export interface TeacherProfileData {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  institutionId?: string;
   createdAt?: string | Date;
   updatedAt?: string | Date;
   user?: User;
@@ -374,7 +405,7 @@ export interface TeacherProfileData {
 interface TeacherWithUser {
   id: string;
   userId: string;
-  matricule: string;
+  matricule?: string;
   hireDate: string | Date;
   photo?: string;
   maritalStatus?: string;
@@ -397,7 +428,7 @@ interface TeacherWithUser {
 export interface StaffProfileData {
   id?: string;
   userId: string;
-  matricule: string;
+  matricule?: string;
   hireDate: string | Date;
   position?: string;
   photo?: string;
@@ -413,7 +444,7 @@ export interface StaffProfileData {
 interface StaffWithUser {
   id: string;
   userId: string;
-  matricule: string;
+  matricule?: string;
   hireDate: string | Date;
   position?: string;
   photo?: string;
@@ -433,10 +464,19 @@ interface StaffWithUser {
   };
 }
 
+interface Institution {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+}
+
 interface ClassCategory {
   id: string;
   name: string;
   description?: string;
+  institutionId?: string;
+  institution?: Institution;
   createdAt: string;
 }
 
@@ -446,7 +486,7 @@ interface ClassData {
   classCategoryId: string;
   description?: string;
   level: string;
-  capacity: number;
+  capacity?: number;
   orderLevel: number;
   category?: ClassCategory;
   categoryId?: string;
@@ -461,7 +501,8 @@ interface Class {
   level: string;
   capacity: number;
   orderLevel: number;
-  category: ClassCategory;
+  classCategory?: ClassCategory | null;
+  category?: ClassCategory; // Alias pour compatibilité
   createdAt: string;
 }
 
@@ -524,7 +565,9 @@ interface StudentClass {
   created_at: string;
   updated_at: string;
   student: StudentWithUser;
-  class: Class;
+  class: Class & {
+    classCategory?: ClassCategory | null;
+  };
 }
 
 interface TeachingAssignmentData {
@@ -770,9 +813,7 @@ class ApiService {
       const url = `${API_BASE_URL}${endpoint}`;
 
       // Récupérer le token d'accès depuis le stockage
-      const accessToken =
-        localStorage.getItem("itak_access_token") ||
-        sessionStorage.getItem("itak_access_token");
+      const accessToken = localStorage.getItem("token");
 
       console.log(
         "🔑 Token récupéré:",
@@ -929,7 +970,7 @@ class ApiService {
 
   // Méthode pour mettre à jour un utilisateur
   async updateUser(
-    id: number,
+    id: string | number,
     userData: Partial<UserRegistrationData>
   ): Promise<ApiResponse<User>> {
     return this.makeRequest<User>(`/users/${id}`, {
@@ -942,6 +983,20 @@ class ApiService {
   async deleteUser(id: string | number): Promise<ApiResponse<void>> {
     return this.makeRequest<void>(`/users/${id}`, {
       method: "DELETE",
+    });
+  }
+
+  // Méthode pour activer un utilisateur
+  async activateUser(id: string): Promise<ApiResponse<User>> {
+    return this.makeRequest<User>(`/users/${id}/activate`, {
+      method: "PUT",
+    });
+  }
+
+  // Méthode pour désactiver un utilisateur
+  async deactivateUser(id: string): Promise<ApiResponse<User>> {
+    return this.makeRequest<User>(`/users/${id}/deactivate`, {
+      method: "PUT",
     });
   }
 
@@ -988,8 +1043,13 @@ class ApiService {
   }
 
   // Méthode pour récupérer tous les étudiants avec leurs données utilisateur
-  async getAllStudents(): Promise<ApiResponse<StudentWithUser[]>> {
-    return this.makeRequest<StudentWithUser[]>("/students");
+  async getAllStudents(
+    institutionId?: string
+  ): Promise<ApiResponse<StudentWithUser[]>> {
+    const url = institutionId
+      ? `/students?institutionId=${institutionId}`
+      : "/students";
+    return this.makeRequest<StudentWithUser[]>(url);
   }
 
   // Méthode pour créer un profil enseignant
@@ -1004,8 +1064,13 @@ class ApiService {
   }
 
   // Méthode pour récupérer tous les enseignants avec leurs données utilisateur
-  async getAllTeachers(): Promise<ApiResponse<TeacherWithUser[]>> {
-    return this.makeRequest<TeacherWithUser[]>("/teachers");
+  async getAllTeachers(
+    institutionId?: string
+  ): Promise<ApiResponse<TeacherWithUser[]>> {
+    const url = institutionId
+      ? `/teachers?institutionId=${institutionId}`
+      : "/teachers";
+    return this.makeRequest<TeacherWithUser[]>(url);
   }
 
   // Méthode pour créer un profil personnel administratif
@@ -1043,6 +1108,27 @@ class ApiService {
     return this.makeRequest<TeacherWithUser>(`/teachers/${id}`, {
       method: "PUT",
       body: JSON.stringify(profileData),
+    });
+  }
+
+  // Méthode pour supprimer un étudiant
+  async deleteStudent(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/students/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Méthode pour supprimer un enseignant
+  async deleteTeacher(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/teachers/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Méthode pour supprimer un personnel
+  async deleteStaff(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/staff/${id}`, {
+      method: "DELETE",
     });
   }
 
@@ -1113,8 +1199,13 @@ class ApiService {
   }
 
   // Méthode pour récupérer toutes les catégories de classes
-  async getAllClassCategories(): Promise<ApiResponse<ClassCategory[]>> {
-    return this.makeRequest<ClassCategory[]>("/class-categories");
+  async getAllClassCategories(
+    institutionId?: string
+  ): Promise<ApiResponse<ClassCategory[]>> {
+    const url = institutionId
+      ? `/class-categories?institutionId=${institutionId}`
+      : "/class-categories";
+    return this.makeRequest<ClassCategory[]>(url);
   }
 
   // Méthode pour récupérer une catégorie de classe par ID
@@ -1643,7 +1734,6 @@ export type {
   UserRegistrationData,
   User,
   LoginResponse,
-  StudentWithUser,
   TeacherWithUser,
   StaffWithUser,
   ClassData,

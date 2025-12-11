@@ -36,6 +36,7 @@ import { TeachingAssignment } from '../entities/teaching-assignment.entity';
 import { User } from '../entities/user.entity';
 import { Subject } from '../entities/subject.entity';
 import { Class } from '../entities/class.entity';
+import { Institution } from '../entities/institution.entity';
 
 export default registerAs(
   'database',
@@ -60,6 +61,7 @@ export default registerAs(
       FeeType,
       GradeComplaint,
       GradeComplaintHistory,
+      Institution,
       Parent,
       SchoolYear,
       Staff,
@@ -114,6 +116,7 @@ export const AppDataSource = new DataSource({
     FeeType,
     GradeComplaint,
     GradeComplaintHistory,
+    Institution,
     Parent,
     SchoolYear,
     Staff,

@@ -6,9 +6,10 @@ export class CreateStaffDto {
   @IsString({ message: 'userId doit être une chaîne' })
   userId: string;
 
+  @IsOptional()
   @IsString({ message: 'Le matricule doit être une chaîne' })
   @MinLength(3, { message: 'Le matricule doit contenir au moins 3 caractères' })
-  matricule: string;
+  matricule?: string;
 
   @IsString({
     message: "La date d'embauche doit être une chaîne au format YYYY-MM-DD",
@@ -49,7 +50,7 @@ export class UpdateStaffDto extends PartialType(CreateStaffDto) {}
 export class StaffResponseDto {
   id: string;
   userId: string;
-  matricule: string;
+  matricule?: string;
   hireDate: string | Date;
   position: string;
   photo?: string;

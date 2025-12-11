@@ -118,9 +118,26 @@ export class StudentClassService {
   async getAllStudentClasses(): Promise<StudentClassResponseDto[]> {
     try {
       const studentClasses = await this.studentClassRepository.find({
-        relations: ['student', 'student.user', 'class'],
+        relations: [
+          'student',
+          'student.user',
+          'class',
+          'class.classCategory',
+          'class.classCategory.institution',
+        ],
         order: { startDate: 'DESC' },
       });
+
+      // Debug: vérifier si l'institution est chargée
+      if (studentClasses.length > 0) {
+        const firstClass = studentClasses[0];
+        console.log('🔍 Backend - Classe chargée:', {
+          hasClass: !!firstClass.class,
+          hasClassCategory: !!firstClass.class?.classCategory,
+          hasInstitution: !!firstClass.class?.classCategory?.institution,
+          institution: firstClass.class?.classCategory?.institution,
+        });
+      }
 
       return studentClasses.map((studentClass) =>
         this.mapToStudentClassResponseDto(studentClass),
@@ -359,7 +376,24 @@ export class StudentClassService {
         orderLevel: studentClass.class.orderLevel,
         createdAt: studentClass.class.createdAt,
         updatedAt: studentClass.class.updatedAt,
-        classCategory: studentClass.class.classCategory,
+        classCategory: studentClass.class.classCategory
+          ? {
+              id: studentClass.class.classCategory.id,
+              name: studentClass.class.classCategory.name,
+              institutionId: studentClass.class.classCategory.institutionId,
+              institution: studentClass.class.classCategory.institution
+                ? {
+                    id: studentClass.class.classCategory.institution.id,
+                    name: studentClass.class.classCategory.institution.name,
+                    code: studentClass.class.classCategory.institution.code,
+                    description:
+                      studentClass.class.classCategory.institution.description,
+                  }
+                : undefined,
+              createdAt: studentClass.class.classCategory.createdAt,
+              updatedAt: studentClass.class.classCategory.updatedAt,
+            }
+          : null,
         classSubjects: studentClass.class.classSubjects,
         studentClasses: studentClass.class.studentClasses,
       },

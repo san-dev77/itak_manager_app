@@ -19,13 +19,13 @@ export class SchoolYear {
   @Index()
   name: string;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   @Index()
-  startDate: Date;
+  startDate: Date | null;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   @Index()
-  endDate: Date;
+  endDate: Date | null;
 
   @Column({ type: 'boolean', default: false })
   @Index()

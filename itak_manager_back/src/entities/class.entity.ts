@@ -7,6 +7,7 @@ import {
   Index,
   UpdateDateColumn,
   ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ClassSubject } from './class-subject.entity';
 import { StudentClass } from './student-class.entity';
@@ -32,10 +33,6 @@ export class Class {
   @Column({ type: 'varchar', length: 20, nullable: true })
   level: string;
 
-  @Column({ type: 'uuid' })
-  @Index()
-  categoryId: string;
-
   @Column({ type: 'int', nullable: true })
   capacity: number;
 
@@ -50,7 +47,10 @@ export class Class {
   updatedAt: Date;
 
   // Relations
-  @ManyToOne(() => ClassCategory, (classCategory) => classCategory.classes)
+  @ManyToOne(() => ClassCategory, (classCategory) => classCategory.classes, {
+    nullable: false,
+  })
+  @JoinColumn({ name: 'class_category_id' })
   classCategory: ClassCategory;
 
   @OneToMany(() => ClassSubject, (classSubject) => classSubject.class)

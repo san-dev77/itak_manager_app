@@ -10,6 +10,7 @@ import {
   Index,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Institution } from './institution.entity';
 import { StudentClass } from './student-class.entity';
 import { StudentParent } from './student-parent.entity';
 import { StudentPromotion } from './student-promotion.entity';
@@ -64,6 +65,10 @@ export class Student {
   @Column({ type: 'text', nullable: true })
   notes?: string;
 
+  @Column({ type: 'uuid', nullable: true })
+  @Index()
+  institutionId?: string;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
@@ -76,6 +81,12 @@ export class Student {
   })
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => Institution, (institution) => institution.students, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'institution_id' })
+  institution?: Institution;
 
   @OneToMany(() => StudentClass, (studentClass) => studentClass.student)
   studentClasses: StudentClass[];

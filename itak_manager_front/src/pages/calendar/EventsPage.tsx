@@ -61,7 +61,7 @@ const EventsPage: React.FC = () => {
 
   useEffect(() => {
     const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
+      localStorage.getItem("user");
     if (userData) {
       try {
         const parsedUser = JSON.parse(userData);
@@ -88,11 +88,12 @@ const EventsPage: React.FC = () => {
       if (classesRes.success) setClasses(classesRes.data || []);
       if (schoolYearsRes.success) {
         setSchoolYears(schoolYearsRes.data || []);
-        // Sélectionner automatiquement l'année active
+        // Sélectionner automatiquement l'année active ou la première disponible
         const activeYear = schoolYearsRes.data?.find((year) => year.isActive);
-        if (activeYear) {
-          setSelectedSchoolYear(activeYear.id);
-          setFormData((prev) => ({ ...prev, academicYearId: activeYear.id }));
+        const defaultYear = activeYear || schoolYearsRes.data?.[0];
+        if (defaultYear) {
+          setSelectedSchoolYear(defaultYear.id);
+          setFormData((prev) => ({ ...prev, academicYearId: defaultYear.id }));
         }
       }
     } catch (error) {
@@ -108,6 +109,13 @@ const EventsPage: React.FC = () => {
       loadData();
     }
   }, [user, loadData]);
+
+  // Synchroniser l'année scolaire du filtre avec le formulaire (notamment s'il n'y a pas d'année active)
+  useEffect(() => {
+    if (selectedSchoolYear && !editingEvent) {
+      setFormData((prev) => ({ ...prev, academicYearId: selectedSchoolYear }));
+    }
+  }, [selectedSchoolYear, editingEvent]);
 
   const showNotificationMessage = (
     message: string,
@@ -130,15 +138,22 @@ const EventsPage: React.FC = () => {
       return;
     }
 
+    // Nettoyage : ne pas envoyer de chaînes vides pour les champs optionnels
+    const payload: CreateEventDto | UpdateEventDto = {
+      ...formData,
+      endDate: formData.endDate || undefined,
+      classId: formData.classId || undefined,
+    };
+
     try {
       let response;
       if (editingEvent) {
         response = await apiService.updateEvent(
           editingEvent.id,
-          formData as UpdateEventDto
+          payload as UpdateEventDto
         );
       } else {
-        response = await apiService.createEvent(formData);
+        response = await apiService.createEvent(payload as CreateEventDto);
       }
 
       if (response.success) {
@@ -804,6 +819,32 @@ const EventsPage: React.FC = () => {
                         {classes.map((cls) => (
                           <option key={cls.id} value={cls.id}>
                             {cls.name} - {cls.level}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Année scolaire *
+                      </label>
+                      <select
+                        value={formData.academicYearId}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            academicYearId: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                        required
+                      >
+                        <option value="">Sélectionnez une année</option>
+                        {schoolYears.map((year) => (
+                          <option key={year.id} value={year.id}>
+                            {year.name} {year.isActive ? "(Actuelle)" : ""}
                           </option>
                         ))}
                       </select>

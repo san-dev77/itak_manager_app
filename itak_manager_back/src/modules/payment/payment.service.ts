@@ -105,7 +105,7 @@ export class PaymentService {
 
   async findAll(): Promise<Payment[]> {
     return await this.paymentRepository.find({
-      relations: ['studentFee', 'receivedByUser'],
+      relations: ['studentFee', 'studentFee.academicYear', 'receivedByUser'],
       order: { createdAt: 'DESC' },
     });
   }

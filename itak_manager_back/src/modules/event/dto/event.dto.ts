@@ -68,7 +68,7 @@ export class EventResponseDto {
     id: string;
     firstName: string;
     lastName: string;
-    email: string;
+    email?: string;
   };
   academicYear?: {
     id: string;
@@ -85,7 +85,7 @@ export class EventResponseDto {
       id: string;
       firstName: string;
       lastName: string;
-      email: string;
+      email?: string;
     };
   }>;
 }

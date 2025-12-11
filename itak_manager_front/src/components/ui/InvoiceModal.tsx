@@ -8,6 +8,7 @@ import {
   Building2,
 } from "lucide-react";
 import QRCode from "qrcode";
+import logoItak from "../../assets/logo itak.png";
 
 interface Payment {
   id: string;
@@ -72,7 +73,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
           etudiant: studentInfo.name,
           matricule: studentInfo.matricule,
           typeFrais: feeTypeInfo.name,
-          institution: "UPCD ITAK - Institut Technique l'Antidote de Kati",
+          institution: "Cyber School",
         },
       };
 
@@ -145,7 +146,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
               <h2 className="text-lg font-bold text-gray-900">
                 Reçu de paiement
               </h2>
-              <p className="text-xs text-gray-600">Reçu officiel UPCD ITAK</p>
+              <p className="text-xs text-gray-600">Reçu officiel ITAK</p>
               {studentInfo && (
                 <p className="text-xs font-semibold text-blue-600 mt-1">
                   Étudiant: {studentInfo.name}
@@ -163,10 +164,17 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
         {/* Invoice Content compact */}
         <div className="p-6 relative">
-          {/* Filigrane UPCD ITAK centré */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-20 z-50">
-            <div className="text-9xl font-black text-blue-400 transform -rotate-12">
-              UPCD ITAK
+          {/* Filigrane ITAK centré avec logo */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-10 z-50">
+            <div className="flex flex-col items-center justify-center">
+              <img
+                src={logoItak}
+                alt="UPCD - ITAK Logo"
+                className="w-64 h-64 object-contain"
+              />
+              <div className="text-6xl font-black text-blue-400 transform -rotate-12 mt-4">
+                UPCD - ITAK
+              </div>
             </div>
           </div>
 
@@ -174,22 +182,20 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <div className="relative z-10 mb-6">
             <div className="flex items-center justify-between border-b-2 border-gray-200 pb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden">
+                <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden bg-white p-1 shadow-sm">
                   <img
-                    src="/src/assets/logo itak.png"
-                    alt="Logo ITAK"
+                    src={logoItak}
+                    alt="ITAK Logo"
                     className="w-full h-full object-contain"
                   />
                 </div>
                 <div>
-                  <h1 className="text-xl font-black text-gray-900">
-                    UPCD ITAK
-                  </h1>
+                  <h1 className="text-xl font-black text-gray-900">ITAK</h1>
                   <p className="text-sm font-semibold text-gray-700">
-                    Université Privée Checkné Diallo
+                    Institut de Technologie et d'Administration du Kankan
                   </p>
                   <p className="text-xs text-gray-600">
-                    Institut Technique l'Antidote de Kati
+                    Système de gestion intégré
                   </p>
                 </div>
               </div>
@@ -394,7 +400,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
               <div className="flex items-center justify-center space-x-2 mb-2">
                 <Building2 className="w-3 h-3" />
                 <span className="font-semibold">
-                  UPCD ITAK - Institut Technique l'Antidote de Kati
+                  UPCD - ITAK - Institut de Technique de l'Antidote de Kati
                 </span>
               </div>
               <p>Facture générée automatiquement par le système de gestion</p>

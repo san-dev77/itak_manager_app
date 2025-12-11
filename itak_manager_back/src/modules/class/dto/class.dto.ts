@@ -51,7 +51,7 @@ export class ClassResponseDto {
   id: string;
   name: string;
   code: string;
-  classCategory: ClassCategoryResponseDto;
+  classCategory: ClassCategoryResponseDto | null;
   description: string;
   level?: string;
   capacity?: number;

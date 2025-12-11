@@ -28,8 +28,8 @@ export class FreezePeriodResponseDto {
   schoolYear?: {
     id: string;
     name: string;
-    startDate: Date;
-    endDate: Date;
+    startDate: Date | null;
+    endDate: Date | null;
   };
 
   term?: {
@@ -49,21 +49,21 @@ export class FreezePeriodResponseDto {
     id: string;
     firstName: string;
     lastName: string;
-    email: string;
+    email?: string;
   };
 
   approver?: {
     id: string;
     firstName: string;
     lastName: string;
-    email: string;
+    email?: string;
   };
 
   canceller?: {
     id: string;
     firstName: string;
     lastName: string;
-    email: string;
+    email?: string;
   };
 }
 

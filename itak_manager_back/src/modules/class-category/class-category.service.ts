@@ -2,10 +2,12 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClassCategory } from '../../entities/class-category.entity';
+import { Institution } from '../../entities/institution.entity';
 import {
   ClassCategoryResponseDto,
   CreateClassCategoryDto,
@@ -13,11 +15,31 @@ import {
 } from './dto/class-category.dto';
 
 @Injectable()
-export class ClassCategoryService {
+export class ClassCategoryService implements OnModuleInit {
   constructor(
     @InjectRepository(ClassCategory)
     private readonly classCategoryRepository: Repository<ClassCategory>,
+    @InjectRepository(Institution)
+    private readonly institutionRepository: Repository<Institution>,
   ) {}
+
+  async onModuleInit() {
+    await this.initializeInstitutionsAndCategories();
+  }
+
+  async getAllInstitutions(): Promise<Institution[]> {
+    try {
+      return await this.institutionRepository.find({
+        order: { name: 'ASC' },
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Erreur inconnue';
+      throw new Error(
+        `Erreur lors de la récupération des institutions: ${message}`,
+      );
+    }
+  }
 
   async createClassCategory(
     createClassCategoryDto: CreateClassCategoryDto,
@@ -48,9 +70,18 @@ export class ClassCategoryService {
     }
   }
 
-  async getAllClassCategories(): Promise<ClassCategoryResponseDto[]> {
+  async getAllClassCategories(
+    institutionId?: string,
+  ): Promise<ClassCategoryResponseDto[]> {
     try {
+      const where: any = {};
+      if (institutionId) {
+        where.institutionId = institutionId;
+      }
+
       const categories = await this.classCategoryRepository.find({
+        where,
+        relations: ['institution'],
         order: { createdAt: 'DESC' },
       });
 
@@ -68,6 +99,7 @@ export class ClassCategoryService {
     try {
       const category = await this.classCategoryRepository.findOne({
         where: { id },
+        relations: ['institution'],
       });
 
       if (!category) {
@@ -177,29 +209,76 @@ export class ClassCategoryService {
     }
   }
 
-  // Méthode pour initialiser les catégories par défaut
-  async initializeDefaultCategories(): Promise<void> {
+  // Méthode pour initialiser les institutions et catégories par défaut
+  async initializeInstitutionsAndCategories(): Promise<void> {
     try {
-      const defaultCategories = [{ name: 'Collège' }, { name: 'Faculté' }];
+      // Créer les institutions ITAK et UPCD
+      const itakInstitution = await this.findOrCreateInstitution({
+        name: 'ITAK',
+        code: 'ITAK',
+        description: "Institut Technique l'Antidote de Kati (Lycée)",
+      });
 
-      for (const category of defaultCategories) {
-        const existingCategory = await this.classCategoryRepository.findOne({
-          where: { name: category.name },
-        });
+      const upcdInstitution = await this.findOrCreateInstitution({
+        name: 'UPCD',
+        code: 'UPCD',
+        description: 'Université Privée (Faculté)',
+      });
 
-        if (!existingCategory) {
-          const newCategory = this.classCategoryRepository.create(category);
-          await this.classCategoryRepository.save(newCategory);
-        }
-      }
+      console.log('✅ Institutions et catégories initialisées avec succès');
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Erreur inconnue';
-      console.log(
-        'Catégories par défaut déjà initialisées ou erreur:',
+      console.error(
+        "❌ Erreur lors de l'initialisation des institutions et catégories:",
         message,
       );
     }
+  }
+
+  private async findOrCreateInstitution(data: {
+    name: string;
+    code: string;
+    description?: string;
+  }): Promise<Institution> {
+    let institution = await this.institutionRepository.findOne({
+      where: { code: data.code },
+    });
+
+    if (!institution) {
+      institution = this.institutionRepository.create(data);
+      institution = await this.institutionRepository.save(institution);
+    }
+
+    return institution;
+  }
+
+  private async findOrCreateCategory(data: {
+    name: string;
+    institutionId: string;
+  }): Promise<ClassCategory> {
+    let category = await this.classCategoryRepository.findOne({
+      where: { name: data.name },
+    });
+
+    if (!category) {
+      category = this.classCategoryRepository.create({
+        name: data.name,
+        institutionId: data.institutionId,
+      });
+      category = await this.classCategoryRepository.save(category);
+    } else if (!category.institutionId) {
+      // Mettre à jour si la catégorie existe mais n'a pas d'institution
+      category.institutionId = data.institutionId;
+      category = await this.classCategoryRepository.save(category);
+    }
+
+    return category;
+  }
+
+  // Méthode pour initialiser les catégories par défaut (conservée pour compatibilité)
+  async initializeDefaultCategories(): Promise<void> {
+    await this.initializeInstitutionsAndCategories();
   }
 
   private mapToClassCategory(
@@ -208,6 +287,15 @@ export class ClassCategoryService {
     return {
       id: category.id,
       name: category.name,
+      institutionId: category.institutionId,
+      institution: category.institution
+        ? {
+            id: category.institution.id,
+            name: category.institution.name,
+            code: category.institution.code,
+            description: category.institution.description,
+          }
+        : undefined,
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,
     };

@@ -61,6 +61,7 @@ export class StudentService {
       const student = this.studentRepository.create({
         ...createStudentDto,
         enrollmentDate: createStudentDto.enrollmentDate,
+        institutionId: createStudentDto.institutionId,
       });
 
       const savedStudent = await this.studentRepository.save(student);
@@ -89,10 +90,16 @@ export class StudentService {
     }
   }
 
-  async getAllStudents(): Promise<StudentResponseDto[]> {
+  async getAllStudents(institutionId?: string): Promise<StudentResponseDto[]> {
     try {
+      const where: any = {};
+      if (institutionId) {
+        where.institutionId = institutionId;
+      }
+
       const students = await this.studentRepository.find({
-        relations: ['user'],
+        where,
+        relations: ['user', 'institution'],
         order: { createdAt: 'DESC' },
       });
 
@@ -268,6 +275,14 @@ export class StudentService {
       address: student.address,
       emergencyContact: student.emergencyContact,
       notes: student.notes,
+      institutionId: student.institutionId,
+      institution: student.institution
+        ? {
+            id: student.institution.id,
+            name: student.institution.name,
+            code: student.institution.code,
+          }
+        : undefined,
       createdAt: student.createdAt,
       updatedAt: student.updatedAt,
       user: student.user

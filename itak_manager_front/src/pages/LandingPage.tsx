@@ -1,243 +1,153 @@
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  Users,
-  BookOpen,
-  BarChart3,
-} from "lucide-react";
-import Button from "../components/ui/Button";
+import { ArrowRight, Users, BookOpen, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
+import logoCyberSchool from "../assets/cyberschool.jpg";
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Background avec design moderne */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
+    <div className="min-h-screen bg-slate-900 relative overflow-hidden">
+      {/* Fond subtil avec motif de points */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)] bg-[length:40px_40px]" />
 
-      {/* Éléments décoratifs animés */}
-      <div className="absolute inset-0">
-        {/* Grille de points */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.15)_1px,transparent_0)] bg-[length:50px_50px] animate-pulse"></div>
+      {/* Lueur subtile en haut */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-600/10 rounded-full blur-3xl" />
 
-        {/* Formes géométriques flottantes */}
-        <motion.div
-          className="absolute top-20 left-20 w-32 h-32 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 rounded-full blur-xl"
-          animate={{
-            y: [0, -20, 0],
-            x: [0, 10, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
+      {/* Contenu principal */}
+      <div className="relative min-h-screen flex flex-col">
+        {/* Navigation */}
+        <nav className="w-full px-6 py-5">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img
+                src={logoCyberSchool}
+                alt="Cyber School"
+                className="w-10 h-10 rounded-lg object-cover"
+              />
+              <span className="text-lg font-semibold text-white">
+                Cyber School
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link
+                to="/login"
+                className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+              >
+                Connexion
+              </Link>
+              <Link
+                to="/register"
+                className="text-sm font-medium bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-500 transition-colors"
+              >
+                Commencer
+              </Link>
+            </div>
+          </div>
+        </nav>
 
-        <motion.div
-          className="absolute top-40 right-32 w-48 h-48 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 rounded-full blur-2xl"
-          animate={{
-            y: [0, 30, 0],
-            x: [0, -15, 0],
-            scale: [1, 0.9, 1],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-        />
-
-        <motion.div
-          className="absolute bottom-32 left-1/3 w-40 h-40 bg-gradient-to-r from-cyan-400/20 to-blue-400/20 rounded-full blur-xl"
-          animate={{
-            y: [0, -25, 0],
-            x: [0, 20, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 4,
-          }}
-        />
-
-        <motion.div
-          className="absolute bottom-20 right-20 w-56 h-56 bg-gradient-to-r from-blue-400/15 to-indigo-400/15 rounded-full blur-3xl"
-          animate={{
-            y: [0, 40, 0],
-            x: [0, -25, 0],
-            scale: [1, 0.8, 1],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
-        />
-
-        {/* Lignes de connexion */}
-        <svg
-          className="absolute inset-0 w-full h-full opacity-50"
-          viewBox="0 0 1000 1000"
-        >
-          <defs>
-            <linearGradient
-              id="lineGradient"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
-            >
-              <stop offset="0%" stopColor="rgba(59, 130, 246, 0.3)" />
-              <stop offset="50%" stopColor="rgba(99, 102, 241, 0.2)" />
-              <stop offset="100%" stopColor="rgba(139, 92, 246, 0.3)" />
-            </linearGradient>
-          </defs>
-          <motion.path
-            d="M100,200 Q300,100 500,200 T900,200"
-            stroke="url(#lineGradient)"
-            strokeWidth="2"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              repeatType: "reverse",
-            }}
-          />
-          <motion.path
-            d="M100,400 Q400,300 700,400 T900,400"
-            stroke="url(#lineGradient)"
-            strokeWidth="2"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              repeatType: "reverse",
-              delay: 1,
-            }}
-          />
-          <motion.path
-            d="M100,600 Q200,500 400,600 T800,600"
-            stroke="url(#lineGradient)"
-            strokeWidth="2"
-            fill="none"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{
-              duration: 5,
-              repeat: Infinity,
-              repeatType: "reverse",
-              delay: 2,
-            }}
-          />
-        </svg>
-      </div>
-
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-20 min-h-screen flex items-center">
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="text-center">
+        {/* Hero */}
+        <section className="flex-1 flex items-center justify-center px-6 py-16">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Logo central */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="mb-12"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="mb-10"
             >
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight">
-                <span className="bg-gradient-to-r from-white via-blue-100 to-indigo-100 bg-clip-text text-transparent">
-                  La Gestion
-                </span>
-                <br />
-                <span className="bg-gradient-to-r from-blue-300 via-indigo-300 to-purple-300 bg-clip-text text-transparent">
-                  Scolaire
-                </span>
-                <br />
-                <span className="text-5xl md:text-6xl lg:text-7xl bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                  Simplifiée
-                </span>
-              </h1>
-
-              <p className="text-xl md:text-2xl text-blue-100 max-w-4xl mx-auto mb-12 leading-relaxed font-light">
-                Transformez votre établissement scolaire avec une plateforme
-                <span className="font-semibold text-white">
-                  {" "}
-                  moderne et intuitive
-                </span>
-                . Gérez élèves, cours, et performances en toute simplicité.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-                <Link to="/login">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      size="lg"
-                      className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-2xl hover:shadow-blue-500/25 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300"
-                    >
-                      Commencer maintenant
-                      <ArrowRight className="w-6 h-6 ml-3" />
-                    </Button>
-                  </motion.div>
-                </Link>
+              <div className="inline-block p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
+                <img
+                  src={logoCyberSchool}
+                  alt="Cyber School"
+                  className="w-28 h-28 md:w-36 md:h-36 object-contain"
+                />
               </div>
             </motion.div>
 
-            {/* Stats Cards */}
+            {/* Titre */}
             <motion.div
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+              transition={{ duration: 0.5, delay: 0.1 }}
             >
-              <motion.div
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-white/20"
-                whileHover={{ y: -5, scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                  <Users className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-3xl font-bold text-white mb-2">500+</h3>
-                <p className="text-blue-200 font-medium">Établissements</p>
-              </motion.div>
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 tracking-tight">
+                Cyber School
+              </h1>
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-medium text-blue-400 mb-6">
+                La Gestion Scolaire Simplifiée
+              </h2>
+              <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-4">
+                Plateforme intégrée de gestion scolaire
+              </p>
+              <p className="text-base text-slate-500 max-w-xl mx-auto mb-10">
+                Gérez élèves, enseignants, notes, finances et emplois du temps
+                en toute simplicité.
+              </p>
+            </motion.div>
 
-              <motion.div
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-white/20"
-                whileHover={{ y: -5, scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                  <BookOpen className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-3xl font-bold text-white mb-2">50K+</h3>
-                <p className="text-blue-200 font-medium">Étudiants</p>
-              </motion.div>
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 mb-10"
+            >
+              <span className="text-sm text-slate-400">Powered by</span>
+              <span className="text-sm font-semibold text-blue-400">MSNET</span>
+            </motion.div>
 
-              <motion.div
-                className="bg-white/10 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-white/20"
-                whileHover={{ y: -5, scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                  <BarChart3 className="w-8 h-8 text-white" />
+            {/* CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="mb-16"
+            >
+              <Link to="/login">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold text-lg flex items-center gap-3 mx-auto hover:bg-blue-500 transition-colors"
+                >
+                  Commencer maintenant
+                  <ArrowRight className="w-5 h-5" />
+                </motion.button>
+              </Link>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto"
+            >
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-blue-500/30 transition-colors">
+                <div className="w-14 h-14 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                  <Users className="w-7 h-7 text-blue-400" />
                 </div>
-                <h3 className="text-3xl font-bold text-white mb-2">99%</h3>
-                <p className="text-blue-200 font-medium">Satisfaction</p>
-              </motion.div>
+                <div className="text-3xl font-bold text-white mb-1">500+</div>
+                <div className="text-sm text-slate-500">Établissements</div>
+              </div>
+
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-blue-500/30 transition-colors">
+                <div className="w-14 h-14 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                  <BookOpen className="w-7 h-7 text-blue-400" />
+                </div>
+                <div className="text-3xl font-bold text-white mb-1">50K+</div>
+                <div className="text-sm text-slate-500">Étudiants</div>
+              </div>
+
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-blue-500/30 transition-colors">
+                <div className="w-14 h-14 bg-blue-600/20 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                  <BarChart3 className="w-7 h-7 text-blue-400" />
+                </div>
+                <div className="text-3xl font-bold text-white mb-1">99%</div>
+                <div className="text-sm text-slate-500">Satisfaction</div>
+              </div>
             </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 };

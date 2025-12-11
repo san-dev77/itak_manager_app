@@ -24,6 +24,8 @@ export class StaffService {
 
   async createStaff(createStaffDto: CreateStaffDto): Promise<StaffResponseDto> {
     try {
+      console.log('📝 Création staff avec données:', createStaffDto);
+
       // Vérifier si l'utilisateur existe
       const user = await this.userRepository.findOne({
         where: { id: createStaffDto.userId },
@@ -33,15 +35,43 @@ export class StaffService {
         throw new NotFoundException('Utilisateur non trouvé');
       }
 
-      // Vérifier si le matricule existe déjà
-      const existingStaff = await this.staffRepository.findOne({
-        where: { matricule: createStaffDto.matricule },
-      });
+      console.log('✅ Utilisateur trouvé:', user.id);
 
-      if (existingStaff) {
-        throw new ConflictException(
-          'Un membre du personnel avec ce matricule existe déjà',
-        );
+      // Générer un matricule automatiquement si non fourni
+      let matricule = createStaffDto.matricule;
+      if (!matricule) {
+        // Générer un matricule unique basé sur le timestamp et un random
+        const timestamp = Date.now().toString(36).toUpperCase();
+        const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+        matricule = `STF-${timestamp}-${random}`;
+
+        // Vérifier l'unicité
+        let exists = await this.staffRepository.findOne({
+          where: { matricule },
+        });
+        let attempts = 0;
+        while (exists && attempts < 10) {
+          const newRandom = Math.random()
+            .toString(36)
+            .substring(2, 6)
+            .toUpperCase();
+          matricule = `STF-${timestamp}-${newRandom}`;
+          exists = await this.staffRepository.findOne({
+            where: { matricule },
+          });
+          attempts++;
+        }
+      } else {
+        // Vérifier si le matricule existe déjà
+        const existingStaff = await this.staffRepository.findOne({
+          where: { matricule: createStaffDto.matricule },
+        });
+
+        if (existingStaff) {
+          throw new ConflictException(
+            'Un membre du personnel avec ce matricule existe déjà',
+          );
+        }
       }
 
       // Vérifier si l'utilisateur est déjà du personnel administratif
@@ -56,12 +86,18 @@ export class StaffService {
       }
 
       // Créer le membre du personnel
-      const staff = this.staffRepository.create({
+      const staffData = {
         ...createStaffDto,
+        matricule: matricule,
         hireDate: createStaffDto.hireDate,
-      });
+      };
+
+      console.log('📦 Données staff à créer:', staffData);
+
+      const staff = this.staffRepository.create(staffData);
 
       const savedStaff = await this.staffRepository.save(staff);
+      console.log('✅ Staff créé avec succès:', savedStaff.id);
 
       // Récupérer le membre du personnel avec la relation user chargée
       const staffWithUser = await this.staffRepository.findOne({

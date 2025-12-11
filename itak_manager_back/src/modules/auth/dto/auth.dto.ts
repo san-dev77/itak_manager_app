@@ -8,8 +8,9 @@ import {
 import { UserRole } from '../../../entities/user.entity';
 
 export class RegisterDto {
+  @IsOptional()
   @IsEmail({}, { message: 'Email invalide' })
-  email: string;
+  email?: string;
 
   @IsString({ message: 'Le prénom doit être une chaîne' })
   firstName: string;

@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "../../components/layout/Layout";
+import AuthenticatedPage from "../../components/layout/AuthenticatedPage";
+import PageHeader from "../../components/ui/PageHeader";
+import Breadcrumb from "../../components/ui/Breadcrumb";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import {
   apiService,
   type FeeType,
   type StudentClass,
+  type User,
+  type StaffWithUser,
 } from "../../services/api";
+
+interface AcademicYear {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
 import {
   Search,
-  User,
+  User as UserIcon,
   CheckSquare,
   Square,
   CreditCard,
@@ -47,15 +57,6 @@ interface StudentFee {
   };
 }
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-}
-
 // Interface Payment étendue pour inclure studentFeeId
 interface PaymentWithStudentFee {
   id: string;
@@ -72,13 +73,13 @@ interface PaymentWithStudentFee {
 
 const PaymentAssignmentPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
   const [studentFees, setStudentFees] = useState<StudentFee[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [staffs, setStaffs] = useState<User[]>([]);
+  const [staffs, setStaffs] = useState<StaffWithUser[]>([]);
   const [studentClasses, setStudentClasses] = useState<StudentClass[]>([]);
   const [payments, setPayments] = useState<PaymentWithStudentFee[]>([]);
   const [feeTypes, setFeeTypes] = useState<FeeType[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -95,6 +96,7 @@ const PaymentAssignmentPage: React.FC = () => {
     method: "cash" as "cash" | "bank_transfer" | "mobile_money" | "card",
     receivedBy: "",
     paymentDate: new Date().toISOString().split("T")[0],
+    academicYearId: "",
   });
 
   // État pour le formulaire (non utilisé pour le moment)
@@ -217,21 +219,9 @@ const PaymentAssignmentPage: React.FC = () => {
   };
 
   useEffect(() => {
-    const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-        loadAllData();
-      } catch (error) {
-        console.error("Erreur lors du chargement des données:", error);
-        navigate("/login");
-      }
-    } else {
-      navigate("/login");
-    }
+    loadAllData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
+  }, []);
 
   const loadFeeTypes = async () => {
     try {
@@ -261,7 +251,8 @@ const PaymentAssignmentPage: React.FC = () => {
         loadStaffs(),
         loadStudentClasses(),
         loadPayments(),
-        loadFeeTypes(), // Load fee types
+        loadFeeTypes(),
+        loadAcademicYears(),
       ]);
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
@@ -328,14 +319,10 @@ const PaymentAssignmentPage: React.FC = () => {
 
   const loadStaffs = async () => {
     try {
-      const response = await apiService.getAllUsers();
+      const response = await apiService.getAllStaff();
       if (response.success && response.data) {
-        // Filtrer les utilisateurs pour ne garder que les staffs et admins
-        const staffUsers = response.data.filter(
-          (user: User) => user.role === "staff" || user.role === "admin"
-        );
-        console.log("📥 Staffs reçus de l'API:", staffUsers);
-        setStaffs(staffUsers);
+        console.log("📥 Staffs reçus de l'API:", response.data);
+        setStaffs(response.data);
       } else {
         console.error("Erreur lors du chargement des staffs:", response.error);
         setStaffs([]);
@@ -384,6 +371,33 @@ const PaymentAssignmentPage: React.FC = () => {
     } catch (error) {
       console.error("Erreur lors du chargement des paiements:", error);
       setPayments([]);
+    }
+  };
+
+  const loadAcademicYears = async () => {
+    try {
+      const response = await apiService.getAllSchoolYears();
+      if (response.success && response.data) {
+        console.log("📥 Années académiques reçues de l'API:", response.data);
+        setAcademicYears(response.data);
+        // Sélectionner l'année active par défaut
+        const activeYear = response.data.find((year) => year.isActive);
+        if (activeYear) {
+          setBulkFormData((prev) => ({
+            ...prev,
+            academicYearId: activeYear.id,
+          }));
+        }
+      } else {
+        console.error(
+          "Erreur lors du chargement des années académiques:",
+          response.error
+        );
+        setAcademicYears([]);
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des années académiques:", error);
+      setAcademicYears([]);
     }
   };
 
@@ -476,6 +490,11 @@ const PaymentAssignmentPage: React.FC = () => {
       return;
     }
 
+    if (!bulkFormData.academicYearId) {
+      alert("Veuillez sélectionner une année académique.");
+      return;
+    }
+
     if (bulkFormData.amount <= 0) {
       alert("Le montant doit être positif.");
       return;
@@ -484,9 +503,20 @@ const PaymentAssignmentPage: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      const selectedFees = getFilteredStudentFees().filter((fee) =>
-        selectedStudentFees.has(fee.id)
+      // Filtrer les frais sélectionnés par l'année académique choisie
+      const selectedFees = getFilteredStudentFees().filter(
+        (fee) =>
+          selectedStudentFees.has(fee.id) &&
+          fee.academicYearId === bulkFormData.academicYearId
       );
+
+      if (selectedFees.length === 0) {
+        alert(
+          "Aucun frais trouvé pour l'année académique sélectionnée parmi les étudiants sélectionnés."
+        );
+        setIsSubmitting(false);
+        return;
+      }
 
       // Vérifier que tous les montants restants sont suffisants
       for (const fee of selectedFees) {
@@ -526,11 +556,14 @@ const PaymentAssignmentPage: React.FC = () => {
         alert(`${successful.length} paiements enregistrés avec succès !`);
         // Reset form
         setSelectedStudentFees(new Set());
+        // Réinitialiser le formulaire mais garder l'année académique
+        const currentAcademicYearId = bulkFormData.academicYearId;
         setBulkFormData({
           amount: 0,
           method: "cash",
           receivedBy: "",
           paymentDate: new Date().toISOString().split("T")[0],
+          academicYearId: currentAcademicYearId,
         });
         // Refresh page
         window.location.reload();
@@ -573,46 +606,35 @@ const PaymentAssignmentPage: React.FC = () => {
   //     );
   //   });
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
+  const breadcrumbItems = [
+    { label: "Finances", path: "/finances" },
+    { label: "Paiements", path: "/finances/payments" },
+    { label: "Enregistrement", path: "/finances/payments/assign" },
+  ];
 
   return (
-    <Layout user={user}>
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                Enregistrement de paiements en lot
-              </h1>
-              <p className="text-gray-600 text-sm">
-                Sélectionnez un type de frais, puis les étudiants pour
-                enregistrer leurs paiements
-              </p>
-            </div>
+    <AuthenticatedPage>
+      <div className="space-y-6">
+        <Breadcrumb items={breadcrumbItems} />
+        <PageHeader
+          title="Enregistrement de paiements en lot"
+          subtitle="Sélectionnez un type de frais, puis les étudiants pour enregistrer leurs paiements"
+          icon={CreditCard}
+          iconColor="from-emerald-600 to-emerald-800"
+          actions={
             <Button
               onClick={() => navigate("/finances/payments")}
               variant="outline"
-              className="text-sm"
             >
-              Retour aux paiements
+              ← Retour
             </Button>
-          </div>
-        </div>
+          }
+        />
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
               <p className="text-gray-600">Chargement des données...</p>
             </div>
           </div>
@@ -636,10 +658,10 @@ const PaymentAssignmentPage: React.FC = () => {
                   <div
                     key={feeType.id}
                     onClick={() => handleFeeTypeSelect(feeType.id)}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                    className={`p-4 border-2 rounded-lg cursor-pointer ${
                       selectedFeeType === feeType.id
-                        ? "border-blue-500 bg-blue-50 shadow-md"
-                        : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 bg-white"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -666,7 +688,7 @@ const PaymentAssignmentPage: React.FC = () => {
               <Card className="p-6">
                 <div className="mb-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-                    <User className="w-5 h-5 mr-2 text-green-600" />
+                    <UserIcon className="w-5 h-5 mr-2 text-green-600" />
                     Étape 2: Sélectionner les étudiants
                   </h2>
                   <p className="text-sm text-gray-600">
@@ -744,10 +766,10 @@ const PaymentAssignmentPage: React.FC = () => {
                           onClick={() =>
                             toggleStudentFeeSelection(studentFee.id)
                           }
-                          className={`p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                          className={`p-3 border-2 rounded-lg cursor-pointer ${
                             isSelected
-                              ? "border-green-500 bg-green-50 shadow-md"
-                              : "border-gray-200 hover:border-gray-300 hover:shadow-sm bg-white"
+                              ? "border-green-500 bg-green-50"
+                              : "border-gray-200 bg-white"
                           }`}
                         >
                           <div className="flex items-center justify-between">
@@ -766,7 +788,7 @@ const PaymentAssignmentPage: React.FC = () => {
                                 <h3 className="font-semibold text-gray-900 text-sm">
                                   {studentUser.firstName} {studentUser.lastName}
                                 </h3>
-                                <div className="flex items-center space-x-3 text-xs text-gray-600">
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 mt-1">
                                   <span className="flex font-extrabold items-center">
                                     <FileText className="w-3 font-extrabold h-3 mr-1" />
                                     {studentFee.student.matricule}
@@ -774,6 +796,13 @@ const PaymentAssignmentPage: React.FC = () => {
                                   <span className="flex font-extrabold items-center">
                                     <GraduationCap className="w-3 font-extrabold h-3 mr-1" />
                                     {getStudentClass(studentFee.student.id)}
+                                  </span>
+                                  <span className="flex font-extrabold items-center px-2 py-0.5 bg-purple-100 text-purple-700 rounded">
+                                    <CreditCard className="w-3 font-extrabold h-3 mr-1" />
+                                    {studentFee.feeType.name}
+                                  </span>
+                                  <span className="flex font-extrabold items-center px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
+                                    {studentFee.academicYear.name}
                                   </span>
                                 </div>
                               </div>
@@ -802,7 +831,7 @@ const PaymentAssignmentPage: React.FC = () => {
 
                 {getFilteredStudentFees().length === 0 && (
                   <div className="text-center py-8 text-gray-500">
-                    <User className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <UserIcon className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                     <p>Aucun étudiant trouvé pour ce type de frais</p>
                   </div>
                 )}
@@ -821,9 +850,83 @@ const PaymentAssignmentPage: React.FC = () => {
                     Renseignez les détails du paiement qui sera appliqué à tous
                     les étudiants sélectionnés
                   </p>
+                  {selectedFeeType && (
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex flex-wrap items-center gap-4 text-sm">
+                        <div>
+                          <span className="font-semibold text-gray-700">
+                            Type de frais:
+                          </span>
+                          <span className="ml-2 text-gray-900">
+                            {feeTypes.find((ft) => ft.id === selectedFeeType)
+                              ?.name || "N/A"}
+                          </span>
+                        </div>
+                        {bulkFormData.academicYearId && (
+                          <div>
+                            <span className="font-semibold text-gray-700">
+                              Année sélectionnée:
+                            </span>
+                            <span className="ml-2 text-purple-700 font-semibold">
+                              {academicYears.find(
+                                (y) => y.id === bulkFormData.academicYearId
+                              )?.name || "N/A"}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-semibold text-gray-700">
+                            Années disponibles:
+                          </span>
+                          <span className="ml-2 text-gray-600 text-xs">
+                            {Array.from(
+                              new Set(
+                                getFilteredStudentFees()
+                                  .filter((fee) =>
+                                    selectedStudentFees.has(fee.id)
+                                  )
+                                  .map((fee) => fee.academicYear.name)
+                              )
+                            ).join(", ")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <form onSubmit={handleBulkSubmit} className="space-y-6">
+                  {/* Année académique */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Année académique <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={bulkFormData.academicYearId}
+                      onChange={(e) =>
+                        setBulkFormData({
+                          ...bulkFormData,
+                          academicYearId: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      required
+                    >
+                      <option value="">
+                        Sélectionner une année académique
+                      </option>
+                      {academicYears.map((year) => (
+                        <option key={year.id} value={year.id}>
+                          {year.name} {year.isActive ? "(Active)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Sélectionnez l'année académique pour laquelle ce paiement
+                      est destiné
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Montant */}
                     <div>
@@ -892,8 +995,9 @@ const PaymentAssignmentPage: React.FC = () => {
                           Sélectionner un membre du personnel
                         </option>
                         {staffs.map((staff) => (
-                          <option key={staff.id} value={staff.id}>
-                            {staff.firstName} {staff.lastName}
+                          <option key={staff.user.id} value={staff.user.id}>
+                            {staff.user.firstName} {staff.user.lastName}
+                            {staff.position && ` - ${staff.position}`}
                           </option>
                         ))}
                       </select>
@@ -966,6 +1070,7 @@ const PaymentAssignmentPage: React.FC = () => {
                           method: "cash",
                           receivedBy: "",
                           paymentDate: new Date().toISOString().split("T")[0],
+                          academicYearId: "",
                         });
                       }}
                       variant="outline"
@@ -979,7 +1084,7 @@ const PaymentAssignmentPage: React.FC = () => {
                     >
                       {isSubmitting ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
                           Enregistrement...
                         </>
                       ) : (
@@ -996,7 +1101,7 @@ const PaymentAssignmentPage: React.FC = () => {
           </div>
         )}
       </div>
-    </Layout>
+    </AuthenticatedPage>
   );
 };
 

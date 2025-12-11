@@ -57,6 +57,10 @@ export class CreateStudentDto {
   @IsOptional()
   @IsString({ message: 'Les notes doivent être une chaîne' })
   notes?: string;
+
+  @IsOptional()
+  @IsUUID('4', { message: 'institutionId doit être un UUID valide' })
+  institutionId?: string;
 }
 
 export class UpdateStudentDto extends PartialType(CreateStudentDto) {}
@@ -75,6 +79,12 @@ export class StudentResponseDto {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  institutionId?: string;
+  institution?: {
+    id: string;
+    name: string;
+    code: string;
+  };
   createdAt: string | Date;
   updatedAt: string | Date;
   user?: UserResponseDto;

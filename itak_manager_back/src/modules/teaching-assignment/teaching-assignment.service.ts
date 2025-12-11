@@ -367,7 +367,7 @@ export class TeachingAssignmentService {
       updatedAt: assignment.updatedAt,
       teacher: {
         id: assignment.teacher.id,
-        matricule: assignment.teacher.matricule,
+        matricule: assignment.teacher.matricule || '',
         hireDate: assignment.teacher.hireDate,
         subjects: assignment.teacher.subjects || [],
         createdAt: assignment.teacher.createdAt,

@@ -142,18 +142,28 @@
     }
 
     .role-super-admin {
+      background-color: #fef3c7;
+      color: #b45309;
+    }
+
+    .role-admin {
       background-color: #ffe4e6;
       color: #d72638;
     }
 
-    .role-business-owner {
-      background-color: #fff4e6;
-      color: #f97316;
-    }
-
-    .role-employee {
+    .role-scolarite {
       background-color: #e6f0ff;
       color: #1e40af;
+    }
+
+    .role-finance {
+      background-color: #dcfce7;
+      color: #16a34a;
+    }
+
+    .role-qualite {
+      background-color: #f3e8ff;
+      color: #7c3aed;
     }
 
     .cta-button {
@@ -265,7 +275,7 @@
         <img src="<%= logoUrl %>" alt="<%= appName %> Logo">
       </div>
       <h1><%= appName %></h1>
-      <p>Votre solution de gestion de stock</p>
+      <p>Système de Gestion Universitaire</p>
     </div>
 
     <!-- Content -->
@@ -289,16 +299,13 @@
         <div class="credential-item">
           <span class="credential-label">Rôle :</span>
           <span class="role-badge role-<%= role.toLowerCase().replace('_', '-') %>">
-            <%= role === 'SUPER_ADMIN' ? 'Super Admin' : 
-                role === 'BUSINESS_OWNER' ? 'Propriétaire' : 'Employé' %>
+            <%= role === 'super_admin' ? 'Président / DG' : 
+                role === 'admin' ? 'Administrateur' : 
+                role === 'scolarite' ? 'Service Scolarité' :
+                role === 'finance' ? 'Service Comptabilité' :
+                role === 'qualite' ? 'Assurance Qualité' : role %>
           </span>
         </div>
-        <% if (businessName && businessName.trim() !== '') { %>
-        <div class="credential-item">
-          <span class="credential-label">Entreprise :</span>
-          <span class="credential-value"><%= businessName %></span>
-        </div>
-        <% } %>
       </div>
 
       <!-- CTA -->
@@ -310,8 +317,8 @@
         <ul>
           <li>Connectez-vous avec vos identifiants</li>
           <li>Changez votre mot de passe lors de votre première connexion</li>
-          <li>Explorez les fonctionnalités de gestion de stock</li>
-          <li>Configurez votre profil utilisateur</li>
+          <li>Accédez à votre espace de travail</li>
+          <li>Contactez le support en cas de problème</li>
         </ul>
       </div>
     </div>

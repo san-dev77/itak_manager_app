@@ -1,6 +1,6 @@
 # Pages de Paramètres
 
-Ce dossier contient toutes les pages de configuration et d'affectation du système ITAK.
+Ce dossier contient toutes les pages de configuration et d'affectation du système Cyber School.
 
 ## Structure des Pages
 

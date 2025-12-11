@@ -6,7 +6,7 @@ import { UserService } from '../../user/user.service';
 
 export interface JwtPayload {
   sub: string;
-  email: string;
+  email?: string;
   role: string;
   iat?: number;
   exp?: number;
@@ -28,7 +28,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload) {
     try {
-      const user = await this.userService.getUserByEmail(payload.email);
+      // Récupérer par ID (sub) si email non disponible
+      let user;
+      if (payload.email) {
+        user = await this.userService.getUserByEmail(payload.email);
+      } else {
+        user = await this.userService.getUserById(payload.sub);
+      }
 
       if (!user || !user.isActive) {
         throw new UnauthorizedException('Utilisateur non trouvé ou inactif');

@@ -75,8 +75,7 @@ const SubjectClassAssignmentPage: React.FC = () => {
   // >("students");
 
   useEffect(() => {
-    const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
+    const userData = localStorage.getItem("user");
     if (userData) {
       try {
         setUser(JSON.parse(userData));
@@ -668,6 +667,11 @@ const SubjectClassAssignmentPage: React.FC = () => {
                             <div>
                               <h3 className="font-semibold text-gray-900">
                                 {classItem.name}
+                                {classItem.classCategory?.institution && (
+                                  <span className="ml-2 text-xs font-semibold text-blue-600">
+                                    ({classItem.classCategory.institution.code})
+                                  </span>
+                                )}
                               </h3>
                               <p className="text-sm text-gray-600">
                                 Niveau: {classItem.level} • Code:{" "}
@@ -766,152 +770,93 @@ const SubjectClassAssignmentPage: React.FC = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-500">
-                    {assignments.map((assignment) => (
-                      <div
-                        key={assignment.id}
-                        className="group relative bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all duration-200 hover:border-gray-300"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            {/* Header avec informations */}
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-green-600 rounded-lg flex items-center justify-center">
-                                <svg
-                                  className="w-5 h-5 text-white"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                                  />
-                                </svg>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Matière
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Classe
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Institution
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Coefficient
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Heures/semaine
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Type
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {assignments.map((assignment) => (
+                          <tr key={assignment.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                {assignment.subject?.name || "Matière inconnue"}
                               </div>
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-gray-900 text-lg">
-                                  {assignment.subject?.name ||
-                                    "Matière inconnue"}
-                                </h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    <div className="w-2 h-2 rounded-full mr-1.5 bg-blue-400"></div>
-                                    Affectée
-                                  </span>
-                                  {assignment.isOptional && (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                      Optionnel
-                                    </span>
-                                  )}
-                                </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">
+                                {assignment.class?.name || "Classe inconnue"}
                               </div>
-                            </div>
-
-                            {/* Informations de classe */}
-                            <div className="bg-white rounded-lg p-3 mb-3 border border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
-                                  <svg
-                                    className="w-3 h-3 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                    />
-                                  </svg>
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900">
-                                    {assignment.class?.name ||
-                                      "Classe inconnue"}
-                                  </p>
-                                  <p className="text-sm text-gray-600">
-                                    Niveau: {assignment.class?.level || "N/A"}
-                                  </p>
-                                </div>
+                              <div className="text-xs text-gray-500">
+                                {assignment.class?.level || "N/A"}
                               </div>
-                            </div>
-
-                            {/* Détails */}
-                            <div className="flex items-center gap-4 text-sm">
-                              <div className="flex items-center gap-1.5 text-gray-600">
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                                  />
-                                </svg>
-                                <span className="font-medium">
-                                  Coefficient:
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-semibold text-blue-600">
+                                N/A
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500">
+                                {assignment.coefficient}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500">
+                                {assignment.weeklyHours
+                                  ? `${assignment.weeklyHours}h`
+                                  : "N/A"}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {assignment.isOptional ? (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                  Optionnel
                                 </span>
-                                <span>{assignment.coefficient}</span>
-                              </div>
-                              {assignment.weeklyHours && (
-                                <div className="flex items-center gap-1.5 text-gray-600">
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                  </svg>
-                                  <span className="font-medium">Heures:</span>
-                                  <span>{assignment.weeklyHours}h/semaine</span>
-                                </div>
+                              ) : (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  Obligatoire
+                                </span>
                               )}
-                            </div>
-                          </div>
-
-                          {/* Bouton de suppression */}
-                          <div className="ml-4 flex-shrink-0">
-                            <Button
-                              onClick={() =>
-                                handleDeleteClick(assignment.id, assignment)
-                              }
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 opacity-0 group-hover:opacity-100"
-                            >
-                              <svg
-                                className="w-4 h-4 mr-1"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              <Button
+                                onClick={() =>
+                                  handleDeleteClick(assignment.id, assignment)
+                                }
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                              Supprimer
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                                Supprimer
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>

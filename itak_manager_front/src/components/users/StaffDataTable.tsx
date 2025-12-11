@@ -39,8 +39,8 @@ const StaffDataTable = ({
       // Inclure tous les utilisateurs qui ont des profils staff OU qui ont le rôle "staff" ou "teacher"
       const staffUsers = users.filter(
         (user) =>
-          user.role === "staff" ||
-          user.role === "teacher" ||
+          (user.role as string) === "staff" ||
+          (user.role as string) === "teacher" ||
           existingProfiles.some((profile) => profile.userId === user.id)
       );
 

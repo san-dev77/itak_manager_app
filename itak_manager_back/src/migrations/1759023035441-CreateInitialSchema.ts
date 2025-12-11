@@ -4,6 +4,37 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
   name = 'CreateInitialSchema1759023035441';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Créer la table institutions en premier (si elle n'existe pas déjà)
+    const institutionsTable = await queryRunner.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'institutions'
+      )
+    `);
+
+    if (!institutionsTable[0].exists) {
+      await queryRunner.query(`
+        CREATE TABLE "institutions" (
+          "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+          "name" character varying(50) NOT NULL,
+          "code" character varying(10) NOT NULL,
+          "description" text,
+          "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+          "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
+          CONSTRAINT "UQ_institutions_name" UNIQUE ("name"),
+          CONSTRAINT "UQ_institutions_code" UNIQUE ("code"),
+          CONSTRAINT "PK_institutions" PRIMARY KEY ("id")
+        )
+      `);
+      await queryRunner.query(
+        `CREATE INDEX "IDX_institutions_name" ON "institutions" ("name")`,
+      );
+      await queryRunner.query(
+        `CREATE INDEX "IDX_institutions_code" ON "institutions" ("code")`,
+      );
+    }
+
     await queryRunner.query(
       `CREATE TABLE "school_years" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(20) NOT NULL, "start_date" date NOT NULL, "end_date" date NOT NULL, "is_active" boolean NOT NULL DEFAULT false, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_687611dadc1a5966e0365e4f492" UNIQUE ("name"), CONSTRAINT "PK_3fe99d570a61178cb99065783cf" PRIMARY KEY ("id"))`,
     );
@@ -65,7 +96,7 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
       `CREATE INDEX "IDX_542cbba74dde3c82ab49c57310" ON "subjects" ("code") `,
     );
     await queryRunner.query(
-      `CREATE TABLE "teachers" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "matricule" character varying(20) NOT NULL, "hire_date" date NOT NULL, "photo" text, "marital_status" character varying(20), "diplomas" text, "address" text, "emergency_contact" character varying(100), "notes" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_4668d4752e6766682d1be0b346f" UNIQUE ("user_id"), CONSTRAINT "UQ_4da9777c79b35eb3a0fcdcd833e" UNIQUE ("matricule"), CONSTRAINT "PK_a8d4f83be3abe4c687b0a0093c8" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "teachers" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "matricule" character varying(20) NOT NULL, "hire_date" date NOT NULL, "photo" text, "marital_status" character varying(20), "diplomas" text, "address" text, "emergency_contact" character varying(100), "notes" text, "institution_id" uuid, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_4668d4752e6766682d1be0b346f" UNIQUE ("user_id"), CONSTRAINT "UQ_4da9777c79b35eb3a0fcdcd833e" UNIQUE ("matricule"), CONSTRAINT "PK_a8d4f83be3abe4c687b0a0093c8" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_4668d4752e6766682d1be0b346" ON "teachers" ("user_id") `,
@@ -75,6 +106,9 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_bc8ceddb4c4419b52ff7ff5c3b" ON "teachers" ("hire_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_teachers_institution_id" ON "teachers" ("institution_id") `,
     );
     await queryRunner.query(
       `CREATE TABLE "staff" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "matricule" character varying(20) NOT NULL, "hire_date" date NOT NULL, "position" character varying(50) NOT NULL, "photo" text, "marital_status" character varying(20), "address" text, "emergency_contact" character varying(100), "notes" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_cec9365d9fc3a3409158b645f2e" UNIQUE ("user_id"), CONSTRAINT "UQ_a9de5f1c1623ab6169408ed4159" UNIQUE ("matricule"), CONSTRAINT "PK_e4ee98bb552756c180aec1e854a" PRIMARY KEY ("id"))`,
@@ -230,10 +264,10 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
       `CREATE INDEX "IDX_addd19c06574aa904472b8c82b" ON "payments" ("received_by") `,
     );
     await queryRunner.query(
-      `CREATE TYPE "public"."users_role_enum" AS ENUM('admin', 'super_admin', 'teacher', 'student', 'staff', 'parent')`,
+      `CREATE TYPE "public"."users_role_enum" AS ENUM('super_admin', 'admin', 'scolarite', 'finance', 'qualite')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "users" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "username" character varying(50) NOT NULL, "email" character varying(100) NOT NULL, "first_name" character varying(50) NOT NULL, "last_name" character varying(50) NOT NULL, "gender" character varying(10), "birth_date" date, "phone" character varying(20), "password" character varying(255) NOT NULL, "role" "public"."users_role_enum" NOT NULL DEFAULT 'student', "is_active" boolean NOT NULL DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_fe0bb3f6520ee0469504521e710" UNIQUE ("username"), CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "users" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "username" character varying(50) NOT NULL, "email" character varying(100), "first_name" character varying(50) NOT NULL, "last_name" character varying(50) NOT NULL, "gender" character varying(10), "birth_date" date, "phone" character varying(20), "password" character varying(255) NOT NULL, "role" "public"."users_role_enum" NOT NULL DEFAULT 'scolarite', "is_active" boolean NOT NULL DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_fe0bb3f6520ee0469504521e710" UNIQUE ("username"), CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_fe0bb3f6520ee0469504521e71" ON "users" ("username") `,
@@ -311,7 +345,7 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
       `CREATE INDEX "IDX_c4593f7d91140d6fcc31d1abbf" ON "assessment_attendance" ("status") `,
     );
     await queryRunner.query(
-      `CREATE TABLE "students" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "matricule" character varying(20) NOT NULL, "enrollment_date" date NOT NULL, "photo" text, "marital_status" character varying(20), "father_name" character varying(100), "mother_name" character varying(100), "tutor_name" character varying(100), "tutor_phone" character varying(20), "address" text, "emergency_contact" character varying(100), "notes" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_fb3eff90b11bddf7285f9b4e281" UNIQUE ("user_id"), CONSTRAINT "UQ_72985b50b5a897ee0ea6a3536cd" UNIQUE ("matricule"), CONSTRAINT "PK_7d7f07271ad4ce999880713f05e" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "students" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "matricule" character varying(20) NOT NULL, "enrollment_date" date NOT NULL, "photo" text, "marital_status" character varying(20), "father_name" character varying(100), "mother_name" character varying(100), "tutor_name" character varying(100), "tutor_phone" character varying(20), "address" text, "emergency_contact" character varying(100), "notes" text, "institution_id" uuid, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_fb3eff90b11bddf7285f9b4e281" UNIQUE ("user_id"), CONSTRAINT "UQ_72985b50b5a897ee0ea6a3536cd" UNIQUE ("matricule"), CONSTRAINT "PK_7d7f07271ad4ce999880713f05e" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_fb3eff90b11bddf7285f9b4e28" ON "students" ("user_id") `,
@@ -321,6 +355,9 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_f02c3d198bd4cfafea78366b65" ON "students" ("enrollment_date") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_students_institution_id" ON "students" ("institution_id") `,
     );
     await queryRunner.query(
       `CREATE TYPE "public"."student_classes_status_enum" AS ENUM('active', 'transferred', 'repeating', 'graduated', 'dropped')`,
@@ -347,19 +384,22 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
       `CREATE INDEX "IDX_de18b50a2bd4b317616cec9756" ON "student_classes" ("year") `,
     );
     await queryRunner.query(
-      `CREATE TABLE "class_category" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(50) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_57121e4285ce95dcb67dce5f77f" UNIQUE ("name"), CONSTRAINT "PK_903c13b4bea96ee4844ad7abd9e" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "class_category" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(50) NOT NULL, "institution_id" uuid, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_57121e4285ce95dcb67dce5f77f" UNIQUE ("name"), CONSTRAINT "PK_903c13b4bea96ee4844ad7abd9e" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_57121e4285ce95dcb67dce5f77" ON "class_category" ("name") `,
     );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_class_category_institution_id" ON "class_category" ("institution_id") `,
+    );
     // Données initiales pour les catégories de classes
     await queryRunner.query(
       `INSERT INTO "class_category" ("id", "name") VALUES 
-        (uuid_generate_v4(), 'Collège & Lycée'),
-        (uuid_generate_v4(), 'Faculté')`,
+        (uuid_generate_v4(), 'ITAK(Lycée professionnel)'),
+        (uuid_generate_v4(), 'UPCD(Université privée)')`,
     );
     await queryRunner.query(
-      `CREATE TABLE "classes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(50) NOT NULL, "code" character varying(10) NOT NULL, "description" text, "level" character varying(20), "category_id" uuid NOT NULL, "capacity" integer, "order_level" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "class_category_id" uuid, CONSTRAINT "UQ_cf7491878e0fca8599438629988" UNIQUE ("code"), CONSTRAINT "PK_e207aa15404e9b2ce35910f9f7f" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "classes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(50) NOT NULL, "code" character varying(10) NOT NULL, "description" text, "level" character varying(20), "category_id" uuid, "capacity" integer, "order_level" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "class_category_id" uuid, CONSTRAINT "UQ_cf7491878e0fca8599438629988" UNIQUE ("code"), CONSTRAINT "PK_e207aa15404e9b2ce35910f9f7f" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_1f3940af28a76098f31004f03c" ON "classes" ("name") `,
@@ -566,6 +606,9 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
       `ALTER TABLE "teachers" ADD CONSTRAINT "FK_4668d4752e6766682d1be0b346f" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
+      `ALTER TABLE "teachers" ADD CONSTRAINT "FK_teachers_institution" FOREIGN KEY ("institution_id") REFERENCES "institutions"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
       `ALTER TABLE "staff" ADD CONSTRAINT "FK_cec9365d9fc3a3409158b645f2e" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
@@ -665,6 +708,9 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
       `ALTER TABLE "students" ADD CONSTRAINT "FK_fb3eff90b11bddf7285f9b4e281" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
+      `ALTER TABLE "students" ADD CONSTRAINT "FK_students_institution" FOREIGN KEY ("institution_id") REFERENCES "institutions"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
       `ALTER TABLE "student_classes" ADD CONSTRAINT "FK_09b94eccbdedd86b77d54daaeb8" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
@@ -672,6 +718,9 @@ export class CreateInitialSchema1759023035441 implements MigrationInterface {
     );
     await queryRunner.query(
       `ALTER TABLE "classes" ADD CONSTRAINT "FK_fbc2a60d09eaf6d4cbb9f326932" FOREIGN KEY ("class_category_id") REFERENCES "class_category"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "class_category" ADD CONSTRAINT "FK_class_category_institution" FOREIGN KEY ("institution_id") REFERENCES "institutions"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "class_subjects" ADD CONSTRAINT "FK_433f93dd22b685e59c285726a1f" FOREIGN KEY ("class_id") REFERENCES "classes"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,

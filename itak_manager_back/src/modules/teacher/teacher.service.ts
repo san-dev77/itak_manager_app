@@ -38,13 +38,39 @@ export class TeacherService {
         throw new NotFoundException('Utilisateur non trouvé');
       }
 
-      // Vérifier si le matricule existe déjà
-      const existingTeacher = await this.teacherRepository.findOne({
-        where: { matricule: createTeacherDto.matricule },
-      });
+      // Générer un matricule automatiquement si non fourni
+      let matricule = createTeacherDto.matricule;
+      if (!matricule) {
+        // Générer un matricule unique basé sur le timestamp et un random
+        const timestamp = Date.now().toString(36).toUpperCase();
+        const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+        matricule = `TCH-${timestamp}-${random}`;
 
-      if (existingTeacher) {
-        throw new ConflictException('Ce matricule existe déjà');
+        // Vérifier l'unicité
+        let exists = await this.teacherRepository.findOne({
+          where: { matricule },
+        });
+        let attempts = 0;
+        while (exists && attempts < 10) {
+          const newRandom = Math.random()
+            .toString(36)
+            .substring(2, 6)
+            .toUpperCase();
+          matricule = `TCH-${timestamp}-${newRandom}`;
+          exists = await this.teacherRepository.findOne({
+            where: { matricule },
+          });
+          attempts++;
+        }
+      } else {
+        // Vérifier si le matricule existe déjà
+        const existingTeacher = await this.teacherRepository.findOne({
+          where: { matricule: createTeacherDto.matricule },
+        });
+
+        if (existingTeacher) {
+          throw new ConflictException('Ce matricule existe déjà');
+        }
       }
 
       // Vérifier si l'utilisateur n'est pas déjà enseignant
@@ -70,9 +96,11 @@ export class TeacherService {
       }
 
       // Créer l'enseignant
+      console.log('📤 Création enseignant - institutionId reçu:', createTeacherDto.institutionId);
+      
       const teacher = this.teacherRepository.create({
         userId: createTeacherDto.userId,
-        matricule: createTeacherDto.matricule,
+        matricule: matricule,
         hireDate: new Date(createTeacherDto.hireDate),
         photo: createTeacherDto.photo,
         maritalStatus: createTeacherDto.maritalStatus,
@@ -80,15 +108,17 @@ export class TeacherService {
         address: createTeacherDto.address,
         emergencyContact: createTeacherDto.emergencyContact,
         notes: createTeacherDto.notes,
+        institutionId: createTeacherDto.institutionId,
         subjects,
       });
 
       const savedTeacher = await this.teacherRepository.save(teacher);
+      console.log('✅ Enseignant sauvegardé - id:', savedTeacher.id, 'institutionId:', savedTeacher.institutionId);
 
       // Récupérer l'enseignant avec toutes les relations
       const teacherWithRelations = await this.teacherRepository.findOne({
         where: { id: savedTeacher.id },
-        relations: ['user', 'subjects'],
+        relations: ['user', 'subjects', 'institution'],
       });
 
       return this.mapToTeacherResponse(teacherWithRelations!);
@@ -105,11 +135,33 @@ export class TeacherService {
     }
   }
 
-  async getAllTeachers(): Promise<TeacherResponseDto[]> {
+  async getAllTeachers(institutionId?: string): Promise<TeacherResponseDto[]> {
     try {
+      const where: any = {};
+      if (institutionId) {
+        where.institutionId = institutionId;
+      } else {
+        // Si pas d'institutionId, inclure aussi les enseignants sans institution
+        // pour éviter de filtrer les enseignants qui n'ont pas d'institution
+      }
+
+      console.log('🔍 getAllTeachers - institutionId:', institutionId);
+      console.log('🔍 getAllTeachers - where:', where);
+
       const teachers = await this.teacherRepository.find({
-        relations: ['user'],
+        where,
+        relations: ['user', 'institution'],
         order: { createdAt: 'DESC' },
+      });
+
+      console.log('🔍 getAllTeachers - nombre d\'enseignants trouvés:', teachers.length);
+      teachers.forEach((t, i) => {
+        console.log(`🔍 Enseignant ${i + 1}:`, {
+          id: t.id,
+          name: `${t.user?.firstName} ${t.user?.lastName}`,
+          institutionId: t.institutionId,
+          institutionName: t.institution?.name,
+        });
       });
 
       return teachers.map((teacher) => this.mapToTeacherResponse(teacher));
@@ -278,7 +330,7 @@ export class TeacherService {
   private mapToTeacherResponse(teacher: Teacher): TeacherResponseDto {
     return {
       id: teacher.id,
-      matricule: teacher.matricule,
+      matricule: teacher.matricule || '',
       hireDate: teacher.hireDate,
       photo: teacher.photo,
       maritalStatus: teacher.maritalStatus,
@@ -287,6 +339,14 @@ export class TeacherService {
       address: teacher.address,
       emergencyContact: teacher.emergencyContact,
       notes: teacher.notes,
+      institutionId: teacher.institutionId,
+      institution: teacher.institution
+        ? {
+            id: teacher.institution.id,
+            name: teacher.institution.name,
+            code: teacher.institution.code,
+          }
+        : undefined,
       createdAt: teacher.createdAt,
       updatedAt: teacher.updatedAt,
       user: {

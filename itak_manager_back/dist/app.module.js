@@ -13,6 +13,7 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const config_1 = require("@nestjs/config");
+const bullmq_1 = require("@nestjs/bullmq");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const database_config_1 = __importDefault(require("./config/database.config"));
@@ -50,6 +51,7 @@ const event_participant_module_1 = require("./modules/event-participant/event-pa
 const teaching_assignment_module_1 = require("./modules/teaching-assignment/teaching-assignment.module");
 const class_subject_module_1 = require("./modules/class-subject/class-subject.module");
 const student_class_module_1 = require("./modules/student-class/student-class.module");
+const email_module_1 = require("./modules/email/email.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -58,6 +60,17 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
+            }),
+            bullmq_1.BullModule.forRootAsync({
+                imports: [config_1.ConfigModule],
+                useFactory: (configService) => ({
+                    connection: {
+                        host: configService.get('REDIS_HOST', 'localhost'),
+                        port: configService.get('REDIS_PORT', 6379),
+                        password: configService.get('REDIS_PASSWORD'),
+                    },
+                }),
+                inject: [config_1.ConfigService],
             }),
             typeorm_1.TypeOrmModule.forRootAsync({
                 useFactory: database_config_1.default,
@@ -96,6 +109,7 @@ exports.AppModule = AppModule = __decorate([
             teaching_assignment_module_1.TeachingAssignmentModule,
             class_subject_module_1.ClassSubjectModule,
             student_class_module_1.StudentClassModule,
+            email_module_1.EmailModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

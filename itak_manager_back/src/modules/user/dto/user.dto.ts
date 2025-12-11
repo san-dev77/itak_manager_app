@@ -13,8 +13,9 @@ export class CreateUserDto {
   @IsString({ message: "Le nom d'utilisateur doit être une chaîne" })
   username?: string;
 
+  @IsOptional()
   @IsEmail({}, { message: 'Email invalide' })
-  email: string;
+  email?: string;
 
   @IsString({ message: 'Le prénom doit être une chaîne' })
   firstName: string;
@@ -94,7 +95,7 @@ export class UpdateUserDto {
 export class UserResponseDto {
   id: string;
   username: string;
-  email: string;
+  email?: string;
   firstName: string;
   lastName: string;
   gender?: string;

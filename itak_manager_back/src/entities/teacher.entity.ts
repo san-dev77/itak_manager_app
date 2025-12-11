@@ -12,6 +12,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Institution } from './institution.entity';
 import { TeachingAssignment } from './teaching-assignment.entity';
 import { Subject } from './subject.entity';
 
@@ -24,9 +25,9 @@ export class Teacher {
   @Index()
   userId: string;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
+  @Column({ type: 'varchar', length: 20, unique: true, nullable: true })
   @Index()
-  matricule: string;
+  matricule?: string;
 
   @Column({ type: 'date' })
   @Index()
@@ -52,6 +53,10 @@ export class Teacher {
   @Column({ type: 'text', nullable: true })
   notes?: string;
 
+  @Column({ type: 'uuid', nullable: true })
+  @Index()
+  institutionId?: string;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
@@ -64,6 +69,12 @@ export class Teacher {
   })
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => Institution, (institution) => institution.teachers, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'institution_id' })
+  institution?: Institution;
 
   @OneToMany(() => TeachingAssignment, (assignment) => assignment.teacher)
   teachingAssignments: TeachingAssignment[];

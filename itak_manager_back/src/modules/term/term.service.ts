@@ -40,11 +40,13 @@ export class TermService {
         );
       }
 
-      // Vérifier que les dates sont dans la période de l'année scolaire
-      if (startDate < schoolYear.startDate || endDate > schoolYear.endDate) {
-        throw new BadRequestException(
-          "Les dates du trimestre doivent être comprises dans la période de l'année scolaire",
-        );
+      // Vérifier que les dates sont dans la période de l'année scolaire (si les dates de l'année sont définies)
+      if (schoolYear.startDate && schoolYear.endDate) {
+        if (startDate < schoolYear.startDate || endDate > schoolYear.endDate) {
+          throw new BadRequestException(
+            "Les dates du trimestre doivent être comprises dans la période de l'année scolaire",
+          );
+        }
       }
 
       // Vérifier l'unicité du nom dans la même année scolaire
@@ -239,11 +241,13 @@ export class TermService {
           );
         }
 
-        // Vérifier que les dates sont dans la période de l'année scolaire
-        if (schoolYear && (startDate < schoolYear.startDate || endDate > schoolYear.endDate)) {
-          throw new BadRequestException(
-            "Les dates du trimestre doivent être comprises dans la période de l'année scolaire",
-          );
+        // Vérifier que les dates sont dans la période de l'année scolaire (si les dates de l'année sont définies)
+        if (schoolYear && schoolYear.startDate && schoolYear.endDate) {
+          if (startDate < schoolYear.startDate || endDate > schoolYear.endDate) {
+            throw new BadRequestException(
+              "Les dates du trimestre doivent être comprises dans la période de l'année scolaire",
+            );
+          }
         }
       } else if (updateTermDto.startDate || updateTermDto.endDate) {
         // Si une seule date est fournie, utiliser les dates existantes pour la validation
@@ -260,11 +264,13 @@ export class TermService {
           );
         }
 
-        // Vérifier que les dates sont dans la période de l'année scolaire
-        if (schoolYear && (startDate < schoolYear.startDate || endDate > schoolYear.endDate)) {
-          throw new BadRequestException(
-            "Les dates du trimestre doivent être comprises dans la période de l'année scolaire",
-          );
+        // Vérifier que les dates sont dans la période de l'année scolaire (si les dates de l'année sont définies)
+        if (schoolYear && schoolYear.startDate && schoolYear.endDate) {
+          if (startDate < schoolYear.startDate || endDate > schoolYear.endDate) {
+            throw new BadRequestException(
+              "Les dates du trimestre doivent être comprises dans la période de l'année scolaire",
+            );
+          }
         }
       }
 

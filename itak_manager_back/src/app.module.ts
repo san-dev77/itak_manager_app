@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BullModule } from '@nestjs/bullmq';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import databaseConfig from './config/database.config';
@@ -38,11 +39,24 @@ import { EventParticipantModule } from './modules/event-participant/event-partic
 import { TeachingAssignmentModule } from './modules/teaching-assignment/teaching-assignment.module';
 import { ClassSubjectModule } from './modules/class-subject/class-subject.module';
 import { StudentClassModule } from './modules/student-class/student-class.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    // Configuration BullMQ pour Redis (queues d'emails)
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('REDIS_HOST', 'localhost'),
+          port: configService.get('REDIS_PORT', 6379),
+          password: configService.get('REDIS_PASSWORD'),
+        },
+      }),
+      inject: [ConfigService],
     }),
     TypeOrmModule.forRootAsync({
       useFactory: databaseConfig,
@@ -81,6 +95,7 @@ import { StudentClassModule } from './modules/student-class/student-class.module
     TeachingAssignmentModule,
     ClassSubjectModule,
     StudentClassModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

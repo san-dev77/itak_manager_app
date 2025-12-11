@@ -32,7 +32,7 @@ export class GradeFreezeController {
   async createFreezePeriod(
     @Body() createFreezePeriodDto: CreateFreezePeriodDto,
   ): Promise<FreezePeriodResponseDto> {
-    return await this.gradeFreezeService.createFreezePeriod(
+    return (await this.gradeFreezeService.createFreezePeriod(
       createFreezePeriodDto.schoolYearId,
       createFreezePeriodDto.title,
       createFreezePeriodDto.description || undefined,
@@ -44,7 +44,7 @@ export class GradeFreezeController {
       createFreezePeriodDto.classId,
       createFreezePeriodDto.allowEmergencyOverride,
       createFreezePeriodDto.overridePassword,
-    );
+    )) as unknown as FreezePeriodResponseDto;
   }
 
   @Get()
@@ -55,20 +55,22 @@ export class GradeFreezeController {
     @Query('termId') termId?: string,
     @Query('classId') classId?: string,
   ): Promise<FreezePeriodResponseDto[]> {
-    return await this.gradeFreezeService.getFreezePeriods(
+    return (await this.gradeFreezeService.getFreezePeriods(
       schoolYearId,
       status,
       scope,
       termId,
       classId,
-    );
+    )) as unknown as FreezePeriodResponseDto[];
   }
 
   @Get(':id')
   async getFreezePeriodById(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<FreezePeriodResponseDto> {
-    return await this.gradeFreezeService.getFreezePeriodById(id);
+    return (await this.gradeFreezeService.getFreezePeriodById(
+      id,
+    )) as unknown as FreezePeriodResponseDto;
   }
 
   @Get('check/status')
@@ -77,11 +79,11 @@ export class GradeFreezeController {
     @Query('termId') termId?: string,
     @Query('classId') classId?: string,
   ): Promise<FreezeStatusCheckDto> {
-    return await this.gradeFreezeService.isGradeFrozen(
+    return (await this.gradeFreezeService.isGradeFrozen(
       schoolYearId,
       termId,
       classId,
-    );
+    )) as unknown as FreezeStatusCheckDto;
   }
 
   @Post(':id/approve')
@@ -89,10 +91,10 @@ export class GradeFreezeController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() approveDto: ApproveFreezePeriodDto,
   ): Promise<FreezePeriodResponseDto> {
-    return await this.gradeFreezeService.approveFreezePeriod(
+    return (await this.gradeFreezeService.approveFreezePeriod(
       id,
       approveDto.approvedBy,
-    );
+    )) as unknown as FreezePeriodResponseDto;
   }
 
   @Post(':id/cancel')
@@ -100,11 +102,11 @@ export class GradeFreezeController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() cancelDto: CancelFreezePeriodDto,
   ): Promise<FreezePeriodResponseDto> {
-    return await this.gradeFreezeService.cancelFreezePeriod(
+    return (await this.gradeFreezeService.cancelFreezePeriod(
       id,
       cancelDto.cancelledBy,
       cancelDto.reason,
-    );
+    )) as unknown as FreezePeriodResponseDto;
   }
 
   @Post(':id/verify-override')
@@ -148,7 +150,10 @@ export class GradeFreezeController {
       updates.overridePassword = updateFreezePeriodDto.overridePassword;
     }
 
-    return await this.gradeFreezeService.updateFreezePeriod(id, updates);
+    return (await this.gradeFreezeService.updateFreezePeriod(
+      id,
+      updates,
+    )) as unknown as FreezePeriodResponseDto;
   }
 
   @Delete(':id')
@@ -167,7 +172,7 @@ export class GradeFreezeController {
     const periods = await this.gradeFreezeService.activateScheduledPeriods();
     return {
       activated: periods.length,
-      periods,
+      periods: periods as unknown as FreezePeriodResponseDto[],
     };
   }
 
@@ -179,7 +184,7 @@ export class GradeFreezeController {
     const periods = await this.gradeFreezeService.completeExpiredPeriods();
     return {
       completed: periods.length,
-      periods,
+      periods: periods as unknown as FreezePeriodResponseDto[],
     };
   }
 }

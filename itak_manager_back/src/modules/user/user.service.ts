@@ -27,15 +27,17 @@ export class UserService {
 
   async createUser(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     try {
-      // Vérifier si l'utilisateur existe déjà
-      const existingUser = await this.userRepository.findOne({
-        where: { email: createUserDto.email },
-      });
+      // Vérifier si l'utilisateur existe déjà (seulement si email fourni)
+      if (createUserDto.email) {
+        const existingUser = await this.userRepository.findOne({
+          where: { email: createUserDto.email },
+        });
 
-      if (existingUser) {
-        throw new ConflictException(
-          'Un utilisateur avec cet email existe déjà',
-        );
+        if (existingUser) {
+          throw new ConflictException(
+            'Un utilisateur avec cet email existe déjà',
+          );
+        }
       }
 
       const password = createUserDto.password || Utils.generateRandomString(10);
@@ -54,7 +56,7 @@ export class UserService {
       // Créer l'utilisateur
       const user = this.userRepository.create({
         username,
-        email: createUserDto.email,
+        email: createUserDto.email || undefined,
         firstName: createUserDto.firstName,
         lastName: createUserDto.lastName,
         gender: createUserDto.gender,
@@ -63,20 +65,20 @@ export class UserService {
           : undefined,
         phone: createUserDto.phone,
         password: hashedPassword,
-        role: createUserDto.role || UserRole.STUDENT,
+        role: createUserDto.role || UserRole.SCOLARITE,
         isActive: true,
       });
 
-      // Send welcome email if EmailService is available
-      if (this.emailService) {
+      // Send welcome email if EmailService is available AND email provided
+      if (this.emailService && createUserDto.email) {
         try {
           await this.emailService.sendWelcomeEmail({
             firstName: createUserDto.firstName,
             lastName: createUserDto.lastName,
             email: createUserDto.email,
             password,
-            role: createUserDto.role || UserRole.STUDENT,
-            loginUrl: `${this.configService.get('app.frontendUrl')}/auth/login`,
+            role: createUserDto.role || UserRole.SCOLARITE,
+            loginUrl: `${this.configService.get('app.frontendUrl')}/login`,
           });
         } catch (emailError) {
           // Log email error but don't fail user creation

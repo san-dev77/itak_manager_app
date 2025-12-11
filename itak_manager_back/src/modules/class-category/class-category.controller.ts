@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   ValidationPipe,
@@ -32,8 +33,10 @@ export class ClassCategoryController {
   }
 
   @Get()
-  async getAllClassCategories(): Promise<ClassCategoryResponseDto[]> {
-    return this.classCategoryService.getAllClassCategories();
+  async getAllClassCategories(
+    @Query('institutionId') institutionId?: string,
+  ): Promise<ClassCategoryResponseDto[]> {
+    return this.classCategoryService.getAllClassCategories(institutionId);
   }
 
   @Get(':id')
@@ -67,5 +70,10 @@ export class ClassCategoryController {
   async initializeDefaultCategories(): Promise<{ message: string }> {
     await this.classCategoryService.initializeDefaultCategories();
     return { message: 'Catégories par défaut initialisées avec succès' };
+  }
+
+  @Get('institutions/all')
+  async getAllInstitutions() {
+    return this.classCategoryService.getAllInstitutions();
   }
 }

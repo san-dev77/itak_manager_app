@@ -52,10 +52,10 @@ export const useUserStore = create<UserState>()(
         const { users } = get();
         return {
           all: users.length,
-          students: users.filter((user) => user.role === "student").length,
-          teachers: users.filter((user) => user.role === "teacher").length,
-          staff: users.filter((user) => user.role === "staff").length,
-          parents: users.filter((user) => user.role === "parent").length,
+          students: users.filter((user) => (user.role as string) === "student").length,
+          teachers: users.filter((user) => (user.role as string) === "teacher").length,
+          staff: users.filter((user) => (user.role as string) === "staff").length,
+          parents: users.filter((user) => (user.role as string) === "parent").length,
           admins: users.filter((user) => user.role === "admin").length,
         };
       },

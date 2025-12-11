@@ -4,8 +4,11 @@ const core_1 = require("@nestjs/core");
 const app_module_1 = require("./app.module");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const express_1 = require("express");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    app.use((0, express_1.json)({ limit: '10mb' }));
+    app.use((0, express_1.urlencoded)({ limit: '10mb', extended: true }));
     app.enableCors({
         origin: (origin, callback) => {
             if (!origin)
@@ -15,10 +18,14 @@ async function bootstrap() {
                 'http://localhost:3001',
                 'http://localhost:5173',
                 'http://localhost:8080',
+                'http://localhost',
                 'http://127.0.0.1:3000',
                 'http://127.0.0.1:3001',
                 'http://127.0.0.1:5173',
+                'http://127.0.0.1',
                 'http://127.0.0.1:8080',
+                'https://cyberschool.upcd.ml',
+                'https://www.cyberschool.upcd.ml',
             ];
             if (allowedOrigins.includes(origin)) {
                 callback(null, true);
@@ -56,9 +63,9 @@ async function bootstrap() {
     const document = swagger_1.SwaggerModule.createDocument(app, config);
     swagger_1.SwaggerModule.setup('api/docs', app, document);
     const port = process.env.PORT ?? 3000;
-    await app.listen(port);
-    console.log(`Application is running on: http://localhost:${port}`);
-    console.log(`Swagger documentation: http://localhost:${port}/api/docs`);
+    await app.listen(port, '0.0.0.0');
+    console.log(`Application is running on: http://0.0.0.0:${port}`);
+    console.log(`Swagger documentation: http://0.0.0.0:${port}/api/docs`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map
