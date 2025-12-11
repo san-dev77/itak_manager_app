@@ -137,7 +137,7 @@ const ProfileManager = ({
               </h2>
               <p className="text-blue-600 mt-2">{getProfileDescription()}</p>
               <p className="text-sm text-blue-500 mt-1">
-                Utilisateur: {user.first_name} {user.last_name} ({user.email})
+                Utilisateur: {user.firstName} {user.lastName} ({user.email})
               </p>
             </div>
             <button

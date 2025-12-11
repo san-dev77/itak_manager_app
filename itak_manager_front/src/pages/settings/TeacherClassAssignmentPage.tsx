@@ -13,8 +13,7 @@ const TeacherClassAssignmentPage: React.FC = () => {
   const [notification, setNotification] = useState<any>(null);
 
   useEffect(() => {
-    const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
+    const userData = localStorage.getItem("user");
     if (userData) {
       try {
         setUser(JSON.parse(userData));
@@ -151,82 +150,129 @@ const TeacherClassAssignmentPage: React.FC = () => {
             Affectations existantes ({assignments.length})
           </h2>
 
-          <div className="space-y-4">
-            {assignments.map((assignment) => (
-              <div
-                key={assignment.id}
-                className="p-4 bg-gray-50 rounded-lg border border-gray-200"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold text-sm">
-                          {assignment.teacher?.user?.first_name?.[0] || "E"}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          {assignment.teacher?.user?.first_name ||
-                            "Prénom inconnu"}{" "}
-                          {assignment.teacher?.user?.last_name || "Nom inconnu"}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {assignment.teacher?.speciality ||
-                            "Spécialité non définie"}
-                        </p>
-                      </div>
-                    </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Enseignant
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Spécialité
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Matière
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Classe
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Institution
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date début
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date fin
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {assignments.map((assignment) => {
+                  const teacherFirstName =
+                    assignment.teacher?.user?.first_name ||
+                    assignment.teacher?.user?.firstName ||
+                    "Prénom";
+                  const teacherLastName =
+                    assignment.teacher?.user?.last_name ||
+                    assignment.teacher?.user?.lastName ||
+                    "Nom";
 
-                    <div className="ml-13">
-                      <p className="text-sm text-gray-700">
-                        <span className="font-medium">Matière :</span>{" "}
-                        {assignment.class_subject?.subject?.name ||
-                          "Matière inconnue"}
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        <span className="font-medium">Classe :</span>{" "}
-                        {assignment.class_subject?.class?.name ||
-                          "Classe inconnue"}{" "}
-                        ({assignment.class_subject?.class?.level || "Niveau"})
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Du{" "}
-                        {new Date(assignment.start_date).toLocaleDateString()}
-                        {assignment.end_date &&
-                          ` au ${new Date(
-                            assignment.end_date
-                          ).toLocaleDateString()}`}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {assignments.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-gray-400 text-2xl">👨‍🏫</span>
-                </div>
-                <p className="text-lg font-medium text-gray-900 mb-2">
-                  Aucune affectation trouvée
-                </p>
-                <p className="text-gray-600">
-                  Les enseignants n'ont pas encore été affectés aux matières
-                  dans les classes.
-                </p>
-                <Button
-                  onClick={() =>
-                    navigate("/settings/teacher-subject-assignment")
-                  }
-                  className="mt-4"
-                >
-                  Créer la première affectation
-                </Button>
-              </div>
-            )}
+                  return (
+                    <tr key={assignment.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {teacherFirstName} {teacherLastName}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {assignment.teacher?.speciality || "N/A"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {assignment.class_subject?.subject?.name ||
+                            assignment.classSubject?.subject?.name ||
+                            "Matière inconnue"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {assignment.class_subject?.class?.name ||
+                            assignment.classSubject?.class?.name ||
+                            "Classe inconnue"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {assignment.class_subject?.class?.level ||
+                            assignment.classSubject?.class?.level ||
+                            "N/A"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-semibold text-blue-600">
+                          {assignment.class_subject?.class?.classCategory
+                            ?.institution?.code ||
+                            assignment.classSubject?.class?.classCategory
+                              ?.institution?.code ||
+                            "N/A"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {assignment.start_date
+                            ? new Date(
+                                assignment.start_date
+                              ).toLocaleDateString("fr-FR")
+                            : "N/A"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {assignment.end_date
+                            ? new Date(assignment.end_date).toLocaleDateString(
+                                "fr-FR"
+                              )
+                            : "En cours"}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+
+          {assignments.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-gray-400 text-2xl">👨‍🏫</span>
+              </div>
+              <p className="text-lg font-medium text-gray-900 mb-2">
+                Aucune affectation trouvée
+              </p>
+              <p className="text-gray-600">
+                Les enseignants n'ont pas encore été affectés aux matières dans
+                les classes.
+              </p>
+              <Button
+                onClick={() => navigate("/settings/teacher-subject-assignment")}
+                className="mt-4"
+              >
+                Créer la première affectation
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </Layout>

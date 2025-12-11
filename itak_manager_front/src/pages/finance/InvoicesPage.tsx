@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import Layout from "../../components/layout/Layout";
-import Button from "../../components/ui/Button";
-import Card from "../../components/ui/Card";
+import AuthenticatedPage from "../../components/layout/AuthenticatedPage";
+import PageHeader from "../../components/ui/PageHeader";
+import Breadcrumb from "../../components/ui/Breadcrumb";
+import { HeaderActionButton } from "../../components/ui/ActionButton";
+import Modal from "../../components/ui/Modal";
+import { FormInput } from "../../components/form";
 import Input from "../../components/ui/Input";
-import FormModal from "../../components/ui/FormModal";
+import { FileText, Plus } from "lucide-react";
 import { apiService } from "../../services/api";
 
 interface Invoice {
@@ -33,8 +35,6 @@ interface Invoice {
 }
 
 const InvoicesPage: React.FC = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,6 +44,7 @@ const InvoicesPage: React.FC = () => {
 
   const [formData, setFormData] = useState({
     studentId: "",
+    invoiceNumber: `INV-${Date.now()}`,
     totalAmount: 0,
     issuedDate: new Date().toISOString().split("T")[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -53,19 +54,8 @@ const InvoicesPage: React.FC = () => {
   });
 
   useEffect(() => {
-    const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-        loadInvoices();
-      } catch (error) {
-        navigate("/login");
-      }
-    } else {
-      navigate("/login");
-    }
-  }, [navigate]);
+    loadInvoices();
+  }, []);
 
   const loadInvoices = async () => {
     try {
@@ -73,7 +63,11 @@ const InvoicesPage: React.FC = () => {
       const response = await apiService.getAllInvoices();
 
       if (response.success && response.data) {
-        setInvoices(response.data);
+        // Filtrer les factures qui ont un student valide
+        const validInvoices = response.data.filter(
+          (inv) => inv.student && inv.student.firstName && inv.student.lastName
+        ) as Invoice[];
+        setInvoices(validInvoices);
       } else {
         console.error(
           "Erreur lors du chargement des factures:",
@@ -255,6 +249,7 @@ const InvoicesPage: React.FC = () => {
     setEditingInvoice(invoice);
     setFormData({
       studentId: invoice.studentId,
+      invoiceNumber: invoice.invoiceNumber,
       totalAmount: invoice.totalAmount,
       issuedDate: invoice.issuedDate,
       dueDate: invoice.dueDate,
@@ -284,6 +279,7 @@ const InvoicesPage: React.FC = () => {
   const resetForm = () => {
     setFormData({
       studentId: "",
+      invoiceNumber: `INV-${Date.now()}`,
       totalAmount: 0,
       issuedDate: new Date().toISOString().split("T")[0],
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -345,39 +341,28 @@ const InvoicesPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <Layout user={user}>
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Gestion des factures
-              </h1>
-              <p className="text-gray-600">
-                Gérez les factures et documents de facturation
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button onClick={() => navigate("/finances")} variant="outline">
-                ← Retour
-              </Button>
-              <Button onClick={openModal}>+ Nouvelle facture</Button>
-            </div>
-          </div>
-        </div>
+    <AuthenticatedPage>
+      <div className="space-y-6">
+        <Breadcrumb
+          items={[
+            { label: "Finances", path: "/finances" },
+            { label: "Factures" },
+          ]}
+        />
+        <PageHeader
+          title="Gestion des factures"
+          subtitle="Gérez les factures et documents de facturation"
+          icon={FileText}
+          iconColor="from-blue-600 to-blue-800"
+          actions={
+            <HeaderActionButton
+              onClick={openModal}
+              icon={Plus}
+              label="Nouvelle facture"
+            />
+          }
+        />
 
         {/* Filtres */}
         <div className="mb-6 flex gap-4">
@@ -385,7 +370,9 @@ const InvoicesPage: React.FC = () => {
             type="text"
             placeholder="Rechercher une facture..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearchTerm(e.target.value)
+            }
             className="max-w-md"
           />
           <select
@@ -404,14 +391,17 @@ const InvoicesPage: React.FC = () => {
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
               <p className="text-gray-600">Chargement des factures...</p>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             {filteredInvoices.map((invoice) => (
-              <Card key={invoice.id} className="p-6">
+              <div
+                key={invoice.id}
+                className="bg-white rounded-xl p-6 border border-slate-200 shadow-md"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-2">
@@ -499,19 +489,20 @@ const InvoicesPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         )}
 
         {/* Modal */}
-        <FormModal
+        <Modal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           title={editingInvoice ? "Modifier la facture" : "Nouvelle facture"}
+          size="md"
         >
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
+            <FormInput
               label="ID de l'étudiant"
               type="text"
               value={formData.studentId}
@@ -521,7 +512,7 @@ const InvoicesPage: React.FC = () => {
               required
             />
 
-            <Input
+            <FormInput
               label="Montant total (FCFA)"
               type="number"
               value={formData.totalAmount}
@@ -535,7 +526,7 @@ const InvoicesPage: React.FC = () => {
               min="0"
             />
 
-            <Input
+            <FormInput
               label="Date d'émission"
               type="date"
               value={formData.issuedDate}
@@ -545,7 +536,7 @@ const InvoicesPage: React.FC = () => {
               required
             />
 
-            <Input
+            <FormInput
               label="Date d'échéance"
               type="date"
               value={formData.dueDate}
@@ -556,7 +547,7 @@ const InvoicesPage: React.FC = () => {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
                 Notes (optionnel)
               </label>
               <textarea
@@ -564,27 +555,30 @@ const InvoicesPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 text-sm font-medium border-2 rounded-lg bg-white text-slate-800 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 focus:outline-none focus:ring-2"
                 rows={3}
               />
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 font-medium"
               >
                 Annuler
-              </Button>
-              <Button type="submit">
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
+              >
                 {editingInvoice ? "Mettre à jour" : "Créer"}
-              </Button>
+              </button>
             </div>
           </form>
-        </FormModal>
+        </Modal>
       </div>
-    </Layout>
+    </AuthenticatedPage>
   );
 };
 

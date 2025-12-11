@@ -44,7 +44,7 @@ const TeacherDataTable = ({
       // Inclure tous les utilisateurs qui ont des profils enseignants OU qui ont le rôle "teacher"
       const teacherUsers = users.filter(
         (user) =>
-          user.role === "teacher" ||
+          (user.role as string) === "teacher" ||
           existingProfiles.some((profile) => profile.user.id === user.id)
       );
 

@@ -1,36 +1,82 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { appConfig } from './config/app.config';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Configuration CORS
-  app.enableCors(appConfig.cors);
+  // Increase body size limit for base64 images
+  app.use(json({ limit: '10mb' }));
+  app.use(urlencoded({ limit: '10mb', extended: true }));
 
-  // Validation globale avec transformation
+  // Configuration CORS
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Autoriser les requêtes sans origine (ex: Postman, applications mobiles)
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:5173',
+        'http://localhost:8080',
+        'http://localhost',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:3001',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1',
+        'http://127.0.0.1:8080',
+        'https://cyberschool.upcd.ml',
+        'https://www.cyberschool.upcd.ml',
+      ];
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Non autorisé par CORS'));
+      }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'Origin',
+      'X-Requested-With',
+      'Access-Control-Request-Method',
+      'Access-Control-Request-Headers',
+    ],
+    exposedHeaders: ['Authorization'],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  });
+
+  // Configuration des pipes de validation
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
       whitelist: true,
       forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
-  // Préfixe global pour l'API
-  app.setGlobalPrefix('api');
+  // Configuration Swagger
+  const config = new DocumentBuilder()
+    .setTitle('ITAK Manager API')
+    .setDescription("API pour la gestion de l'école ITAK")
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
 
-  const port = appConfig.port;
-  await app.listen(port);
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
 
-  console.log(
-    `🚀 ${appConfig.name} v${appConfig.version} démarré sur le port ${port}`,
-  );
-  console.log(`🌍 Environnement: ${appConfig.environment}`);
-  console.log(`📡 API disponible sur: http://localhost:${port}/api`);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port, '0.0.0.0');
+  console.log(`Application is running on: http://0.0.0.0:${port}`);
+  console.log(`Swagger documentation: http://0.0.0.0:${port}/api/docs`);
 }
 bootstrap();

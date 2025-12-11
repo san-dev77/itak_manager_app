@@ -1,70 +1,65 @@
-import React, { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
-import type { User } from "../../services/api";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
+import type { MenuKey } from "../../config/permissions";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requiredMenu?: MenuKey;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+/**
+ * Route protégée qui vérifie l'authentification et les permissions.
+ * Redirige vers /login si non authentifié.
+ */
+const ProtectedRoute = ({ children, requiredMenu }: ProtectedRouteProps) => {
+  const { user, isLoading } = useAuth();
+  const { canAccessMenu } = usePermissions();
+  const location = useLocation();
 
-  useEffect(() => {
-    // Vérifier l'authentification
-    const checkAuth = () => {
-      const userData =
-        localStorage.getItem("itak_user") ||
-        sessionStorage.getItem("itak_user");
-      const token =
-        localStorage.getItem("itak_access_token") ||
-        sessionStorage.getItem("itak_access_token");
+  // Vérification via localStorage (pour éviter le flash de redirection)
+  const storedUser = localStorage.getItem("user");
+  const storedToken = localStorage.getItem("token");
+  const hasStoredAuth = !!(storedUser && storedToken);
 
-      if (userData && token) {
-        try {
-          setUser(JSON.parse(userData));
-        } catch (error) {
-          console.error(
-            "Erreur lors du parsing des données utilisateur:",
-            error
-          );
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, []);
-
-  if (isLoading) {
+  // Loading - afficher un loader minimal
+  if (isLoading && !hasStoredAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-blue-600">Vérification de l'authentification...</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Pas authentifié -> rediriger vers login
+  if (!hasStoredAuth && !user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Vérifier les permissions si requiredMenu est spécifié
+  if (requiredMenu && user && !canAccessMenu(requiredMenu)) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-md bg-white p-8 rounded-xl shadow-lg">
+          <h2 className="text-xl font-bold text-slate-800 mb-2">
+            Accès Non Autorisé
+          </h2>
+          <p className="text-slate-600 mb-6">
+            Vous n'avez pas les permissions pour accéder à cette page.
+          </p>
+          <button
+            onClick={() => (window.location.href = "/dashboard")}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            Retour au tableau de bord
+          </button>
         </div>
       </div>
     );
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Cloner les enfants et passer l'utilisateur comme prop
-  return (
-    <>
-      {React.Children.map(children, (child) => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child, { user } as { user: User });
-        }
-        return child;
-      })}
-    </>
-  );
+  // Authentifié et autorisé -> afficher le contenu
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "../../components/layout/Layout";
-import Button from "../../components/ui/Button";
-import Card from "../../components/ui/Card";
+import AuthenticatedPage from "../../components/layout/AuthenticatedPage";
+import PageHeader from "../../components/ui/PageHeader";
+import Breadcrumb from "../../components/ui/Breadcrumb";
+import { TrendingUp, DollarSign, CreditCard, FileText } from "lucide-react";
 import { apiService } from "../../services/api";
 
 interface FinanceStats {
@@ -16,7 +17,6 @@ interface FinanceStats {
 
 const FinanceOverviewPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
   const [stats, setStats] = useState<FinanceStats>({
     totalRevenue: 0,
     pendingPayments: 0,
@@ -28,27 +28,23 @@ const FinanceOverviewPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-        // TODO: Charger les statistiques depuis l'API
-        loadFinanceStats();
-      } catch (error) {
-        navigate("/login");
-      }
-    } else {
-      navigate("/login");
-    }
-  }, [navigate]);
+    loadFinanceStats();
+  }, []);
 
   const loadFinanceStats = async () => {
     try {
       const response = await apiService.getFinanceStats();
 
       if (response.success && response.data) {
-        setStats(response.data);
+        // Mapper les données de l'API vers l'interface locale
+        setStats({
+          totalRevenue: response.data.totalRevenue,
+          pendingPayments: response.data.totalPending || 0,
+          overduePayments: response.data.totalOverdue || 0,
+          totalInvoices: 0, // Non disponible dans l'API
+          paidInvoices: response.data.totalPaid || 0,
+          pendingInvoices: response.data.totalPending || 0,
+        });
       } else {
         console.error(
           "Erreur lors du chargement des statistiques:",
@@ -80,41 +76,26 @@ const FinanceOverviewPage: React.FC = () => {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <Layout user={user}>
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Vue d'ensemble financière
-              </h1>
-              <p className="text-gray-600">
-                Tableau de bord et statistiques financières
-              </p>
-            </div>
-            <Button onClick={() => navigate("/finances")} variant="outline">
-              ← Retour
-            </Button>
-          </div>
-        </div>
+    <AuthenticatedPage>
+      <div className="space-y-6">
+        <Breadcrumb
+          items={[
+            { label: "Finances", path: "/finances" },
+            { label: "Vue d'ensemble" },
+          ]}
+        />
+        <PageHeader
+          title="Vue d'ensemble financière"
+          subtitle="Tableau de bord et statistiques financières"
+          icon={TrendingUp}
+          iconColor="from-blue-600 to-blue-800"
+        />
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
               <p className="text-gray-600">Chargement des statistiques...</p>
             </div>
           </div>
@@ -122,7 +103,7 @@ const FinanceOverviewPage: React.FC = () => {
           <>
             {/* Statistiques principales */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card className="p-6">
+              <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-md">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
@@ -133,12 +114,12 @@ const FinanceOverviewPage: React.FC = () => {
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <span className="text-green-600 text-xl">💰</span>
+                    <DollarSign className="w-6 h-6 text-green-600" />
                   </div>
                 </div>
-              </Card>
+              </div>
 
-              <Card className="p-6">
+              <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-md">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
@@ -149,12 +130,12 @@ const FinanceOverviewPage: React.FC = () => {
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                    <span className="text-yellow-600 text-xl">⏳</span>
+                    <CreditCard className="w-6 h-6 text-yellow-600" />
                   </div>
                 </div>
-              </Card>
+              </div>
 
-              <Card className="p-6">
+              <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-md">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
@@ -168,9 +149,9 @@ const FinanceOverviewPage: React.FC = () => {
                     <span className="text-red-600 text-xl">⚠️</span>
                   </div>
                 </div>
-              </Card>
+              </div>
 
-              <Card className="p-6">
+              <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-md">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">
@@ -181,18 +162,21 @@ const FinanceOverviewPage: React.FC = () => {
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <span className="text-blue-600 text-xl">✅</span>
+                    <FileText className="w-6 h-6 text-blue-600" />
                   </div>
                 </div>
-              </Card>
+              </div>
             </div>
 
             {/* Actions rapides */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <Card className="p-6">
+              <div
+                className="bg-white rounded-xl p-6 border border-slate-200 shadow-md cursor-pointer"
+                onClick={() => navigate("/finances/payments/assign")}
+              >
                 <div className="text-center">
                   <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <span className="text-blue-600 text-2xl">💳</span>
+                    <CreditCard className="w-8 h-8 text-blue-600" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Nouveau paiement
@@ -200,19 +184,22 @@ const FinanceOverviewPage: React.FC = () => {
                   <p className="text-sm text-gray-600 mb-4">
                     Enregistrer un nouveau paiement
                   </p>
-                  <Button
-                    onClick={() => navigate("/finances/payments/new")}
-                    className="w-full"
+                  <button
+                    onClick={() => navigate("/finances/payments/assign")}
+                    className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
                   >
                     Créer un paiement
-                  </Button>
+                  </button>
                 </div>
-              </Card>
+              </div>
 
-              <Card className="p-6">
+              <div
+                className="bg-white rounded-xl p-6 border border-slate-200 shadow-md cursor-pointer"
+                onClick={() => navigate("/finances/invoices")}
+              >
                 <div className="text-center">
                   <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <span className="text-purple-600 text-2xl">🧾</span>
+                    <FileText className="w-8 h-8 text-purple-600" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Nouvelle facture
@@ -220,19 +207,22 @@ const FinanceOverviewPage: React.FC = () => {
                   <p className="text-sm text-gray-600 mb-4">
                     Créer une nouvelle facture
                   </p>
-                  <Button
-                    onClick={() => navigate("/finances/invoices/new")}
-                    className="w-full"
+                  <button
+                    onClick={() => navigate("/finances/invoices")}
+                    className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
                   >
                     Créer une facture
-                  </Button>
+                  </button>
                 </div>
-              </Card>
+              </div>
 
-              <Card className="p-6">
+              <div
+                className="bg-white rounded-xl p-6 border border-slate-200 shadow-md cursor-pointer"
+                onClick={() => navigate("/finances/fee-types")}
+              >
                 <div className="text-center">
                   <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <span className="text-green-600 text-2xl">📊</span>
+                    <DollarSign className="w-8 h-8 text-green-600" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     Types de frais
@@ -240,19 +230,19 @@ const FinanceOverviewPage: React.FC = () => {
                   <p className="text-sm text-gray-600 mb-4">
                     Gérer les types de frais
                   </p>
-                  <Button
+                  <button
                     onClick={() => navigate("/finances/fee-types")}
-                    className="w-full"
+                    className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium"
                   >
                     Gérer les frais
-                  </Button>
+                  </button>
                 </div>
-              </Card>
+              </div>
             </div>
 
             {/* Graphiques et rapports */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="p-6">
+              <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-md">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Évolution des revenus
                 </h3>
@@ -261,9 +251,9 @@ const FinanceOverviewPage: React.FC = () => {
                     Graphique des revenus (à implémenter)
                   </p>
                 </div>
-              </Card>
+              </div>
 
-              <Card className="p-6">
+              <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-md">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Statut des paiements
                 </h3>
@@ -272,12 +262,12 @@ const FinanceOverviewPage: React.FC = () => {
                     Graphique des paiements (à implémenter)
                   </p>
                 </div>
-              </Card>
+              </div>
             </div>
           </>
         )}
       </div>
-    </Layout>
+    </AuthenticatedPage>
   );
 };
 

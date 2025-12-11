@@ -1,10 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import Layout from "../../components/layout/Layout";
+import React, { useState, useEffect, useCallback } from "react";
+import AuthenticatedPage from "../../components/layout/AuthenticatedPage";
+import PageHeader from "../../components/ui/PageHeader";
+import Breadcrumb from "../../components/ui/Breadcrumb";
+import DataTable from "../../components/ui/DataTable";
+import Modal from "../../components/ui/Modal";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import Button from "../../components/ui/Button";
-import Input from "../../components/ui/Input";
-import FormModal from "../../components/ui/FormModal";
+import { HeaderActionButton } from "../../components/ui/ActionButton";
+import TableActions from "../../components/ui/TableActions";
+import { FormInput } from "../../components/form";
+import StudentFeeAssignmentModal from "../../components/finance/StudentFeeAssignmentModal";
+import { DollarSign, Plus, UserPlus } from "lucide-react";
 import { apiService } from "../../services/api";
+
+type FeeFrequency = "once" | "monthly" | "quarterly" | "yearly";
 
 interface FeeType {
   id: string;
@@ -12,38 +21,46 @@ interface FeeType {
   description?: string;
   amountDefault: number;
   isRecurring: boolean;
-  frequency: "once" | "monthly" | "quarterly" | "yearly";
+  frequency: FeeFrequency;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 const FeeTypesPage: React.FC = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
   const [feeTypes, setFeeTypes] = useState<FeeType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedFeeType, setSelectedFeeType] = useState<FeeType | null>(null);
   const [editingFeeType, setEditingFeeType] = useState<FeeType | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [assigningFeeType, setAssigningFeeType] = useState<FeeType | null>(
+    null
+  );
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    amountDefault: number;
+    isRecurring: boolean;
+    frequency: FeeFrequency;
+  }>({
     name: "",
     description: "",
     amountDefault: 0,
     isRecurring: false,
-    frequency: "once" as const,
+    frequency: "once",
   });
 
   const [displayAmount, setDisplayAmount] = useState("");
 
-  // Fonctions utilitaires pour le formatage des montants
   const formatAmount = (amount: number): string => {
     return amount.toLocaleString("fr-FR");
   };
 
   const parseAmount = (value: string): number => {
-    // Supprimer tous les espaces et points, puis convertir en nombre
     const cleanValue = value.replace(/[\s.]/g, "");
     return parseInt(cleanValue) || 0;
   };
@@ -54,81 +71,51 @@ const FeeTypesPage: React.FC = () => {
     setDisplayAmount(formatAmount(numericValue));
   };
 
-  useEffect(() => {
-    const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-        loadFeeTypes();
-      } catch (error) {
-        console.log(error);
-        console.log("Erreur lors du chargement des types de frais:", error);
-        navigate("/login");
-      }
-    } else {
-      navigate("/login");
-    }
-  }, [navigate]);
-
-  const loadFeeTypes = async () => {
+  const loadFeeTypes = useCallback(async () => {
     try {
-      setIsLoading(true);
       const response = await apiService.getAllFeeTypes();
 
       if (response.success && response.data) {
-        console.log("📥 Données reçues de l'API:", response.data);
         setFeeTypes(response.data);
       } else {
-        console.error(
-          "Erreur lors du chargement des types de frais:",
-          response.error
-        );
         setFeeTypes([]);
       }
     } catch (error) {
       console.error("Erreur lors du chargement des types de frais:", error);
       setFeeTypes([]);
-    } finally {
-      setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    loadFeeTypes();
+  }, [loadFeeTypes]);
+
+  const openAssignModal = (feeType: FeeType) => {
+    setAssigningFeeType(feeType);
+    setShowAssignModal(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleAssignSuccess = () => {
+    loadFeeTypes();
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log("📤 Données envoyées:", formData);
-
-      if (editingFeeType) {
-        const response = await apiService.updateFeeType(
-          editingFeeType.id,
-          formData
-        );
-        if (response.success) {
-          console.log("Type de frais mis à jour avec succès");
-        } else {
-          console.error("Erreur lors de la mise à jour:", response.error);
-          alert("Erreur lors de la mise à jour du type de frais");
-          return;
-        }
+      setActionLoading(true);
+      const response = await apiService.createFeeType(formData);
+      if (response.success) {
+        setShowCreateModal(false);
+        resetForm();
+        await loadFeeTypes();
       } else {
-        const response = await apiService.createFeeType(formData);
-        if (response.success) {
-          console.log("Type de frais créé avec succès");
-        } else {
-          console.error("Erreur lors de la création:", response.error);
-          alert("Erreur lors de la création du type de frais");
-          return;
-        }
+        alert(response.message || "Erreur lors de la création");
       }
-
-      setIsModalOpen(false);
-      setEditingFeeType(null);
-      resetForm();
-      loadFeeTypes();
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
-      alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
+      console.error("Erreur lors de la création:", error);
+      alert("Erreur lors de la création");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -139,29 +126,72 @@ const FeeTypesPage: React.FC = () => {
       description: feeType.description || "",
       amountDefault: feeType.amountDefault,
       isRecurring: feeType.isRecurring,
-      frequency: feeType.frequency as any,
+      frequency: feeType.frequency,
     });
     setDisplayAmount(formatAmount(feeType.amountDefault));
-    setIsModalOpen(true);
+    setShowEditModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (
-      window.confirm("Êtes-vous sûr de vouloir supprimer ce type de frais ?")
-    ) {
-      try {
-        const response = await apiService.deleteFeeType(id);
-        if (response.success) {
-          console.log("Type de frais supprimé avec succès");
-          loadFeeTypes();
-        } else {
-          console.error("Erreur lors de la suppression:", response.error);
-          alert("Erreur lors de la suppression du type de frais");
-        }
-      } catch (error) {
-        console.error("Erreur lors de la suppression:", error);
-        alert("Erreur lors de la suppression. Veuillez réessayer.");
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFeeType) return;
+
+    // S'assurer que le montant est valide et positif
+    // Convertir en nombre si nécessaire et utiliser la valeur originale comme fallback
+    const currentAmount =
+      typeof formData.amountDefault === "number"
+        ? formData.amountDefault
+        : Number(formData.amountDefault) || editingFeeType.amountDefault;
+
+    const amountToSend =
+      currentAmount > 0 ? currentAmount : editingFeeType.amountDefault;
+
+    // Validation finale
+    if (!amountToSend || amountToSend <= 0) {
+      alert("Le montant doit être positif");
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const response = await apiService.updateFeeType(editingFeeType.id, {
+        ...formData,
+        amountDefault: Number(amountToSend), // S'assurer que c'est un nombre
+      });
+      if (response.success) {
+        setShowEditModal(false);
+        setEditingFeeType(null);
+        resetForm();
+        await loadFeeTypes();
+      } else {
+        alert(response.message || "Erreur lors de la mise à jour");
       }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour:", error);
+      alert("Erreur lors de la mise à jour");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedFeeType) return;
+
+    try {
+      setActionLoading(true);
+      const response = await apiService.deleteFeeType(selectedFeeType.id);
+      if (response.success) {
+        setShowDeleteDialog(false);
+        setSelectedFeeType(null);
+        await loadFeeTypes();
+      } else {
+        alert(response.message || "Erreur lors de la suppression");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      alert("Erreur lors de la suppression");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -176,274 +206,362 @@ const FeeTypesPage: React.FC = () => {
     setDisplayAmount("");
   };
 
-  const openModal = () => {
-    setEditingFeeType(null);
-    resetForm();
-    setIsModalOpen(true);
+  const getFrequencyLabel = (frequency: FeeFrequency): string => {
+    const labels: Record<FeeFrequency, string> = {
+      once: "Unique",
+      monthly: "Mensuel",
+      quarterly: "Trimestriel",
+      yearly: "Annuel",
+    };
+    return labels[frequency];
   };
 
-  const filteredFeeTypes = feeTypes.filter(
-    (feeType) =>
-      feeType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (feeType.description &&
-        feeType.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement...</p>
+  const columns = [
+    {
+      key: "name",
+      header: "Nom",
+      render: (feeType: FeeType) => (
+        <div className="font-semibold text-slate-900">{feeType.name}</div>
+      ),
+    },
+    {
+      key: "description",
+      header: "Description",
+      render: (feeType: FeeType) => (
+        <div className="text-slate-600 max-w-xs truncate">
+          {feeType.description || "-"}
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <Layout user={user}>
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Types de frais
-              </h1>
-              <p className="text-gray-600">
-                Gérez les différents types de frais de l'établissement
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button onClick={() => navigate("/finances")} variant="outline">
-                ← Retour
-              </Button>
-              <Button onClick={openModal}>+ Nouveau type de frais</Button>
-            </div>
-          </div>
+      ),
+    },
+    {
+      key: "amountDefault",
+      header: "Montant par défaut",
+      render: (feeType: FeeType) => (
+        <div className="font-medium text-slate-900">
+          {feeType.amountDefault.toLocaleString("fr-FR")} FCFA
         </div>
-
-        {/* Recherche */}
-        <div className="mb-6">
-          <Input
-            type="text"
-            placeholder="Rechercher un type de frais..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-md"
+      ),
+    },
+    {
+      key: "frequency",
+      header: "Fréquence",
+      render: (feeType: FeeType) => (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          {getFrequencyLabel(feeType.frequency)}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (feeType: FeeType) => (
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openAssignModal(feeType)}
+            className="text-green-600 hover:text-green-900 cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" />
+          </Button>
+          <TableActions
+            onEdit={() => handleEdit(feeType)}
+            onDelete={() => {
+              setSelectedFeeType(feeType);
+              setShowDeleteDialog(true);
+            }}
           />
         </div>
+      ),
+    },
+  ];
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600">Chargement des types de frais...</p>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nom
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Montant par défaut
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Fréquence
-                    </th>
-
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredFeeTypes.map((feeType) => (
-                    <tr key={feeType.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {feeType.name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600 max-w-xs truncate">
-                          {feeType.description || "-"}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {feeType.amountDefault.toLocaleString("fr-FR")} FCFA
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {feeType.frequency === "once" && "Unique"}
-                          {feeType.frequency === "monthly" && "Mensuel"}
-                          {feeType.frequency === "quarterly" && "Trimestriel"}
-                          {feeType.frequency === "yearly" && "Annuel"}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleEdit(feeType)}
-                            className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md transition-colors"
-                          >
-                            Modifier
-                          </button>
-                          <button
-                            onClick={() => handleDelete(feeType.id)}
-                            className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors"
-                          >
-                            Supprimer
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredFeeTypes.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-gray-500">
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">
-                    Aucun type de frais
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Commencez par créer un nouveau type de frais.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Modal */}
-        <FormModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title={
-            editingFeeType
-              ? "Modifier le type de frais"
-              : "Nouveau type de frais"
+  return (
+    <AuthenticatedPage>
+      <div className="space-y-6">
+        <Breadcrumb
+          items={[
+            { label: "Finances", path: "/finances" },
+            { label: "Types de frais" },
+          ]}
+        />
+        <PageHeader
+          title="Types de frais"
+          subtitle="Gérez les différents types de frais de l'établissement"
+          icon={DollarSign}
+          iconColor="from-amber-600 to-amber-700"
+          actions={
+            <HeaderActionButton
+              onClick={() => {
+                resetForm();
+                setShowCreateModal(true);
+              }}
+              icon={Plus}
+              label="Nouveau type de frais"
+            />
           }
-        >
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Nom du type de frais"
-              type="text"
-              value={formData.name}
+        />
+
+        <DataTable
+          data={feeTypes}
+          columns={columns}
+          searchPlaceholder="Rechercher un type de frais..."
+          searchKeys={["name", "description"]}
+          emptyMessage="Aucun type de frais trouvé"
+        />
+      </div>
+
+      {/* Modal de création */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          resetForm();
+        }}
+        title="Nouveau type de frais"
+        size="md"
+      >
+        <form onSubmit={handleCreate} className="space-y-4">
+          <FormInput
+            label="Nom du type de frais"
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
               onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
+                setFormData({ ...formData, description: e.target.value })
               }
+              className="w-full px-3 py-2.5 text-sm font-medium border-2 rounded-lg bg-white text-slate-800 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 focus:outline-none focus:ring-2"
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+              Montant par défaut (FCFA)
+            </label>
+            <input
+              type="text"
+              value={displayAmount}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              placeholder="Ex: 20.000"
+              className="w-full px-3 py-2.5 text-sm font-medium border-2 rounded-lg bg-white text-slate-800 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 focus:outline-none focus:ring-2"
               required
             />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Montant par défaut (FCFA)
-              </label>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center">
               <input
-                type="text"
-                value={displayAmount}
-                onChange={(e) => handleAmountChange(e.target.value)}
-                placeholder="Ex: 20.000"
-                className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+                type="checkbox"
+                checked={formData.isRecurring}
+                onChange={(e) =>
+                  setFormData({ ...formData, isRecurring: e.target.checked })
+                }
+                className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-            </div>
+              <span className="text-sm text-slate-700">Récurrent</span>
+            </label>
+          </div>
 
-            <div className="flex items-center gap-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.isRecurring}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isRecurring: e.target.checked })
-                  }
-                  className="mr-2"
-                />
-                <span className="text-sm text-gray-700">Récurrent</span>
+          {formData.isRecurring && (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                Fréquence
               </label>
-            </div>
-
-            {formData.isRecurring && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fréquence
-                </label>
-                <select
-                  value={formData.frequency}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      frequency: e.target.value as FeeFrequency,
-                    })
-                  }
-                  className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="once">Unique</option>
-                  <option value="monthly">Mensuel</option>
-                  <option value="quarterly">Trimestriel</option>
-                  <option value="yearly">Annuel</option>
-                </select>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsModalOpen(false)}
+              <select
+                value={formData.frequency}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    frequency: e.target.value as FeeFrequency,
+                  })
+                }
+                className="w-full px-3 py-2.5 text-sm font-medium border-2 rounded-lg bg-white text-slate-800 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 focus:outline-none focus:ring-2"
               >
-                Annuler
-              </Button>
-              <Button type="submit">
-                {editingFeeType ? "Mettre à jour" : "Créer"}
-              </Button>
+                <option value="once">Unique</option>
+                <option value="monthly">Mensuel</option>
+                <option value="quarterly">Trimestriel</option>
+                <option value="yearly">Annuel</option>
+              </select>
             </div>
-          </form>
-        </FormModal>
-      </div>
-    </Layout>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreateModal(false);
+                resetForm();
+              }}
+              className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 font-medium"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={actionLoading}
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium disabled:opacity-50"
+            >
+              {actionLoading ? "Création..." : "Créer"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal de modification */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingFeeType(null);
+          resetForm();
+        }}
+        title="Modifier le type de frais"
+        size="md"
+      >
+        <form onSubmit={handleUpdate} className="space-y-4">
+          <FormInput
+            label="Nom du type de frais"
+            type="text"
+            value={formData.name}
+            onChange={(e) => {
+              // Préserver le montant lors de la modification du nom
+              setFormData({
+                ...formData,
+                name: e.target.value,
+                amountDefault:
+                  formData.amountDefault > 0
+                    ? formData.amountDefault
+                    : editingFeeType?.amountDefault || formData.amountDefault,
+              });
+            }}
+            required
+          />
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              className="w-full px-3 py-2.5 text-sm font-medium border-2 rounded-lg bg-white text-slate-800 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 focus:outline-none focus:ring-2"
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+              Montant par défaut (FCFA)
+            </label>
+            <input
+              type="text"
+              value={displayAmount}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              placeholder="Ex: 20.000"
+              className="w-full px-3 py-2.5 text-sm font-medium border-2 rounded-lg bg-white text-slate-800 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 focus:outline-none focus:ring-2"
+              required
+            />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.isRecurring}
+                onChange={(e) =>
+                  setFormData({ ...formData, isRecurring: e.target.checked })
+                }
+                className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <span className="text-sm text-slate-700">Récurrent</span>
+            </label>
+          </div>
+
+          {formData.isRecurring && (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                Fréquence
+              </label>
+              <select
+                value={formData.frequency}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    frequency: e.target.value as FeeFrequency,
+                  })
+                }
+                className="w-full px-3 py-2.5 text-sm font-medium border-2 rounded-lg bg-white text-slate-800 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 focus:outline-none focus:ring-2"
+              >
+                <option value="once">Unique</option>
+                <option value="monthly">Mensuel</option>
+                <option value="quarterly">Trimestriel</option>
+                <option value="yearly">Annuel</option>
+              </select>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setShowEditModal(false);
+                setEditingFeeType(null);
+                resetForm();
+              }}
+              className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 font-medium"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={actionLoading}
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium disabled:opacity-50"
+            >
+              {actionLoading ? "Mise à jour..." : "Mettre à jour"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Dialog de confirmation de suppression */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => {
+          setShowDeleteDialog(false);
+          setSelectedFeeType(null);
+        }}
+        onConfirm={handleDelete}
+        title="Supprimer le type de frais"
+        message={`Êtes-vous sûr de vouloir supprimer le type de frais "${selectedFeeType?.name}" ? Cette action est irréversible.`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+        loading={actionLoading}
+      />
+
+      {/* Modal d'affectation aux étudiants */}
+      <StudentFeeAssignmentModal
+        isOpen={showAssignModal}
+        onClose={() => {
+          setShowAssignModal(false);
+          setAssigningFeeType(null);
+        }}
+        feeType={assigningFeeType}
+        onSuccess={handleAssignSuccess}
+      />
+    </AuthenticatedPage>
   );
 };
 

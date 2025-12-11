@@ -1,27 +1,42 @@
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "/api";
 
 interface ApiResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
   error?: string;
+  statusCode?: number;
 }
 
 // Type union pour les rôles utilisateur correspondant au backend
-export type UserRole = "student" | "teacher" | "staff" | "parent" | "admin";
+export type UserRole =
+  | "super_admin"
+  | "admin"
+  | "scolarite"
+  | "finance"
+  | "qualite";
 
 // Constantes pour les rôles
 export const USER_ROLES = {
-  STUDENT: "student" as const,
-  TEACHER: "teacher" as const,
-  STAFF: "staff" as const,
-  PARENT: "parent" as const,
-  ADMIN: "admin" as const,
+  SUPER_ADMIN: "super_admin" as const, // Président / DG
+  ADMIN: "admin" as const, // Administrateur
+  SCOLARITE: "scolarite" as const, // Service Scolarité
+  FINANCE: "finance" as const, // Service Comptabilité
+  QUALITE: "qualite" as const, // Assurance Qualité
 } as const;
+
+// Labels des rôles pour l'affichage
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  super_admin: "Président / DG",
+  admin: "Administrateur",
+  scolarite: "Scolarité",
+  finance: "Comptabilité",
+  qualite: "Assurance Qualité",
+};
 
 interface UserRegistrationData {
   username?: string;
-  email: string;
+  email?: string;
   password: string;
   firstName: string;
   lastName: string;
@@ -55,7 +70,7 @@ interface LoginResponse {
   refresh_token: string;
 }
 
-interface StudentProfileData {
+export interface StudentProfileData {
   id?: string;
   userId: string;
   matricule: string;
@@ -69,22 +84,276 @@ interface StudentProfileData {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  institutionId?: string;
+  institution?: {
+    id: string;
+    name: string;
+    code: string;
+  };
   createdAt?: string | Date;
   updatedAt?: string | Date;
   user?: User;
 }
 
 export interface Payment {
+  id: string;
+  studentFeeId: string;
+  paymentDate: string;
   amount: number;
   method: "cash" | "bank_transfer" | "mobile_money" | "card";
   provider?: string;
   transactionRef?: string;
-  receivedBy: User;
+  receivedBy: string;
   status: "successful" | "failed" | "pending";
   createdAt: string;
+  studentFee?: {
+    id: string;
+    studentId: string;
+    feeTypeId: string;
+    academicYearId: string;
+    amountAssigned: string | number;
+    amountPaid: string | number;
+    dueDate: string;
+    status: string;
+    academicYear?: {
+      id: string;
+      name: string;
+    };
+  };
+  receivedByUser?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+  };
 }
 
-interface StudentWithUser {
+// Finance Interfaces
+export type FeeFrequency = "once" | "monthly" | "quarterly" | "yearly";
+
+export interface FeeType {
+  id: string;
+  name: string;
+  description?: string;
+  amountDefault: number;
+  isRecurring: boolean;
+  frequency: FeeFrequency;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateFeeTypeDto {
+  name: string;
+  description?: string;
+  amountDefault: number;
+  isRecurring: boolean;
+  frequency: FeeFrequency;
+  isActive?: boolean;
+}
+
+export interface UpdateFeeTypeDto {
+  name?: string;
+  description?: string;
+  amountDefault?: number;
+  isRecurring?: boolean;
+  frequency?: FeeFrequency;
+  isActive?: boolean;
+}
+
+export interface StudentFee {
+  id: string;
+  studentId: string;
+  feeTypeId: string;
+  academicYearId: string;
+  amountAssigned: number;
+  amountPaid: number;
+  dueDate: string;
+  status: "pending" | "partial" | "paid" | "overdue";
+  createdAt: string;
+  updatedAt: string;
+  student?: {
+    id: string;
+    userId: string;
+    matricule: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  feeType?: {
+    id: string;
+    name: string;
+    amountDefault: number;
+  };
+  academicYear?: {
+    id: string;
+    name: string;
+    isActive: boolean;
+  };
+}
+
+export interface CreateStudentFeeDto {
+  studentId: string;
+  feeTypeId: string;
+  academicYearId: string;
+  amountAssigned: number;
+  dueDate?: string;
+}
+
+export interface UpdateStudentFeeDto {
+  studentId?: string;
+  feeTypeId?: string;
+  academicYearId?: string;
+  amountAssigned?: number;
+  dueDate?: string;
+}
+
+export interface CreatePaymentDto {
+  studentFeeId: string;
+  paymentDate: string;
+  amount: number;
+  method: "cash" | "bank_transfer" | "mobile_money" | "card";
+  provider?: string;
+  transactionRef?: string;
+  receivedBy: string;
+}
+
+export interface UpdatePaymentDto {
+  studentFeeId?: string;
+  paymentDate?: string;
+  amount?: number;
+  method?: "cash" | "bank_transfer" | "mobile_money" | "card";
+  provider?: string;
+  transactionRef?: string;
+  receivedBy?: string;
+  status?: "successful" | "failed" | "pending";
+}
+
+export interface Invoice {
+  id: string;
+  studentId: string;
+  invoiceNumber: string;
+  totalAmount: number;
+  status: "unpaid" | "partial" | "paid" | "cancelled";
+  issuedDate: string;
+  dueDate: string;
+  notes?: string;
+  createdAt: string;
+  student?: {
+    firstName: string;
+    lastName: string;
+    matricule?: string;
+  };
+  invoiceItems?: Array<{
+    id: string;
+    amount: number;
+    studentFee?: {
+      feeType?: {
+        name: string;
+      };
+    };
+  }>;
+}
+
+export interface CreateInvoiceDto {
+  studentId: string;
+  invoiceNumber: string;
+  totalAmount: number;
+  issuedDate: string;
+  dueDate: string;
+  notes?: string;
+}
+
+export interface UpdateInvoiceDto {
+  studentId?: string;
+  invoiceNumber?: string;
+  totalAmount?: number;
+  status?: "unpaid" | "partial" | "paid" | "cancelled";
+  issuedDate?: string;
+  dueDate?: string;
+  notes?: string;
+}
+
+export interface Discount {
+  id: string;
+  studentFeeId: string;
+  amount: number;
+  reason: string;
+  appliedBy: string;
+  appliedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  studentFee?: StudentFee;
+  appliedByUser?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+export interface CreateDiscountDto {
+  studentFeeId: string;
+  amount: number;
+  reason: string;
+  appliedBy: string;
+}
+
+export interface UpdateDiscountDto {
+  studentFeeId?: string;
+  amount?: number;
+  reason?: string;
+  appliedBy?: string;
+}
+
+export interface Refund {
+  id: string;
+  paymentId: string;
+  amount: number;
+  reason: string;
+  processedBy: string;
+  processedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  payment?: Payment;
+  processedByUser?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+export interface CreateRefundDto {
+  paymentId: string;
+  amount: number;
+  reason: string;
+  processedBy: string;
+}
+
+export interface UpdateRefundDto {
+  paymentId?: string;
+  amount?: number;
+  reason?: string;
+  processedBy?: string;
+}
+
+export interface FinanceStats {
+  totalRevenue: number;
+  totalPending: number;
+  totalPaid: number;
+  totalOverdue: number;
+  monthlyRevenue?: Array<{
+    month: string;
+    amount: number;
+  }>;
+  feeTypeStats?: Array<{
+    feeTypeId: string;
+    feeTypeName: string;
+    totalAmount: number;
+    paidAmount: number;
+    pendingAmount: number;
+  }>;
+}
+
+export interface StudentWithUser {
   id: string;
   userId: string;
   matricule: string;
@@ -98,6 +367,12 @@ interface StudentWithUser {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  institutionId?: string;
+  institution?: {
+    id: string;
+    name: string;
+    code: string;
+  };
   createdAt?: string | Date;
   updatedAt?: string | Date;
   user: {
@@ -110,10 +385,10 @@ interface StudentWithUser {
   };
 }
 
-interface TeacherProfileData {
+export interface TeacherProfileData {
   id?: string;
   userId: string;
-  matricule: string;
+  matricule?: string;
   hireDate: string | Date;
   photo?: string;
   maritalStatus?: string;
@@ -121,6 +396,7 @@ interface TeacherProfileData {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  institutionId?: string;
   createdAt?: string | Date;
   updatedAt?: string | Date;
   user?: User;
@@ -129,7 +405,7 @@ interface TeacherProfileData {
 interface TeacherWithUser {
   id: string;
   userId: string;
-  matricule: string;
+  matricule?: string;
   hireDate: string | Date;
   photo?: string;
   maritalStatus?: string;
@@ -149,10 +425,10 @@ interface TeacherWithUser {
   };
 }
 
-interface StaffProfileData {
+export interface StaffProfileData {
   id?: string;
   userId: string;
-  matricule: string;
+  matricule?: string;
   hireDate: string | Date;
   position?: string;
   photo?: string;
@@ -168,7 +444,7 @@ interface StaffProfileData {
 interface StaffWithUser {
   id: string;
   userId: string;
-  matricule: string;
+  matricule?: string;
   hireDate: string | Date;
   position?: string;
   photo?: string;
@@ -188,10 +464,19 @@ interface StaffWithUser {
   };
 }
 
+interface Institution {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+}
+
 interface ClassCategory {
   id: string;
   name: string;
   description?: string;
+  institutionId?: string;
+  institution?: Institution;
   createdAt: string;
 }
 
@@ -201,7 +486,7 @@ interface ClassData {
   classCategoryId: string;
   description?: string;
   level: string;
-  capacity: number;
+  capacity?: number;
   orderLevel: number;
   category?: ClassCategory;
   categoryId?: string;
@@ -216,7 +501,8 @@ interface Class {
   level: string;
   capacity: number;
   orderLevel: number;
-  category: ClassCategory;
+  classCategory?: ClassCategory | null;
+  category?: ClassCategory; // Alias pour compatibilité
   createdAt: string;
 }
 
@@ -279,7 +565,9 @@ interface StudentClass {
   created_at: string;
   updated_at: string;
   student: StudentWithUser;
-  class: Class;
+  class: Class & {
+    classCategory?: ClassCategory | null;
+  };
 }
 
 interface TeachingAssignmentData {
@@ -525,9 +813,7 @@ class ApiService {
       const url = `${API_BASE_URL}${endpoint}`;
 
       // Récupérer le token d'accès depuis le stockage
-      const accessToken =
-        localStorage.getItem("itak_access_token") ||
-        sessionStorage.getItem("itak_access_token");
+      const accessToken = localStorage.getItem("token");
 
       console.log(
         "🔑 Token récupéré:",
@@ -595,26 +881,46 @@ class ApiService {
         // Extraction du message d'erreur selon la structure de réponse
         let errorMessage = "Erreur inconnue";
 
-        if (data && typeof data === "object" && "message" in data) {
-          const msg = (data as { message: unknown }).message;
-          if (Array.isArray(msg)) {
-            errorMessage = msg[0];
-          } else if (typeof msg === "string") {
-            errorMessage = msg;
+        if (data && typeof data === "object") {
+          // Priorité 1: Chercher le champ "message" (le plus informatif)
+          if ("message" in data) {
+            const msg = (data as { message: unknown }).message;
+            if (Array.isArray(msg)) {
+              errorMessage = msg[0];
+            } else if (typeof msg === "string" && msg.trim()) {
+              errorMessage = msg;
+            }
           }
-        } else if (data && typeof data === "object" && "error" in data) {
-          const err = (data as { error: unknown }).error;
-          if (typeof err === "string") {
-            errorMessage = err;
+
+          // Priorité 2: Si pas de message ou message vide, chercher "error"
+          if (errorMessage === "Erreur inconnue" && "error" in data) {
+            const err = (data as { error: unknown }).error;
+            if (typeof err === "string" && err.trim()) {
+              errorMessage = err;
+            }
           }
-        } else {
-          // Fallback avec le statut HTTP
+
+          // Priorité 3: Messages d'erreur NestJS typiques
+          if (errorMessage === "Erreur inconnue") {
+            // Structure NestJS: { statusCode: 409, message: "...", error: "..." }
+            if ("statusCode" in data && "message" in data) {
+              const msg = (data as { message: unknown }).message;
+              if (typeof msg === "string" && msg.trim()) {
+                errorMessage = msg;
+              }
+            }
+          }
+        }
+
+        // Fallback avec le statut HTTP si aucun message trouvé
+        if (errorMessage === "Erreur inconnue") {
           errorMessage = `Erreur ${response.status}: ${response.statusText}`;
         }
 
         return {
           success: false,
           error: errorMessage,
+          statusCode: response.status,
         };
       }
 
@@ -664,7 +970,7 @@ class ApiService {
 
   // Méthode pour mettre à jour un utilisateur
   async updateUser(
-    id: number,
+    id: string | number,
     userData: Partial<UserRegistrationData>
   ): Promise<ApiResponse<User>> {
     return this.makeRequest<User>(`/users/${id}`, {
@@ -674,9 +980,23 @@ class ApiService {
   }
 
   // Méthode pour supprimer un utilisateur
-  async deleteUser(id: number): Promise<ApiResponse<void>> {
+  async deleteUser(id: string | number): Promise<ApiResponse<void>> {
     return this.makeRequest<void>(`/users/${id}`, {
       method: "DELETE",
+    });
+  }
+
+  // Méthode pour activer un utilisateur
+  async activateUser(id: string): Promise<ApiResponse<User>> {
+    return this.makeRequest<User>(`/users/${id}/activate`, {
+      method: "PUT",
+    });
+  }
+
+  // Méthode pour désactiver un utilisateur
+  async deactivateUser(id: string): Promise<ApiResponse<User>> {
+    return this.makeRequest<User>(`/users/${id}/deactivate`, {
+      method: "PUT",
     });
   }
 
@@ -723,8 +1043,13 @@ class ApiService {
   }
 
   // Méthode pour récupérer tous les étudiants avec leurs données utilisateur
-  async getAllStudents(): Promise<ApiResponse<StudentWithUser[]>> {
-    return this.makeRequest<StudentWithUser[]>("/students");
+  async getAllStudents(
+    institutionId?: string
+  ): Promise<ApiResponse<StudentWithUser[]>> {
+    const url = institutionId
+      ? `/students?institutionId=${institutionId}`
+      : "/students";
+    return this.makeRequest<StudentWithUser[]>(url);
   }
 
   // Méthode pour créer un profil enseignant
@@ -739,8 +1064,13 @@ class ApiService {
   }
 
   // Méthode pour récupérer tous les enseignants avec leurs données utilisateur
-  async getAllTeachers(): Promise<ApiResponse<TeacherWithUser[]>> {
-    return this.makeRequest<TeacherWithUser[]>("/teachers");
+  async getAllTeachers(
+    institutionId?: string
+  ): Promise<ApiResponse<TeacherWithUser[]>> {
+    const url = institutionId
+      ? `/teachers?institutionId=${institutionId}`
+      : "/teachers";
+    return this.makeRequest<TeacherWithUser[]>(url);
   }
 
   // Méthode pour créer un profil personnel administratif
@@ -759,6 +1089,60 @@ class ApiService {
     return this.makeRequest<StaffWithUser[]>("/staff");
   }
 
+  // Méthode pour mettre à jour un profil étudiant
+  async updateStudentProfile(
+    id: string,
+    profileData: Partial<StudentProfileData>
+  ): Promise<ApiResponse<StudentWithUser>> {
+    return this.makeRequest<StudentWithUser>(`/students/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(profileData),
+    });
+  }
+
+  // Méthode pour mettre à jour un profil enseignant
+  async updateTeacherProfile(
+    id: string,
+    profileData: Partial<TeacherProfileData>
+  ): Promise<ApiResponse<TeacherWithUser>> {
+    return this.makeRequest<TeacherWithUser>(`/teachers/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(profileData),
+    });
+  }
+
+  // Méthode pour supprimer un étudiant
+  async deleteStudent(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/students/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Méthode pour supprimer un enseignant
+  async deleteTeacher(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/teachers/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Méthode pour supprimer un personnel
+  async deleteStaff(id: string): Promise<ApiResponse<void>> {
+    return this.makeRequest<void>(`/staff/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Méthode pour mettre à jour un profil personnel
+  async updateStaffProfile(
+    id: string,
+    profileData: Partial<StaffProfileData>
+  ): Promise<ApiResponse<StaffWithUser>> {
+    return this.makeRequest<StaffWithUser>(`/staff/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(profileData),
+    });
+  }
+
   // Méthode pour créer une classe
   async createClass(classData: ClassData): Promise<ApiResponse<Class>> {
     console.log(classData);
@@ -775,7 +1159,7 @@ class ApiService {
 
   // Méthode pour mettre à jour une classe
   async updateClass(
-    id: number,
+    id: string | number,
     classData: Partial<ClassData>
   ): Promise<ApiResponse<Class>> {
     return this.makeRequest<Class>(`/classes/${id}`, {
@@ -785,7 +1169,7 @@ class ApiService {
   }
 
   // Méthode pour supprimer une classe
-  async deleteClass(id: number): Promise<ApiResponse<void>> {
+  async deleteClass(id: string | number): Promise<ApiResponse<void>> {
     return this.makeRequest<void>(`/classes/${id}`, {
       method: "DELETE",
     });
@@ -815,8 +1199,13 @@ class ApiService {
   }
 
   // Méthode pour récupérer toutes les catégories de classes
-  async getAllClassCategories(): Promise<ApiResponse<ClassCategory[]>> {
-    return this.makeRequest<ClassCategory[]>("/class-categories");
+  async getAllClassCategories(
+    institutionId?: string
+  ): Promise<ApiResponse<ClassCategory[]>> {
+    const url = institutionId
+      ? `/class-categories?institutionId=${institutionId}`
+      : "/class-categories";
+    return this.makeRequest<ClassCategory[]>(url);
   }
 
   // Méthode pour récupérer une catégorie de classe par ID
@@ -864,7 +1253,7 @@ class ApiService {
 
   // Méthode pour mettre à jour une matière
   async updateSubject(
-    id: number,
+    id: string | number,
     subjectData: Partial<SubjectData>
   ): Promise<ApiResponse<Subject>> {
     return this.makeRequest<Subject>(`/subjects/${id}`, {
@@ -874,7 +1263,7 @@ class ApiService {
   }
 
   // Méthode pour supprimer une matière
-  async deleteSubject(id: number): Promise<ApiResponse<void>> {
+  async deleteSubject(id: string | number): Promise<ApiResponse<void>> {
     return this.makeRequest<void>(`/subjects/${id}`, {
       method: "DELETE",
     });
@@ -932,7 +1321,7 @@ class ApiService {
   }
 
   // Méthode pour supprimer une affectation d'étudiant à une classe
-  async deleteStudentClass(id: number): Promise<ApiResponse<void>> {
+  async deleteStudentClass(id: string): Promise<ApiResponse<void>> {
     return this.makeRequest<void>(`/student-classes/${id}`, {
       method: "DELETE",
     });
@@ -980,7 +1369,7 @@ class ApiService {
     data: UpdateSchoolYearDto
   ): Promise<ApiResponse<SchoolYear>> {
     return this.makeRequest<SchoolYear>(`/school-years/${id}`, {
-      method: "PATCH",
+      method: "PUT",
       body: JSON.stringify(data),
     });
   }
@@ -1025,7 +1414,7 @@ class ApiService {
     data: UpdateTermDto
   ): Promise<ApiResponse<Term>> {
     return this.makeRequest<Term>(`/terms/${id}`, {
-      method: "PATCH",
+      method: "PUT",
       body: JSON.stringify(data),
     });
   }
@@ -1161,19 +1550,22 @@ class ApiService {
 
   // Fee Types
   async getAllFeeTypes(): Promise<ApiResponse<FeeType[]>> {
-    return this.makeRequest<any[]>("/fee-types");
+    return this.makeRequest<FeeType[]>("/fee-types");
   }
 
-  async createFeeType(data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>("/fee-types", {
+  async createFeeType(data: CreateFeeTypeDto): Promise<ApiResponse<FeeType>> {
+    return this.makeRequest<FeeType>("/fee-types", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updateFeeType(id: string, data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>(`/fee-types/${id}`, {
-      method: "PUT",
+  async updateFeeType(
+    id: string,
+    data: UpdateFeeTypeDto
+  ): Promise<ApiResponse<FeeType>> {
+    return this.makeRequest<FeeType>(`/fee-types/${id}`, {
+      method: "PATCH",
       body: JSON.stringify(data),
     });
   }
@@ -1185,20 +1577,25 @@ class ApiService {
   }
 
   // Student Fees
-  async getAllStudentFees(): Promise<ApiResponse<any[]>> {
-    return this.makeRequest<any[]>("/student-fees");
+  async getAllStudentFees(): Promise<ApiResponse<StudentFee[]>> {
+    return this.makeRequest<StudentFee[]>("/student-fees");
   }
 
-  async createStudentFee(data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>("/student-fees", {
+  async createStudentFee(
+    data: CreateStudentFeeDto
+  ): Promise<ApiResponse<StudentFee>> {
+    return this.makeRequest<StudentFee>("/student-fees", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updateStudentFee(id: string, data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>(`/student-fees/${id}`, {
-      method: "PUT",
+  async updateStudentFee(
+    id: string,
+    data: UpdateStudentFeeDto
+  ): Promise<ApiResponse<StudentFee>> {
+    return this.makeRequest<StudentFee>(`/student-fees/${id}`, {
+      method: "PATCH",
       body: JSON.stringify(data),
     });
   }
@@ -1210,19 +1607,22 @@ class ApiService {
   }
 
   // Payments
-  async getAllPayments(): Promise<ApiResponse<any[]>> {
-    return this.makeRequest<any[]>("/payments");
+  async getAllPayments(): Promise<ApiResponse<Payment[]>> {
+    return this.makeRequest<Payment[]>("/payments");
   }
 
-  async createPayment(data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>("/payments", {
+  async createPayment(data: CreatePaymentDto): Promise<ApiResponse<Payment>> {
+    return this.makeRequest<Payment>("/payments", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updatePayment(id: string, data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>(`/payments/${id}`, {
+  async updatePayment(
+    id: string,
+    data: UpdatePaymentDto
+  ): Promise<ApiResponse<Payment>> {
+    return this.makeRequest<Payment>(`/payments/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -1235,19 +1635,22 @@ class ApiService {
   }
 
   // Invoices
-  async getAllInvoices(): Promise<ApiResponse<any[]>> {
-    return this.makeRequest<any[]>("/invoices");
+  async getAllInvoices(): Promise<ApiResponse<Invoice[]>> {
+    return this.makeRequest<Invoice[]>("/invoices");
   }
 
-  async createInvoice(data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>("/invoices", {
+  async createInvoice(data: CreateInvoiceDto): Promise<ApiResponse<Invoice>> {
+    return this.makeRequest<Invoice>("/invoices", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updateInvoice(id: string, data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>(`/invoices/${id}`, {
+  async updateInvoice(
+    id: string,
+    data: UpdateInvoiceDto
+  ): Promise<ApiResponse<Invoice>> {
+    return this.makeRequest<Invoice>(`/invoices/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -1260,19 +1663,24 @@ class ApiService {
   }
 
   // Discounts
-  async getAllDiscounts(): Promise<ApiResponse<any[]>> {
-    return this.makeRequest<any[]>("/discounts");
+  async getAllDiscounts(): Promise<ApiResponse<Discount[]>> {
+    return this.makeRequest<Discount[]>("/discounts");
   }
 
-  async createDiscount(data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>("/discounts", {
+  async createDiscount(
+    data: CreateDiscountDto
+  ): Promise<ApiResponse<Discount>> {
+    return this.makeRequest<Discount>("/discounts", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updateDiscount(id: string, data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>(`/discounts/${id}`, {
+  async updateDiscount(
+    id: string,
+    data: UpdateDiscountDto
+  ): Promise<ApiResponse<Discount>> {
+    return this.makeRequest<Discount>(`/discounts/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -1285,19 +1693,22 @@ class ApiService {
   }
 
   // Refunds
-  async getAllRefunds(): Promise<ApiResponse<any[]>> {
-    return this.makeRequest<any[]>("/refunds");
+  async getAllRefunds(): Promise<ApiResponse<Refund[]>> {
+    return this.makeRequest<Refund[]>("/refunds");
   }
 
-  async createRefund(data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>("/refunds", {
+  async createRefund(data: CreateRefundDto): Promise<ApiResponse<Refund>> {
+    return this.makeRequest<Refund>("/refunds", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updateRefund(id: string, data: any): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>(`/refunds/${id}`, {
+  async updateRefund(
+    id: string,
+    data: UpdateRefundDto
+  ): Promise<ApiResponse<Refund>> {
+    return this.makeRequest<Refund>(`/refunds/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -1310,8 +1721,8 @@ class ApiService {
   }
 
   // Finance Statistics
-  async getFinanceStats(): Promise<ApiResponse<any>> {
-    return this.makeRequest<any>("/finance/stats");
+  async getFinanceStats(): Promise<ApiResponse<FinanceStats>> {
+    return this.makeRequest<FinanceStats>("/finance/stats");
   }
 }
 
@@ -1323,11 +1734,7 @@ export type {
   UserRegistrationData,
   User,
   LoginResponse,
-  StudentProfileData,
-  StudentWithUser,
-  TeacherProfileData,
   TeacherWithUser,
-  StaffProfileData,
   StaffWithUser,
   ClassData,
   Class,

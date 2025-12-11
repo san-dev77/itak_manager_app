@@ -46,7 +46,7 @@ const StudentDataTable = ({
       // Inclure tous les utilisateurs qui ont des profils étudiants OU qui ont le rôle "student"
       const studentUsers = users.filter(
         (user) =>
-          user.role === "student" ||
+          (user.role as string) === "student" ||
           existingProfiles.some((profile) => profile.userId === user.id)
       );
 

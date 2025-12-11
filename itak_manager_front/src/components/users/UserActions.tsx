@@ -125,12 +125,12 @@ const UserActions = ({
           <div className="p-3 border-b border-blue-100">
             <h4 className="font-medium text-blue-900">Gérer le profil</h4>
             <p className="text-sm text-blue-600">
-              {user.first_name} {user.last_name}
+              {user.firstName} {user.lastName}
             </p>
           </div>
 
           <div className="p-2">
-            {user.role === "teacher" && (
+            {(user.role as string) === "teacher" && (
               <button
                 onClick={() =>
                   handleActionClick(() => onCreateProfile(user, "teacher"))
@@ -147,7 +147,7 @@ const UserActions = ({
               </button>
             )}
 
-            {user.role === "staff" && (
+            {(user.role as string) === "staff" && (
               <button
                 onClick={() =>
                   handleActionClick(() => onCreateProfile(user, "staff"))

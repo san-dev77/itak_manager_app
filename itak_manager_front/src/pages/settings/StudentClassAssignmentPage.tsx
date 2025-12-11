@@ -11,7 +11,7 @@ import {
   type Class,
   type StudentClass,
 } from "../../services/api";
-import { Search, Users, GraduationCap } from "lucide-react";
+import { Search, GraduationCap } from "lucide-react";
 
 const StudentClassAssignmentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -39,8 +39,7 @@ const StudentClassAssignmentPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"create" | "list">("create");
 
   useEffect(() => {
-    const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
+    const userData = localStorage.getItem("user");
     if (userData) {
       try {
         setUser(JSON.parse(userData));
@@ -157,7 +156,7 @@ const StudentClassAssignmentPage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await apiService.deleteStudentClass(parseInt(id));
+      const response = await apiService.deleteStudentClass(id);
       if (response.success) {
         // Recharger les données
         const assignmentsRes = await apiService.getAllStudentClasses();
@@ -171,12 +170,23 @@ const StudentClassAssignmentPage: React.FC = () => {
           message: "Affectation supprimée avec succès",
           isVisible: true,
         });
+      } else {
+        setNotification({
+          type: "error",
+          title: "Erreur",
+          message: response.error || "Erreur lors de la suppression",
+          isVisible: true,
+        });
       }
-    } catch {
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
       setNotification({
         type: "error",
         title: "Erreur",
-        message: "Erreur lors de la suppression",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la suppression",
         isVisible: true,
       });
     }
@@ -466,43 +476,60 @@ const StudentClassAssignmentPage: React.FC = () => {
 
                     {/* Liste des étudiants */}
                     <div className="h-64 overflow-y-auto border border-gray-200 rounded-lg p-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      {filteredStudents.map((student) => (
-                        <div
-                          key={student.id}
-                          onClick={() => handleStudentToggle(student.id)}
-                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                            selectedStudents.includes(student.id)
-                              ? "bg-blue-500 border-2 border-blue-200"
-                              : "bg-gray-50 border-2 border-transparent hover:bg-gray-100"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                                selectedStudents.includes(student.id)
-                                  ? "bg-blue-500 border-blue-500"
-                                  : "border-gray-300"
-                              }`}
-                            >
-                              {selectedStudents.includes(student.id) && (
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                              )}
-                            </div>
-                            <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                              <Users className="w-4 h-4 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-900">
-                                {student.user?.firstName || "Prénom"}{" "}
-                                {student.user?.lastName || "Nom"}
-                              </h3>
-                              <p className="text-sm text-gray-600">
-                                Matricule: {student.matricule || "N/A"}
-                              </p>
+                      {filteredStudents.map((student) => {
+                        const studentPhoto = student.photo;
+                        const studentFirstName =
+                          student.user?.firstName || "Prénom";
+                        const studentLastName = student.user?.lastName || "Nom";
+
+                        return (
+                          <div
+                            key={student.id}
+                            onClick={() => handleStudentToggle(student.id)}
+                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                              selectedStudents.includes(student.id)
+                                ? "bg-blue-500 border-2 border-blue-200"
+                                : "bg-gray-50 border-2 border-transparent hover:bg-gray-100"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                  selectedStudents.includes(student.id)
+                                    ? "bg-blue-500 border-blue-500"
+                                    : "border-gray-300"
+                                }`}
+                              >
+                                {selectedStudents.includes(student.id) && (
+                                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                                )}
+                              </div>
+                              <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+                                {studentPhoto ? (
+                                  <img
+                                    src={studentPhoto}
+                                    alt={`${studentFirstName} ${studentLastName}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gray-300 text-gray-500 text-xs font-semibold">
+                                    {studentFirstName.charAt(0)}
+                                    {studentLastName.charAt(0)}
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900">
+                                  {studentFirstName} {studentLastName}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  Matricule: {student.matricule || "N/A"}
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       {filteredStudents.length === 0 && (
                         <div className="text-center py-8 text-gray-500">
                           {studentSearchTerm
@@ -565,6 +592,11 @@ const StudentClassAssignmentPage: React.FC = () => {
                             <div>
                               <h3 className="font-semibold text-gray-900">
                                 {classItem.name}
+                                {classItem.classCategory?.institution && (
+                                  <span className="ml-2 text-xs font-semibold text-blue-600">
+                                    ({classItem.classCategory.institution.code})
+                                  </span>
+                                )}
                               </h3>
                               <p className="text-sm text-gray-600">
                                 Niveau: {classItem.level} • Code:{" "}
@@ -591,6 +623,7 @@ const StudentClassAssignmentPage: React.FC = () => {
                         type="date"
                         value={startDate}
                         onChange={handleStartDateChange}
+                        max={new Date().toISOString().split("T")[0]}
                         required
                       />
                     </div>
@@ -686,197 +719,144 @@ const StudentClassAssignmentPage: React.FC = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                    {assignments.map((assignment) => {
-                      const isActive =
-                        !assignment.endDate ||
-                        new Date(assignment.endDate) > new Date();
-                      const startDate = new Date(assignment.startDate);
-                      const endDate = assignment.endDate
-                        ? new Date(assignment.endDate)
-                        : null;
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Photo
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Étudiant
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Matricule
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Classe
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Institution
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Date début
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Date fin
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Statut
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {assignments.map((assignment) => {
+                          const isActive =
+                            !assignment.endDate ||
+                            new Date(assignment.endDate) > new Date();
+                          const startDate = new Date(assignment.startDate);
+                          const endDate = assignment.endDate
+                            ? new Date(assignment.endDate)
+                            : null;
 
-                      return (
-                        <div
-                          key={assignment.id}
-                          className="group relative bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all duration-200 hover:border-gray-300"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              {/* Header avec statut */}
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                  <svg
-                                    className="w-5 h-5 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          const studentPhoto = assignment.student?.photo;
+                          const studentFirstName =
+                            assignment.student?.user?.firstName || "Prénom";
+                          const studentLastName =
+                            assignment.student?.user?.lastName || "Nom";
+
+                          return (
+                            <tr
+                              key={assignment.id}
+                              className="hover:bg-gray-50"
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                                  {studentPhoto ? (
+                                    <img
+                                      src={studentPhoto}
+                                      alt={`${studentFirstName} ${studentLastName}`}
+                                      className="w-full h-full object-cover"
                                     />
-                                  </svg>
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-300 text-gray-500 text-xs font-semibold">
+                                      {studentFirstName.charAt(0)}
+                                      {studentLastName.charAt(0)}
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="flex-1">
-                                  <h3 className="font-semibold text-gray-900 text-lg">
-                                    {assignment.student?.user?.firstName ||
-                                      "Prénom inconnu"}{" "}
-                                    {assignment.student?.user?.lastName ||
-                                      "Nom inconnu"}
-                                  </h3>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span
-                                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                        isActive
-                                          ? "bg-green-100 text-green-800"
-                                          : "bg-gray-100 text-gray-800"
-                                      }`}
-                                    >
-                                      <div
-                                        className={`w-2 h-2 rounded-full mr-1.5 ${
-                                          isActive
-                                            ? "bg-green-400"
-                                            : "bg-gray-400"
-                                        }`}
-                                      ></div>
-                                      {isActive ? "Actif" : "Terminé"}
-                                    </span>
-                                    {assignment.student?.matricule && (
-                                      <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
-                                        {assignment.student.matricule}
-                                      </span>
-                                    )}
-                                  </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {studentFirstName} {studentLastName}
                                 </div>
-                              </div>
-
-                              {/* Informations de classe */}
-                              <div className="bg-white rounded-lg p-3 mb-3 border border-gray-200">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
-                                    <svg
-                                      className="w-3 h-3 text-white"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                      />
-                                    </svg>
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-gray-900">
-                                      {assignment.class?.name ||
-                                        "Classe inconnue"}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      Niveau: {assignment.class?.level || "N/A"}{" "}
-                                      • Code: {assignment.class?.code || "N/A"}
-                                    </p>
-                                  </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-500">
+                                  {assignment.student?.matricule || "N/A"}
                                 </div>
-                              </div>
-
-                              {/* Dates */}
-                              <div className="flex items-center gap-4 text-sm">
-                                <div className="flex items-center gap-1.5 text-gray-600">
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                    />
-                                  </svg>
-                                  <span className="font-medium">Début:</span>
-                                  <span>
-                                    {startDate.toLocaleDateString("fr-FR")}
-                                  </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {assignment.class?.name || "Classe inconnue"}
                                 </div>
-                                {endDate && (
-                                  <div className="flex items-center gap-1.5 text-gray-600">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                      />
-                                    </svg>
-                                    <span className="font-medium">Fin:</span>
-                                    <span>
-                                      {endDate.toLocaleDateString("fr-FR")}
-                                    </span>
-                                  </div>
-                                )}
-                                {!endDate && (
-                                  <div className="flex items-center gap-1.5 text-green-600">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                      />
-                                    </svg>
-                                    <span className="font-medium">
-                                      Permanent
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Bouton de suppression */}
-                            <div className="ml-4 flex-shrink-0">
-                              <Button
-                                onClick={() => handleDelete(assignment.id)}
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              >
-                                <svg
-                                  className="w-4 h-4 mr-1"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                                <div className="text-xs text-gray-500">
+                                  {assignment.class?.level || "N/A"} •{" "}
+                                  {assignment.class?.code || "N/A"}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-semibold text-blue-600">
+                                  {assignment.class?.classCategory?.institution
+                                    ?.code || "N/A"}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-500">
+                                  {startDate.toLocaleDateString("fr-FR")}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-500">
+                                  {endDate
+                                    ? endDate.toLocaleDateString("fr-FR")
+                                    : "En cours"}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    isActive
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                  />
-                                </svg>
-                                Supprimer
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                                  <div
+                                    className={`w-2 h-2 rounded-full mr-1.5 ${
+                                      isActive ? "bg-green-400" : "bg-gray-400"
+                                    }`}
+                                  ></div>
+                                  {isActive ? "Actif" : "Terminé"}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <Button
+                                  onClick={() => handleDelete(assignment.id)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
+                                >
+                                  Supprimer
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>

@@ -1,7 +1,13 @@
+/* Import du système de design */
+@import './styles/design-tokens.css';
+
 body {
+  font-family: var(--font-family);
   overflow-y: visible;
   scrollbar-width: thin;
-  scrollbar-color: #60a5fa #dbeafe;
+  scrollbar-color: var(--color-primary-400) var(--color-primary-100);
+  background-color: var(--color-gray-50);
+  color: var(--color-gray-900);
 }
 
 /* Scrollbar personnalisée */
@@ -14,42 +20,42 @@ body {
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: #dbeafe; /* blue-100 */
-  border-radius: 4px;
+  background: var(--color-primary-100);
+  border-radius: var(--radius-sm);
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #60a5fa; /* blue-400 */
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+  background: var(--color-primary-400);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #3b82f6; /* blue-500 */
+  background: var(--color-primary-500);
 }
 
 .scrollbar-track-blue-100::-webkit-scrollbar-track {
-  background: #dbeafe;
+  background: var(--color-primary-100);
 }
 
 .scrollbar-thumb-blue-400::-webkit-scrollbar-thumb {
-  background: #60a5fa;
+  background: var(--color-primary-400);
 }
 
 .hover\:scrollbar-thumb-blue-500:hover::-webkit-scrollbar-thumb {
-  background: #3b82f6;
+  background: var(--color-primary-500);
 }
 
 /* Scrollbar pour Firefox */
 .scrollbar-thin {
-  scrollbar-color: #60a5fa #dbeafe;
+  scrollbar-color: var(--color-primary-400) var(--color-primary-100);
 }
 
 /* Animation de la scrollbar */
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:active {
-  background: #2563eb; /* blue-600 */
+  background: var(--color-primary-600);
 }

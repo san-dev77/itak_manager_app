@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "../../components/layout/Layout";
+import AuthenticatedPage from "../../components/layout/AuthenticatedPage";
+import PageHeader from "../../components/ui/PageHeader";
+import Breadcrumb from "../../components/ui/Breadcrumb";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
-import { apiService } from "../../services/api";
+import Modal from "../../components/ui/Modal";
+import { apiService, type StudentFee } from "../../services/api";
+import { User as UserIcon } from "lucide-react";
 import {
-  User,
   DollarSign,
   Calendar,
   Search,
@@ -15,6 +18,8 @@ import {
   GraduationCap,
   FileText,
   ArrowRight,
+  CheckCircle,
+  X,
 } from "lucide-react";
 
 interface Student {
@@ -79,14 +84,16 @@ interface AcademicYear {
 
 const StudentFeeAssignmentPage: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<typeof User | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [studentClasses, setStudentClasses] = useState<StudentClass[]>([]);
   const [feeTypes, setFeeTypes] = useState<FeeType[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
-  const [studentFees, setStudentFees] = useState<[]>([]);
+  // État pour les frais étudiants (chargé mais non utilisé dans l'affichage actuel)
+  const [, setStudentFees] = useState<StudentFee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // États pour la sélection
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -149,27 +156,10 @@ const StudentFeeAssignmentPage: React.FC = () => {
     return studentClass?.class || null;
   };
 
-  const parseAmount = (value: string): number => {
-    const cleanValue = value.replace(/[\s.]/g, "");
-    return parseInt(cleanValue) || 0;
-  };
-
   useEffect(() => {
-    const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-        loadAllData();
-      } catch (error) {
-        console.log(error);
-
-        navigate("/login");
-      }
-    } else {
-      navigate("/login");
-    }
-  }, [navigate]);
+    loadAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadAllData = async () => {
     try {
@@ -339,7 +329,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
     e.preventDefault();
 
     if (!selectedStudent || !selectedFeeType || !selectedAcademicYear) {
-      alert(
+      setErrorMessage(
         "Veuillez sélectionner un étudiant, un type de frais et une année scolaire."
       );
       return;
@@ -353,7 +343,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
         !selectedFeeType.amountDefault ||
         selectedFeeType.amountDefault <= 0
       ) {
-        alert(
+        setErrorMessage(
           "Erreur: Le type de frais sélectionné n'a pas de montant valide."
         );
         setIsSubmitting(false);
@@ -383,16 +373,18 @@ const StudentFeeAssignmentPage: React.FC = () => {
 
       if (response.success) {
         console.log("Frais étudiant créé avec succès");
-        alert("Frais attribué avec succès à l'étudiant !");
-        // Recharger la page pour mettre à jour les données
-        window.location.reload();
+        setSuccessMessage("Frais attribué avec succès à l'étudiant !");
+        // Recharger la page pour mettre à jour les données après fermeture de la modale
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } else {
         console.error("Erreur lors de la création:", response.error);
-        alert("Erreur lors de l'attribution du frais. Veuillez réessayer.");
+        setErrorMessage("Erreur lors de l'attribution du frais. Veuillez réessayer.");
       }
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
-      alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
+      setErrorMessage("Erreur lors de la sauvegarde. Veuillez réessayer.");
     } finally {
       setIsSubmitting(false);
     }
@@ -407,14 +399,14 @@ const StudentFeeAssignmentPage: React.FC = () => {
       !selectedFeeType ||
       !selectedAcademicYear
     ) {
-      alert(
+      setErrorMessage(
         "Veuillez sélectionner au moins un étudiant, un type de frais et une année scolaire."
       );
       return;
     }
 
     if (!formData.dueDate) {
-      alert("Veuillez définir une date d'échéance.");
+      setErrorMessage("Veuillez définir une date d'échéance.");
       return;
     }
 
@@ -426,7 +418,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
         !selectedFeeType.amountDefault ||
         selectedFeeType.amountDefault <= 0
       ) {
-        alert(
+        setErrorMessage(
           "Erreur: Le type de frais sélectionné n'a pas de montant valide."
         );
         setIsSubmitting(false);
@@ -450,21 +442,25 @@ const StudentFeeAssignmentPage: React.FC = () => {
       const failed = responses.filter((r) => !r.success);
 
       if (successful.length === responses.length) {
-        alert(
+        setSuccessMessage(
           `Frais attribués avec succès à ${successful.length} étudiant(s) !`
         );
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } else {
-        alert(
+        setSuccessMessage(
           `${successful.length} attribution(s) réussie(s), ${failed.length} échouée(s).`
         );
         if (failed.length < responses.length) {
-          window.location.reload();
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         }
       }
     } catch (error) {
       console.error("Erreur lors de la sauvegarde en lot:", error);
-      alert("Erreur lors de la sauvegarde. Veuillez réessayer.");
+      setErrorMessage("Erreur lors de la sauvegarde. Veuillez réessayer.");
     } finally {
       setIsSubmitting(false);
     }
@@ -500,46 +496,35 @@ const StudentFeeAssignmentPage: React.FC = () => {
           .includes(feeTypeSearchTerm.toLowerCase()))
   );
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
+  const breadcrumbItems = [
+    { label: "Finances", path: "/finances" },
+    { label: "Frais étudiants", path: "/finances/student-fees" },
+    { label: "Attribution", path: "/finances/student-fee-assignment" },
+  ];
 
   return (
-    <Layout user={user}>
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Attribution de frais aux étudiants
-              </h1>
-              <p className="text-gray-600">
-                Attribuez des frais spécifiques aux étudiants
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={() => navigate("/finances/student-fees")}
-                variant="outline"
-              >
-                ← Retour aux frais étudiants
-              </Button>
-            </div>
-          </div>
-        </div>
+    <AuthenticatedPage>
+      <div className="space-y-6">
+        <Breadcrumb items={breadcrumbItems} />
+        <PageHeader
+          title="Attribution de frais aux étudiants"
+          subtitle="Attribuez des frais spécifiques aux étudiants"
+          icon={DollarSign}
+          iconColor="from-green-600 to-green-800"
+          actions={
+            <Button
+              onClick={() => navigate("/finances/student-fees")}
+              variant="outline"
+            >
+              ← Retour
+            </Button>
+          }
+        />
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
               <p className="text-gray-600">Chargement des données...</p>
             </div>
           </div>
@@ -555,7 +540,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
                   {isBulkMode ? (
                     <Users className="w-5 h-5 text-purple-600 mr-2" />
                   ) : (
-                    <User className="w-5 h-5 text-blue-600 mr-2" />
+                    <UserIcon className="w-5 h-5 text-blue-600 mr-2" />
                   )}
                   <h2 className="text-xl font-semibold text-gray-900">
                     1. Sélectionner{" "}
@@ -572,7 +557,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
                     }}
                     className="text-sm"
                   >
-                    <User className="w-4 h-4 mr-1" />
+                    <UserIcon className="w-4 h-4 mr-1" />
                     Mode unique
                   </Button>
                   <Button
@@ -596,7 +581,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-blue-600" />
+                        <UserIcon className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
                         <h3 className="font-medium text-gray-900">
@@ -715,10 +700,10 @@ const StudentFeeAssignmentPage: React.FC = () => {
                           <div
                             key={student.id}
                             onClick={() => handleStudentSelect(student)}
-                            className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
+                            className={`p-3 border rounded-lg cursor-pointer ${
                               isSelected
                                 ? "border-purple-500 bg-purple-50"
-                                : "border-gray-200 hover:border-blue-500 hover:bg-blue-50 bg-white"
+                                : "border-gray-200 bg-white"
                             }`}
                           >
                             <div className="flex items-center space-x-3">
@@ -844,7 +829,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
                       <div
                         key={feeType.id}
                         onClick={() => handleFeeTypeSelect(feeType)}
-                        className="p-3 border border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all duration-200"
+                        className="p-3 border border-gray-200 rounded-lg cursor-pointer bg-white"
                       >
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -885,10 +870,10 @@ const StudentFeeAssignmentPage: React.FC = () => {
                   <div
                     key={year.id}
                     onClick={() => setSelectedAcademicYear(year)}
-                    className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
+                    className={`p-3 border rounded-lg cursor-pointer ${
                       selectedAcademicYear?.id === year.id
                         ? "border-purple-500 bg-purple-50"
-                        : "border-gray-200 hover:border-purple-500 hover:bg-purple-50"
+                        : "border-gray-200 bg-white"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
@@ -924,11 +909,14 @@ const StudentFeeAssignmentPage: React.FC = () => {
             </Card>
 
             {/* Détails du frais */}
-            {selectedStudent && selectedFeeType && selectedAcademicYear && (
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  4. Détails du frais
-                </h2>
+            {((!isBulkMode && selectedStudent) ||
+              (isBulkMode && selectedStudents.size > 0)) &&
+              selectedFeeType &&
+              selectedAcademicYear && (
+                <Card className="p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                    4. Détails du frais
+                  </h2>
 
                 <div className="grid grid-cols-1 gap-6">
                   <div>
@@ -958,27 +946,90 @@ const StudentFeeAssignmentPage: React.FC = () => {
                     />
                   </div>
                 </div>
-              </Card>
-            )}
+                </Card>
+              )}
 
             {/* Bouton de soumission */}
-            {selectedStudent && selectedFeeType && selectedAcademicYear && (
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-8 py-3"
-                >
-                  {isSubmitting
-                    ? "Attribution en cours..."
-                    : "Attribuer le frais"}
-                </Button>
-              </div>
-            )}
+            {((!isBulkMode && selectedStudent) ||
+              (isBulkMode && selectedStudents.size > 0)) &&
+              selectedFeeType &&
+              selectedAcademicYear && (
+                <div className="flex justify-end">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-8 py-3"
+                  >
+                    {isSubmitting
+                      ? "Attribution en cours..."
+                      : isBulkMode
+                        ? `Attribuer à ${selectedStudents.size} étudiant(s)`
+                        : "Attribuer le frais"}
+                  </Button>
+                </div>
+              )}
           </form>
         )}
+
+        {/* Modale de succès */}
+        {successMessage && (
+          <Modal
+            isOpen={!!successMessage}
+            onClose={() => setSuccessMessage(null)}
+            title="Succès"
+            size="sm"
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+              </div>
+              <p className="text-center text-gray-800 text-base font-medium">
+                {successMessage}
+              </p>
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => setSuccessMessage(null)}
+                  variant="primary"
+                >
+                  OK
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {/* Modale d'erreur */}
+        {errorMessage && (
+          <Modal
+            isOpen={!!errorMessage}
+            onClose={() => setErrorMessage(null)}
+            title="Erreur"
+            size="sm"
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                  <X className="w-8 h-8 text-red-600" />
+                </div>
+              </div>
+              <p className="text-center text-gray-800 text-base font-medium">
+                {errorMessage}
+              </p>
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => setErrorMessage(null)}
+                  variant="primary"
+                >
+                  OK
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        )}
       </div>
-    </Layout>
+    </AuthenticatedPage>
   );
 };
 

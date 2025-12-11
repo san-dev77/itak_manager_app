@@ -8,46 +8,31 @@ import {
   ArrowLeft,
   User,
   Phone,
-  CheckCircle,
-  Shield,
-  Users,
-  BookOpen,
-  Calendar,
-  UserCheck,
 } from "lucide-react";
-import Button from "../components/ui/Button";
-import Input from "../components/ui/Input";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  apiService,
-  type UserRegistrationData,
-  USER_ROLES,
-} from "../services/api";
+import { apiService, type UserRegistrationData, USER_ROLES } from "../services/api";
 import Notification, {
   type NotificationType,
 } from "../components/ui/Notification";
+import logoCyberSchool from "../assets/cyberschool.jpg";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    username: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: USER_ROLES.STUDENT,
     firstName: "",
     lastName: "",
-    gender: "",
-    birthDate: "",
     phone: "",
+    role: USER_ROLES.SCOLARITE,
     acceptTerms: false,
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // État pour les notifications
   const [notification, setNotification] = useState<{
     type: NotificationType;
     title: string;
@@ -65,12 +50,7 @@ const RegisterPage = () => {
     title: string,
     message: string
   ) => {
-    setNotification({
-      type,
-      title,
-      message,
-      isVisible: true,
-    });
+    setNotification({ type, title, message, isVisible: true });
   };
 
   const hideNotification = () => {
@@ -88,7 +68,6 @@ const RegisterPage = () => {
       [name]: type === "checkbox" ? checked : value,
     }));
 
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -97,32 +76,19 @@ const RegisterPage = () => {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    // Le nom d'utilisateur est optionnel selon le DTO
-    if (
-      formData.username &&
-      formData.username.length > 0 &&
-      formData.username.length < 3
-    ) {
-      newErrors.username =
-        "Le nom d'utilisateur doit contenir au moins 3 caractères";
-    }
-
     if (!formData.email) {
       newErrors.email = "L'email est requis";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "L'email n'est pas valide";
+      newErrors.email = "Email invalide";
     }
 
     if (!formData.password) {
       newErrors.password = "Le mot de passe est requis";
     } else if (formData.password.length < 8) {
-      newErrors.password =
-        "Le mot de passe doit contenir au moins 8 caractères";
+      newErrors.password = "Minimum 8 caractères";
     }
 
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "La confirmation du mot de passe est requise";
-    } else if (formData.password !== formData.confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
     }
 
@@ -131,25 +97,11 @@ const RegisterPage = () => {
     }
 
     if (!formData.lastName.trim()) {
-      newErrors.lastName = "Le nom de famille est requis";
+      newErrors.lastName = "Le nom est requis";
     }
 
-    // Les champs suivants sont optionnels selon le DTO
-    // if (!formData.gender) {
-    //   newErrors.gender = "Le genre est requis";
-    // }
-
-    // if (!formData.birthDate) {
-    //   newErrors.birthDate = "La date de naissance est requise";
-    // }
-
-    // if (!formData.phone.trim()) {
-    //   newErrors.phone = "Le numéro de téléphone est requis";
-    // }
-
     if (!formData.acceptTerms) {
-      newErrors.acceptTerms =
-        "Vous devez accepter les conditions d'utilisation";
+      newErrors.acceptTerms = "Vous devez accepter les conditions";
     }
 
     setErrors(newErrors);
@@ -162,48 +114,39 @@ const RegisterPage = () => {
       setIsLoading(true);
 
       try {
-        // Prepare data for API (remove confirmPassword and acceptTerms)
         const userData: UserRegistrationData = {
-          username: formData.username || undefined,
           email: formData.email,
-          password: formData.password, // Le mot de passe sera hashé côté backend
+          password: formData.password,
           firstName: formData.firstName,
           lastName: formData.lastName,
-          gender: formData.gender || undefined,
-          birthDate: formData.birthDate || undefined,
           phone: formData.phone || undefined,
           role: formData.role,
-          isActive: true, // Par défaut, les nouveaux utilisateurs sont actifs
         };
 
-        // Appel à l'API via le service
         const response = await apiService.createUser(userData);
 
         if (response.success) {
           showNotification(
             "success",
-            "Compte créé avec succès !",
-            "Votre compte a été créé. Vous pouvez maintenant vous connecter."
+            "Compte créé",
+            "Vous pouvez maintenant vous connecter."
           );
 
-          // Redirection vers la page de connexion après 2 secondes
           setTimeout(() => {
             navigate("/login");
           }, 2000);
         } else {
           showNotification(
             "error",
-            "Erreur lors de la création",
-            response.error ||
-              "Une erreur est survenue lors de la création du compte."
+            "Erreur",
+            response.error || "Erreur lors de la création du compte."
           );
         }
-      } catch (error) {
-        console.error("Registration error:", error);
+      } catch {
         showNotification(
           "error",
-          "Erreur de connexion",
-          "Impossible de se connecter au serveur. Vérifiez votre connexion internet."
+          "Erreur",
+          "Impossible de se connecter au serveur."
         );
       } finally {
         setIsLoading(false);
@@ -211,57 +154,295 @@ const RegisterPage = () => {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
-  const features = [
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Gestion Complète",
-      description: "Tous les aspects de votre école en une seule plateforme",
-    },
-    {
-      icon: <BookOpen className="w-6 h-6" />,
-      title: "Interface Intuitive",
-      description: "Facile à utiliser pour tous les membres de votre équipe",
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Sécurité Garantie",
-      description: "Vos données sont protégées avec les meilleurs standards",
-    },
-  ];
-
   const roleOptions = [
-    { value: USER_ROLES.STUDENT, label: "Élève" },
-    { value: USER_ROLES.TEACHER, label: "Enseignant/Enseignante" },
-    { value: USER_ROLES.STAFF, label: "Personnel administratif" },
-    { value: USER_ROLES.PARENT, label: "Parent" },
-    { value: USER_ROLES.ADMIN, label: "Administrateur/Administratrice" },
-  ];
-
-  const genderOptions = [
-    { value: "male", label: "Masculin" },
-    { value: "female", label: "Féminin" },
-    { value: "other", label: "Autre" },
+    { value: USER_ROLES.SCOLARITE, label: "Service Scolarité" },
+    { value: USER_ROLES.FINANCE, label: "Service Comptabilité" },
+    { value: USER_ROLES.QUALITE, label: "Assurance Qualité & RP" },
+    { value: USER_ROLES.ADMIN, label: "Administrateur" },
+    { value: USER_ROLES.SUPER_ADMIN, label: "Président / DG" },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex">
-      {/* Notification */}
+    <div className="min-h-screen bg-slate-900 relative overflow-hidden">
+      {/* Fond subtil */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)] bg-[length:40px_40px]" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/10 rounded-full blur-3xl" />
+
+      <div className="relative min-h-screen flex flex-col">
+        {/* Navigation */}
+        <nav className="w-full px-6 py-5">
+          <div className="max-w-6xl mx-auto">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Retour</span>
+            </Link>
+          </div>
+        </nav>
+
+        {/* Contenu */}
+        <div className="flex-1 flex items-center justify-center px-6 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="w-full max-w-lg"
+          >
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="inline-block p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 mb-6">
+                <img
+                  src={logoCyberSchool}
+                  alt="Cyber School"
+                  className="w-14 h-14 object-contain"
+                />
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">
+                Créer un compte
+              </h1>
+              <p className="text-slate-400">Rejoignez Cyber School</p>
+            </div>
+
+            {/* Formulaire */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Nom et Prénom */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Prénom
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                      <input
+                        type="text"
+                        name="firstName"
+                        placeholder="John"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-11 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
+                    </div>
+                    {errors.firstName && (
+                      <p className="text-red-400 text-sm mt-1">
+                        {errors.firstName}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Nom
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                      <input
+                        type="text"
+                        name="lastName"
+                        placeholder="Doe"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-11 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
+                    </div>
+                    {errors.lastName && (
+                      <p className="text-red-400 text-sm mt-1">
+                        {errors.lastName}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="votre@email.com"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-11 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                  )}
+                </div>
+
+                {/* Téléphone */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Téléphone{" "}
+                    <span className="text-slate-500">(optionnel)</span>
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                    <input
+                      type="tel"
+                      name="phone"
+                      placeholder="+223 XX XX XX XX"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-11 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Rôle */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Rôle
+                  </label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                  >
+                    {roleOptions.map((option) => (
+                      <option
+                        key={option.value}
+                        value={option.value}
+                        className="bg-slate-800"
+                      >
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Mots de passe */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Mot de passe
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        placeholder="8 caractères min"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-11 pr-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-red-400 text-sm mt-1">
+                        {errors.password}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Confirmer
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        placeholder="Confirmer"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-11 pr-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="text-red-400 text-sm mt-1">
+                        {errors.confirmPassword}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Conditions */}
+                <div>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="acceptTerms"
+                      checked={formData.acceptTerms}
+                      onChange={handleInputChange}
+                      className="w-4 h-4 mt-0.5 bg-slate-800 border-slate-600 rounded text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
+                    />
+                    <span className="text-sm text-slate-400">
+                      J'accepte les{" "}
+                      <span className="text-blue-400">
+                        conditions d'utilisation
+                      </span>
+                    </span>
+                  </label>
+                  {errors.acceptTerms && (
+                    <p className="text-red-400 text-sm mt-1">
+                      {errors.acceptTerms}
+                    </p>
+                  )}
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Création...
+                    </span>
+                  ) : (
+                    "Créer mon compte"
+                  )}
+                </button>
+              </form>
+            </div>
+
+            {/* Footer */}
+            <p className="text-center text-slate-400 text-sm mt-6">
+              Déjà un compte ?{" "}
+              <Link
+                to="/login"
+                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              >
+                Se connecter
+              </Link>
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
       <Notification
         type={notification.type}
         title={notification.title}
@@ -270,395 +451,6 @@ const RegisterPage = () => {
         onClose={hideNotification}
         duration={5000}
       />
-
-      {/* Left Side - Registration Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <motion.div
-          className="w-full max-w-lg"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Header */}
-          <motion.div className="text-center mb-8" variants={itemVariants}>
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Retour à l'accueil</span>
-            </Link>
-
-            <div className="flex items-center justify-center gap-3 mb-6">
-              {/* <img src={logoItak} alt="ITAK Manager" className="w-12 h-12" /> */}
-              <span className="text-2xl font-bold text-blue-900">
-                School Manager
-              </span>
-            </div>
-
-            <h1 className="text-3xl font-bold text-blue-900 mb-2">
-              Créer un compte
-            </h1>
-            <p className="text-blue-700">
-              Rejoignez School Manager et accédez à votre espace
-            </p>
-          </motion.div>
-
-          {/* Registration Form */}
-          <motion.div
-            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-blue-100 p-8"
-            variants={itemVariants}
-          >
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Account Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-blue-900 border-b border-blue-200 pb-2">
-                  Informations du compte
-                </h3>
-
-                <motion.div variants={itemVariants}>
-                  <Input
-                    label="Nom d'utilisateur (optionnel)"
-                    type="text"
-                    name="username"
-                    placeholder="Votre nom d'utilisateur"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    error={errors.username}
-                    icon={<UserCheck className="w-5 h-5" />}
-                  />
-                </motion.div>
-
-                <motion.div variants={itemVariants}>
-                  <Input
-                    label="Adresse email"
-                    type="email"
-                    name="email"
-                    placeholder="votre@email.com"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    error={errors.email}
-                    icon={<Mail className="w-5 h-5" />}
-                  />
-                </motion.div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <motion.div variants={itemVariants}>
-                    <div className="relative">
-                      <Input
-                        label="Mot de passe"
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        placeholder="Votre mot de passe"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        error={errors.password}
-                        icon={<Lock className="w-5 h-5" />}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-600 transition-colors"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-                  </motion.div>
-
-                  <motion.div variants={itemVariants}>
-                    <div className="relative">
-                      <Input
-                        label="Confirmer le mot de passe"
-                        type={showConfirmPassword ? "text" : "password"}
-                        name="confirmPassword"
-                        placeholder="Confirmez votre mot de passe"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        error={errors.confirmPassword}
-                        icon={<Lock className="w-5 h-5" />}
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 hover:text-blue-600 transition-colors"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-                  </motion.div>
-                </div>
-              </div>
-
-              {/* Personal Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-blue-900 border-b border-blue-200 pb-2">
-                  Informations personnelles
-                </h3>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <motion.div variants={itemVariants}>
-                    <Input
-                      label="Prénom"
-                      type="text"
-                      name="firstName"
-                      placeholder="Votre prénom"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      error={errors.firstName}
-                      icon={<User className="w-5 h-5" />}
-                    />
-                  </motion.div>
-
-                  <motion.div variants={itemVariants}>
-                    <Input
-                      label="Nom de famille"
-                      type="text"
-                      name="lastName"
-                      placeholder="Votre nom"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      error={errors.lastName}
-                      icon={<User className="w-5 h-5" />}
-                    />
-                  </motion.div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <motion.div variants={itemVariants}>
-                    <label className="block text-sm font-medium text-blue-700 mb-2">
-                      Genre (optionnel)
-                    </label>
-                    <select
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-white text-slate-800 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                    >
-                      <option value="" className="text-slate-800">
-                        Sélectionnez votre genre
-                      </option>
-                      {genderOptions.map((option) => (
-                        <option
-                          key={option.value}
-                          value={option.value}
-                          className="text-slate-800"
-                        >
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.gender && (
-                      <div className="text-red-500 text-xs mt-1">
-                        {errors.gender}
-                      </div>
-                    )}
-                  </motion.div>
-
-                  <motion.div variants={itemVariants}>
-                    <Input
-                      label="Date de naissance (optionnel)"
-                      type="date"
-                      name="birthDate"
-                      value={formData.birthDate}
-                      onChange={handleInputChange}
-                      error={errors.birthDate}
-                      icon={<Calendar className="w-5 h-5 " />}
-                    />
-                  </motion.div>
-                </div>
-
-                <motion.div variants={itemVariants}>
-                  <Input
-                    label="Numéro de téléphone (optionnel)"
-                    type="tel"
-                    name="phone"
-                    placeholder="+33 6 12 34 56 78"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    error={errors.phone}
-                    icon={<Phone className="w-5 h-5" />}
-                  />
-                </motion.div>
-
-                <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-medium text-blue-700 mb-2">
-                    Rôle dans l'établissement
-                  </label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-white text-slate-800 border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                  >
-                    {roleOptions.map((option) => (
-                      <option
-                        key={option.value}
-                        value={option.value}
-                        className="text-slate-800"
-                      >
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </motion.div>
-              </div>
-
-              <motion.div variants={itemVariants}>
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="acceptTerms"
-                    checked={formData.acceptTerms}
-                    onChange={handleInputChange}
-                    className="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
-                  />
-                  <div className="text-sm text-blue-700">
-                    <span>
-                      J'accepte les{" "}
-                      <a
-                        href="#"
-                        className="text-blue-600 hover:text-blue-700 font-medium underline"
-                      >
-                        conditions d'utilisation
-                      </a>{" "}
-                      et la{" "}
-                      <a
-                        href="#"
-                        className="text-blue-600 hover:text-blue-700 font-medium underline"
-                      >
-                        politique de confidentialité
-                      </a>
-                    </span>
-                    {errors.acceptTerms && (
-                      <div className="text-red-500 text-xs mt-1">
-                        {errors.acceptTerms}
-                      </div>
-                    )}
-                  </div>
-                </label>
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Création du compte...
-                    </div>
-                  ) : (
-                    "Créer mon compte"
-                  )}
-                </Button>
-              </motion.div>
-            </form>
-
-            {/* Login Link */}
-            <motion.div className="text-center mt-6" variants={itemVariants}>
-              <p className="text-blue-600 text-sm">
-                Vous avez déjà un compte ?{" "}
-                <Link
-                  to="/login"
-                  className="text-blue-700 hover:text-blue-800 font-semibold transition-colors"
-                >
-                  Se connecter
-                </Link>
-              </p>
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      </div>
-
-      {/* Right Side - Features & Info */}
-      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white p-12">
-        <div className="w-full max-w-lg">
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="mb-12"
-          >
-            <h2 className="text-4xl font-bold mb-4">
-              Rejoignez la révolution scolaire
-            </h2>
-            <p className="text-xl text-blue-100 leading-relaxed">
-              Des centaines d'écoles font déjà confiance à School Manager.
-              Simplifiez votre administration et améliorez l'expérience de tous.
-            </p>
-          </motion.div>
-
-          <div className="space-y-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 + index * 0.1 }}
-                className="flex items-start gap-4"
-              >
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  {feature.icon}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-blue-100 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Benefits */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="mt-12 pt-8 border-t border-white/20"
-          >
-            <h3 className="text-xl font-semibold mb-4">
-              Pourquoi choisir School Manager ?
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-300" />
-                <span className="text-blue-100">Essai gratuit de 30 jours</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-300" />
-                <span className="text-blue-100">Support technique 24/7</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-300" />
-                <span className="text-blue-100">Mise à jour automatique</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-300" />
-                <span className="text-blue-100">
-                  Formation gratuite incluse
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
     </div>
   );
 };

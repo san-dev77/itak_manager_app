@@ -3,7 +3,12 @@ import { useState, useEffect } from "react";
 import { Search, UserPlus, X, Check } from "lucide-react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
-import type { User } from "../../services/api";
+import type {
+  User,
+  StudentProfileData,
+  TeacherProfileData,
+  StaffProfileData,
+} from "../../services/api";
 
 interface ProfileAssignmentModalProps {
   isOpen: boolean;
@@ -12,49 +17,14 @@ interface ProfileAssignmentModalProps {
   onAssignProfile: (
     user: User,
     profileData: StudentProfileData | TeacherProfileData | StaffProfileData
-  ) => void;
+  ) => void | Promise<void>;
   existingUsers: User[];
-}
-
-interface StudentProfileData {
-  id?: string;
-  userId: string;
-  matricule: string;
-  enrollmentDate: string | Date;
-  photo?: string;
-  maritalStatus?: string;
-  fatherName?: string;
-  motherName?: string;
-  tutorName?: string;
-  tutorPhone?: string;
-  address?: string;
-  emergencyContact?: string;
-  notes?: string;
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
-  user?: User; // UserResponseDto
-}
-
-interface TeacherProfileData {
-  matricule: string;
-  hireDate: string;
-  photo: string | null;
-  maritalStatus: string;
-  diplomas: string;
-  address: string;
-  emergencyContact: string;
-  notes: string;
-}
-
-interface StaffProfileData {
-  matricule: string;
-  hireDate: string;
-  position: string;
-  photo: string | null;
-  maritalStatus: string;
-  address: string;
-  emergencyContact: string;
-  notes: string;
+  preselectedUser?: User | null;
+  existingProfileData?:
+    | StudentProfileData
+    | TeacherProfileData
+    | StaffProfileData
+    | null;
 }
 
 const ProfileAssignmentModal = ({
@@ -63,11 +33,15 @@ const ProfileAssignmentModal = ({
   profileType,
   onAssignProfile,
   existingUsers,
+  preselectedUser,
+  existingProfileData,
 }: ProfileAssignmentModalProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(
+    preselectedUser || null
+  );
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [showProfileForm, setShowProfileForm] = useState(!!preselectedUser);
 
   // Form data for student profile
   const [studentProfile, setStudentProfile] = useState<
@@ -87,10 +61,12 @@ const ProfileAssignmentModal = ({
   });
 
   // Form data for teacher profile
-  const [teacherProfile, setTeacherProfile] = useState<TeacherProfileData>({
+  const [teacherProfile, setTeacherProfile] = useState<
+    Partial<TeacherProfileData>
+  >({
     matricule: "",
     hireDate: "",
-    photo: null,
+    photo: undefined,
     maritalStatus: "single",
     diplomas: "",
     address: "",
@@ -99,16 +75,67 @@ const ProfileAssignmentModal = ({
   });
 
   // Form data for staff profile
-  const [staffProfile, setStaffProfile] = useState<StaffProfileData>({
+  const [staffProfile, setStaffProfile] = useState<Partial<StaffProfileData>>({
     matricule: "",
     hireDate: "",
-    photo: null,
+    photo: undefined,
     maritalStatus: "single",
     position: "",
     address: "",
     emergencyContact: "",
     notes: "",
   });
+
+  // Initialiser le formulaire avec les données existantes si disponibles
+  useEffect(() => {
+    if (existingProfileData && preselectedUser) {
+      if (
+        profileType === "student" &&
+        "enrollmentDate" in existingProfileData
+      ) {
+        setStudentProfile({
+          matricule: existingProfileData.matricule || "",
+          enrollmentDate: existingProfileData.enrollmentDate || "",
+          maritalStatus: existingProfileData.maritalStatus || "single",
+          fatherName: existingProfileData.fatherName || "",
+          motherName: existingProfileData.motherName || "",
+          tutorName: existingProfileData.tutorName || "",
+          tutorPhone: existingProfileData.tutorPhone || "",
+          address: existingProfileData.address || "",
+          emergencyContact: existingProfileData.emergencyContact || "",
+          notes: existingProfileData.notes || "",
+        });
+      } else if (
+        profileType === "teacher" &&
+        "hireDate" in existingProfileData &&
+        "diplomas" in existingProfileData
+      ) {
+        setTeacherProfile({
+          matricule: existingProfileData.matricule || "",
+          hireDate: existingProfileData.hireDate || "",
+          maritalStatus: existingProfileData.maritalStatus || "single",
+          diplomas: existingProfileData.diplomas || "",
+          address: existingProfileData.address || "",
+          emergencyContact: existingProfileData.emergencyContact || "",
+          notes: existingProfileData.notes || "",
+        });
+      } else if (
+        profileType === "staff" &&
+        "hireDate" in existingProfileData &&
+        "position" in existingProfileData
+      ) {
+        setStaffProfile({
+          matricule: existingProfileData.matricule || "",
+          hireDate: existingProfileData.hireDate || "",
+          maritalStatus: existingProfileData.maritalStatus || "single",
+          position: existingProfileData.position || "",
+          address: existingProfileData.address || "",
+          emergencyContact: existingProfileData.emergencyContact || "",
+          notes: existingProfileData.notes || "",
+        });
+      }
+    }
+  }, [existingProfileData, preselectedUser, profileType]);
 
   useEffect(() => {
     if (searchTerm) {
@@ -125,6 +152,19 @@ const ProfileAssignmentModal = ({
       setFilteredUsers(existingUsers);
     }
   }, [searchTerm, existingUsers]);
+
+  // Réinitialiser l'état quand la modale s'ouvre/ferme
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedUser(preselectedUser || null);
+      setShowProfileForm(!!preselectedUser);
+    } else {
+      // Réinitialiser quand la modale se ferme
+      setSelectedUser(null);
+      setShowProfileForm(false);
+      setSearchTerm("");
+    }
+  }, [isOpen, preselectedUser]);
 
   const handleUserSelect = (user: User) => {
     setSelectedUser(user);
@@ -171,10 +211,46 @@ const ProfileAssignmentModal = ({
           };
           break;
         case "teacher":
-          profileData = teacherProfile;
+          profileData = {
+            id: undefined,
+            userId: selectedUser.id,
+            matricule: teacherProfile.matricule || "",
+            hireDate: teacherProfile.hireDate
+              ? typeof teacherProfile.hireDate === "string"
+                ? teacherProfile.hireDate
+                : teacherProfile.hireDate.toString()
+              : new Date().toISOString(),
+            photo: teacherProfile.photo,
+            maritalStatus: teacherProfile.maritalStatus,
+            diplomas: teacherProfile.diplomas,
+            address: teacherProfile.address,
+            emergencyContact: teacherProfile.emergencyContact,
+            notes: teacherProfile.notes,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            user: selectedUser,
+          };
           break;
         case "staff":
-          profileData = staffProfile;
+          profileData = {
+            id: undefined,
+            userId: selectedUser.id,
+            matricule: staffProfile.matricule || "",
+            hireDate: staffProfile.hireDate
+              ? typeof staffProfile.hireDate === "string"
+                ? staffProfile.hireDate
+                : staffProfile.hireDate.toString()
+              : new Date().toISOString(),
+            photo: staffProfile.photo,
+            maritalStatus: staffProfile.maritalStatus,
+            position: staffProfile.position,
+            address: staffProfile.address,
+            emergencyContact: staffProfile.emergencyContact,
+            notes: staffProfile.notes,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            user: selectedUser,
+          };
           break;
         default:
           profileData = {
@@ -223,7 +299,7 @@ const ProfileAssignmentModal = ({
     setTeacherProfile({
       matricule: "",
       hireDate: "",
-      photo: null,
+      photo: undefined,
       maritalStatus: "single",
       diplomas: "",
       address: "",
@@ -233,7 +309,7 @@ const ProfileAssignmentModal = ({
     setStaffProfile({
       matricule: "",
       hireDate: "",
-      photo: null,
+      photo: undefined,
       maritalStatus: "single",
       position: "",
       address: "",
@@ -578,7 +654,17 @@ const ProfileAssignmentModal = ({
                       label="Date d'embauche"
                       name="hireDate"
                       type="date"
-                      value={teacherProfile.hireDate}
+                      value={
+                        teacherProfile.hireDate
+                          ? typeof teacherProfile.hireDate === "string"
+                            ? teacherProfile.hireDate
+                            : teacherProfile.hireDate instanceof Date
+                            ? teacherProfile.hireDate
+                                .toISOString()
+                                .split("T")[0]
+                            : ""
+                          : ""
+                      }
                       onChange={(e) =>
                         setTeacherProfile({
                           ...teacherProfile,
@@ -703,7 +789,15 @@ const ProfileAssignmentModal = ({
                       label="Date d'embauche"
                       name="hireDate"
                       type="date"
-                      value={staffProfile.hireDate}
+                      value={
+                        staffProfile.hireDate
+                          ? typeof staffProfile.hireDate === "string"
+                            ? staffProfile.hireDate
+                            : staffProfile.hireDate instanceof Date
+                            ? staffProfile.hireDate.toISOString().split("T")[0]
+                            : ""
+                          : ""
+                      }
                       onChange={(e) =>
                         setStaffProfile({
                           ...staffProfile,

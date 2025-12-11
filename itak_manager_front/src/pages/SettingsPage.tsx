@@ -2,10 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Settings,
-  UserPlus,
   BookMarked,
-  UserCheck,
-  Link,
   ArrowRight,
   Sparkles,
   Users,
@@ -17,7 +14,6 @@ import {
   Info,
   CheckCircle,
   Clock,
-  TrendingUp,
 } from "lucide-react";
 import Layout from "../components/layout/Layout";
 
@@ -26,7 +22,7 @@ const SettingsPage = () => {
 
   useEffect(() => {
     const userData =
-      localStorage.getItem("itak_user") || sessionStorage.getItem("itak_user");
+      localStorage.getItem("user");
     if (userData) {
       try {
         setUser(JSON.parse(userData));
@@ -114,7 +110,7 @@ const SettingsPage = () => {
                 <div>
                   <h1 className="text-3xl font-bold">Paramètres du Système</h1>
                   <p className="text-blue-100">
-                    UPCD ITAK - Institut Technique l'Antidote de Kati
+                    Cyber School - Plateforme intégrée de l'école malienne
                   </p>
                 </div>
               </div>
@@ -288,7 +284,7 @@ const SettingsPage = () => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-blue-900 mb-2">
-                💡 Guide de Configuration UPCD ITAK
+                💡 Guide de Configuration Cyber School
               </h3>
               <p className="text-blue-800 text-sm leading-relaxed">
                 Ce module vous permet de configurer toutes les relations entre

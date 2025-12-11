@@ -1,0 +1,1080 @@
+[
+  {
+    "table": "users",
+    "role": "Table de base pour gérer l'authentification et les informations communes à tous les utilisateurs.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "username",
+        "type": "VARCHAR(50)",
+        "description": "Nom d’utilisateur généré automatiquement à partir du nom et prénom",
+        "constraints": "UNIQUE NOT NULL"
+      },
+      {
+        "name": "email",
+        "type": "VARCHAR(100)",
+        "description": "Adresse email",
+        "constraints": "UNIQUE NOT NULL"
+      },
+      {
+        "name": "password",
+        "type": "VARCHAR(100)",
+        "description": "Mot de passe chiffré",
+        "constraints": "NOT NULL"
+      },
+      {
+        "name": "role",
+        "type": "VARCHAR(20)",
+        "description": "Rôle utilisateur",
+        "constraints": "CHECK (student, teacher, staff, parent, admin)"
+      },
+      {
+        "name": "first_name",
+        "type": "VARCHAR(50)",
+        "description": "Prénom"
+      },
+      {
+        "name": "last_name",
+        "type": "VARCHAR(50)",
+        "description": "Nom"
+      },
+      {
+        "name": "gender",
+        "type": "VARCHAR(10)",
+        "description": "Sexe"
+      },
+      {
+        "name": "birth_date",
+        "type": "DATE",
+        "description": "Date de naissance"
+      },
+      {
+        "name": "phone",
+        "type": "VARCHAR(20)",
+        "description": "Téléphone"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "description": "Date de création",
+        "constraints": "DEFAULT NOW()"
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "description": "Date de mise à jour",
+        "constraints": "DEFAULT NOW()"
+      }
+    ]
+  },
+  {
+    "table": "students",
+    "role": "Informations spécifiques aux étudiants (scolarité, parents, inscription).",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "user_id",
+        "type": "INT",
+        "description": "Lien vers utilisateur",
+        "constraints": "FK users.id UNIQUE"
+      },
+      {
+        "name": "matricule",
+        "type": "VARCHAR(20)",
+        "description": "Matricule unique",
+        "constraints": "UNIQUE NOT NULL"
+      },
+      {
+        "name": "enrollment_date",
+        "type": "DATE",
+        "description": "Date d’inscription",
+        "constraints": "NOT NULL"
+      },
+      {
+        "name": "photo",
+        "type": "TEXT",
+        "description": "Photo (nullable)"
+      },
+      {
+        "name": "marital_status",
+        "type": "VARCHAR(20)",
+        "description": "Situation matrimoniale"
+      },
+      {
+        "name": "father_name",
+        "type": "VARCHAR(100)",
+        "description": "Nom du père"
+      },
+      {
+        "name": "mother_name",
+        "type": "VARCHAR(100)",
+        "description": "Nom de la mère"
+      },
+      {
+        "name": "tutor_name",
+        "type": "VARCHAR(100)",
+        "description": "Nom du tuteur légal"
+      },
+      {
+        "name": "tutor_phone",
+        "type": "VARCHAR(20)",
+        "description": "Téléphone du tuteur"
+      },
+      {
+        "name": "address",
+        "type": "TEXT",
+        "description": "Adresse de l’étudiant"
+      },
+      {
+        "name": "emergency_contact",
+        "type": "VARCHAR(100)",
+        "description": "Contact d’urgence"
+      },
+      {
+        "name": "notes",
+        "type": "TEXT",
+        "description": "Remarques diverses"
+      }
+    ]
+  },
+  {
+    "table": "teachers",
+    "role": "Informations spécifiques aux professeurs.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "user_id",
+        "type": "INT",
+        "description": "Lien vers utilisateur",
+        "constraints": "FK users.id UNIQUE"
+      },
+      {
+        "name": "speciality",
+        "type": "VARCHAR(100)",
+        "description": "Spécialité"
+      },
+      {
+        "name": "hire_date",
+        "type": "DATE",
+        "description": "Date d’embauche"
+      },
+      {
+        "name": "photo",
+        "type": "TEXT",
+        "description": "Photo (nullable)"
+      }
+    ]
+  },
+  {
+    "table": "staff",
+    "role": "Informations spécifiques aux personnels administratifs (directeur, surveillant, secrétaire, etc.).",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "user_id",
+        "type": "INT",
+        "description": "Lien vers utilisateur",
+        "constraints": "FK users.id UNIQUE"
+      },
+      {
+        "name": "position",
+        "type": "VARCHAR(100)",
+        "description": "Poste occupé"
+      },
+      {
+        "name": "hire_date",
+        "type": "DATE",
+        "description": "Date de recrutement"
+      }
+    ]
+  },
+  {
+    "table": "parents",
+    "role": "Informations spécifiques aux parents.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "user_id",
+        "type": "INT",
+        "description": "Lien vers utilisateur",
+        "constraints": "FK users.id UNIQUE"
+      },
+      {
+        "name": "job",
+        "type": "VARCHAR(100)",
+        "description": "Profession du parent"
+      }
+    ]
+  },
+  {
+    "table": "student_parents",
+    "role": "Lien entre un étudiant et ses parents.",
+    "fields": [
+      {
+        "name": "student_id",
+        "type": "INT",
+        "description": "Identifiant étudiant",
+        "constraints": "FK students.id"
+      },
+      {
+        "name": "parent_id",
+        "type": "INT",
+        "description": "Identifiant parent",
+        "constraints": "FK parents.id"
+      },
+      {
+        "name": "relationship",
+        "type": "VARCHAR(50)",
+        "description": "Lien (père, mère, tuteur)",
+        "constraints": "NOT NULL"
+      }
+    ]
+  },
+  {
+    "table": "class_categories",
+    "role": "Catégories de classes (collège, lycée, université, etc.).",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(50)",
+        "description": "Nom de la catégorie"
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "description": "Description optionnelle"
+      }
+    ]
+  },
+  {
+    "table": "classes",
+    "role": "Classes dans l’école, liées à une catégorie.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(50)",
+        "description": "Nom de la classe (ex: TSE A)"
+      },
+      {
+        "name": "level",
+        "type": "VARCHAR(20)",
+        "description": "Niveau scolaire (ex: 6ème, Terminale)"
+      },
+      {
+        "name": "category_id",
+        "type": "INT",
+        "description": "Référence catégorie",
+        "constraints": "FK class_categories.id"
+      },
+      {
+        "name": "capacity",
+        "type": "INT",
+        "description": "Nombre maximal d'élèves"
+      },
+      {
+        "name": "order_level",
+        "type": "INT",
+        "description": "Niveau hiérarchique pour les promotions (1=6ème, 2=5ème, etc.)",
+        "constraints": "NOT NULL"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "description": "Date de création",
+        "constraints": "DEFAULT NOW()"
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "description": "Date de modification",
+        "constraints": "DEFAULT NOW()"
+      }
+    ]
+  },
+  {
+    "table": "subjects",
+    "role": "Liste des matières enseignées.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(100)",
+        "description": "Nom de la matière"
+      },
+      {
+        "name": "code",
+        "type": "VARCHAR(20)",
+        "description": "Code matière",
+        "constraints": "UNIQUE"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "description": "Date de création",
+        "constraints": "DEFAULT NOW()"
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "description": "Date de modification",
+        "constraints": "DEFAULT NOW()"
+      }
+    ]
+  },
+  {
+    "table": "class_subjects",
+    "role": "Lien entre classes et matières, avec coefficients.",
+    "fields": [
+      {
+        "name": "class_id",
+        "type": "INT",
+        "description": "Classe concernée",
+        "constraints": "FK classes.id"
+      },
+      {
+        "name": "subject_id",
+        "type": "INT",
+        "description": "Matière concernée",
+        "constraints": "FK subjects.id"
+      },
+      {
+        "name": "coefficient",
+        "type": "INT",
+        "description": "Coefficient de la matière dans la classe"
+      },
+      {
+        "name": "is_optional",
+        "type": "BOOLEAN",
+        "description": "Indique si la matière est optionnelle"
+      }
+    ]
+  },
+  {
+    "table": "student_classes",
+    "role": "Inscription d’un étudiant dans une classe donnée avec gestion des statuts.",
+    "fields": [
+      {
+        "name": "student_id",
+        "type": "INT",
+        "description": "Identifiant étudiant",
+        "constraints": "FK students.id"
+      },
+      {
+        "name": "class_id",
+        "type": "INT",
+        "description": "Identifiant classe",
+        "constraints": "FK classes.id"
+      },
+      {
+        "name": "year",
+        "type": "VARCHAR(9)",
+        "description": "Année scolaire (ex: 2023-2024)"
+      },
+      {
+        "name": "status",
+        "type": "ENUM",
+        "description": "Statut de l'étudiant dans la classe",
+        "constraints": "CHECK (status IN ('active', 'transferred', 'repeating', 'graduated', 'dropped'))"
+      }
+    ]
+  },
+  {
+    "table": "teaching_assignments",
+    "role": "Affectations des professeurs aux matières et classes.",
+    "fields": [
+      {
+        "name": "teacher_id",
+        "type": "INT",
+        "description": "Identifiant enseignant",
+        "constraints": "FK teachers.id"
+      },
+      {
+        "name": "class_subject_id",
+        "type": "INT",
+        "description": "Matière dans une classe",
+        "constraints": "FK class_subjects.id"
+      },
+      {
+        "name": "start_date",
+        "type": "DATE",
+        "description": "Date de début"
+      },
+      {
+        "name": "end_date",
+        "type": "DATE",
+        "description": "Date de fin (si remplacement)"
+      }
+    ]
+  },
+  {
+    "table": "school_years",
+    "role": "Années scolaires.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(20)",
+        "description": "Nom de l’année (ex: 2023-2024)",
+        "constraints": "UNIQUE"
+      },
+      {
+        "name": "start_date",
+        "type": "DATE",
+        "description": "Date de début"
+      },
+      {
+        "name": "end_date",
+        "type": "DATE",
+        "description": "Date de fin"
+      }
+    ]
+  },
+  {
+    "table": "terms",
+    "role": "Trimestres ou semestres d’une année scolaire.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "school_year_id",
+        "type": "INT",
+        "description": "Année scolaire",
+        "constraints": "FK school_years.id"
+      },
+      {
+        "name": "name",
+        "type": "VARCHAR(20)",
+        "description": "Nom du trimestre/semestre"
+      },
+      {
+        "name": "start_date",
+        "type": "DATE",
+        "description": "Date de début"
+      },
+      {
+        "name": "end_date",
+        "type": "DATE",
+        "description": "Date de fin"
+      }
+    ]
+  },
+  {
+    "table": "assessments",
+    "role": "Gérer toutes les formes d'évaluations (examens, devoirs, tests, compositions mensuelles, contrôles continus, etc.) avec gestion des périodes et années scolaires.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "term_id",
+        "type": "INT",
+        "description": "Trimestre/Semestre",
+        "constraints": "FK terms.id"
+      },
+      {
+        "name": "school_year_id",
+        "type": "INT",
+        "description": "Année scolaire",
+        "constraints": "FK school_years.id NOT NULL"
+      },
+      {
+        "name": "class_subject_id",
+        "type": "INT",
+        "description": "Classe/Matière",
+        "constraints": "FK class_subjects.id"
+      },
+      {
+        "name": "type",
+        "type": "ENUM",
+        "description": "Type d'évaluation",
+        "constraints": "CHECK (type IN ('exam', 'test', 'quiz', 'assignment', 'project', 'presentation', 'practical'))"
+      },
+      {
+        "name": "title",
+        "type": "VARCHAR(100)",
+        "description": "Titre de l'évaluation"
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "description": "Description de l'évaluation"
+      },
+      {
+        "name": "start_date",
+        "type": "TIMESTAMP",
+        "description": "Date et heure de début de l'évaluation"
+      },
+      {
+        "name": "end_date",
+        "type": "TIMESTAMP",
+        "description": "Date et heure de fin de l'évaluation"
+      },
+      {
+        "name": "max_score",
+        "type": "DECIMAL(5,2)",
+        "description": "Score maximum"
+      },
+      {
+        "name": "weight",
+        "type": "DECIMAL(5,2)",
+        "description": "Poids de l'évaluation"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "description": "Date de création"
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "description": "Date de modification"
+      }
+    ]
+  },
+  {
+    "table": "assessment_subjects",
+    "role": "Sujets des évaluations (documents fournis par les professeurs).",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "assessment_id",
+        "type": "INT",
+        "description": "Lien vers l’évaluation",
+        "constraints": "FK assessments.id"
+      },
+      {
+        "name": "file_url",
+        "type": "TEXT",
+        "description": "Chemin ou URL du fichier (Word, PDF, etc.)"
+      },
+      {
+        "name": "file_type",
+        "type": "VARCHAR(20)",
+        "description": "Type du fichier (docx, pdf, odt)",
+        "constraints": "CHECK (file_type IN ('pdf','doc','docx','odt'))"
+      },
+      {
+        "name": "uploaded_by",
+        "type": "INT",
+        "description": "Professeur qui a uploadé le fichier",
+        "constraints": "FK users.id"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "description": "Date d’upload",
+        "constraints": "DEFAULT NOW()"
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "description": "Date de modification",
+        "constraints": "DEFAULT NOW()"
+      }
+    ]
+  },
+  {
+    "table": "assessment_results",
+    "role": "Résultats des étudiants aux examens.",
+    "fields": [
+      {
+        "name": "assessment_id",
+        "type": "INT",
+        "description": "Identifiant évaluation",
+        "constraints": "FK assessments.id"
+      },
+      {
+        "name": "student_id",
+        "type": "INT",
+        "description": "Identifiant étudiant",
+        "constraints": "FK students.id"
+      },
+      {
+        "name": "score",
+        "type": "DECIMAL(5,2)",
+        "description": "Note obtenue"
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "description": "Remarques"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "description": "Date de création"
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "description": "Date de modification"
+      }
+    ]
+  },
+  {
+    "table": "student_promotions",
+    "role": "Passages des étudiants en classe supérieure.",
+    "fields": [
+      {
+        "name": "student_id",
+        "type": "INT",
+        "description": "Identifiant étudiant",
+        "constraints": "FK students.id"
+      },
+      {
+        "name": "from_class_id",
+        "type": "INT",
+        "description": "Classe d’origine",
+        "constraints": "FK classes.id"
+      },
+      {
+        "name": "to_class_id",
+        "type": "INT",
+        "description": "Classe de destination",
+        "constraints": "FK classes.id"
+      },
+      {
+        "name": "year",
+        "type": "VARCHAR(9)",
+        "description": "Année scolaire de la promotion"
+      }
+    ]
+  },
+  {
+    "table": "grade_complaints",
+    "role": "Réclamations faites par les étudiants concernant leurs notes.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique de la réclamation",
+        "constraints": "PK"
+      },
+      {
+        "name": "student_id",
+        "type": "INT",
+        "description": "Étudiant qui fait la réclamation",
+        "constraints": "FK students.id"
+      },
+      {
+        "name": "assessment_id",
+        "type": "INT",
+        "description": "Évaluation concernée",
+        "constraints": "FK assessments.id"
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(20)",
+        "description": "État de la réclamation (pending, approved, rejected)",
+        "constraints": "NOT NULL"
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "description": "Motif de la réclamation"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "description": "Date de soumission de la réclamation",
+        "constraints": "DEFAULT NOW()"
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "description": "Date de modification de la réclamation",
+        "constraints": "DEFAULT NOW()"
+      }
+    ]
+  },
+  {
+    "table": "grade_complaint_history",
+    "role": "Historique des modifications liées aux réclamations, pour retracer les notes avant/après.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique de l’historique",
+        "constraints": "PK"
+      },
+      {
+        "name": "complaint_id",
+        "type": "INT",
+        "description": "Lien vers la réclamation",
+        "constraints": "FK grade_complaints.id"
+      },
+      {
+        "name": "old_score",
+        "type": "DECIMAL(5,2)",
+        "description": "Note initiale avant modification"
+      },
+      {
+        "name": "new_score",
+        "type": "DECIMAL(5,2)",
+        "description": "Nouvelle note après modification"
+      },
+      {
+        "name": "changed_by",
+        "type": "INT",
+        "description": "Utilisateur qui a validé le changement",
+        "constraints": "FK users.id"
+      },
+      {
+        "name": "changed_at",
+        "type": "TIMESTAMP",
+        "description": "Date de modification",
+        "constraints": "DEFAULT NOW()"
+      },
+      {
+        "name": "comment",
+        "type": "TEXT",
+        "description": "Commentaire ou justification du changement"
+      }
+    ]
+  },
+  {
+    "table": "student_transfers",
+    "role": "Traçabilité des transferts d'étudiants entre classes au cours d'une même année scolaire.",
+    "fields": [
+      {
+        "name": "id",
+        "type": "SERIAL",
+        "description": "Identifiant unique",
+        "constraints": "PK"
+      },
+      {
+        "name": "student_id",
+        "type": "INT",
+        "description": "Étudiant transféré",
+        "constraints": "FK students.id"
+      },
+      {
+        "name": "from_class_id",
+        "type": "INT",
+        "description": "Classe d'origine",
+        "constraints": "FK classes.id"
+      },
+      {
+        "name": "to_class_id",
+        "type": "INT",
+        "description": "Classe de destination",
+        "constraints": "FK classes.id"
+      },
+      {
+        "name": "school_year_id",
+        "type": "INT",
+        "description": "Année scolaire du transfert",
+        "constraints": "FK school_years.id"
+      },
+      {
+        "name": "transfer_date",
+        "type": "DATE",
+        "description": "Date effective du transfert"
+      },
+      {
+        "name": "reason",
+        "type": "ENUM",
+        "description": "Raison du transfert",
+        "constraints": "CHECK (reason IN ('academic_difficulty', 'disciplinary', 'capacity_overflow', 'student_request', 'administrative', 'health_reasons', 'other'))"
+      },
+      {
+        "name": "status",
+        "type": "ENUM",
+        "description": "Statut du transfert",
+        "constraints": "CHECK (status IN ('pending', 'approved', 'rejected', 'executed', 'reverted'))"
+      },
+      {
+        "name": "requested_by",
+        "type": "INT",
+        "description": "Utilisateur ayant demandé le transfert",
+        "constraints": "FK users.id"
+      },
+      {
+        "name": "approved_by",
+        "type": "INT",
+        "description": "Utilisateur ayant approuvé le transfert",
+        "constraints": "FK users.id"
+      },
+      {
+        "name": "executed_by",
+        "type": "INT",
+        "description": "Utilisateur ayant exécuté le transfert",
+        "constraints": "FK users.id"
+      },
+      {
+        "name": "notes",
+        "type": "TEXT",
+        "description": "Notes ou commentaires sur le transfert"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "description": "Date de création de la demande",
+        "constraints": "DEFAULT NOW()"
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "description": "Date de dernière modification",
+        "constraints": "DEFAULT NOW()"
+      }
+    ]
+  },
+  {
+    "table": "assessment_attendance",
+    "role": "Gestion des présences des étudiants aux évaluations avec traçabilité complète.",
+    "fields": [
+      {
+        "name": "assessment_id",
+        "type": "INT",
+        "description": "Identifiant de l'évaluation",
+        "constraints": "FK assessments.id, PK composite"
+      },
+      {
+        "name": "student_id",
+        "type": "INT",
+        "description": "Identifiant de l'étudiant",
+        "constraints": "FK students.id, PK composite"
+      },
+      {
+        "name": "status",
+        "type": "ENUM",
+        "description": "Statut de présence",
+        "constraints": "CHECK (status IN ('present', 'absent', 'excused', 'excluded')) DEFAULT 'present'"
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "description": "Raison de l'absence ou exclusion"
+      },
+      {
+        "name": "marked_by",
+        "type": "INT",
+        "description": "Utilisateur ayant marqué la présence",
+        "constraints": "FK users.id"
+      },
+      {
+        "name": "marked_at",
+        "type": "TIMESTAMP",
+        "description": "Date et heure de marquage"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP",
+        "description": "Date de création",
+        "constraints": "DEFAULT NOW()"
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP",
+        "description": "Date de modification",
+        "constraints": "DEFAULT NOW()"
+      }
+    ]
+  },
+
+  {
+    "name": "fee_types",
+    "description": "Liste des types de frais applicables aux élèves (scolarité, session, cantine, bibliothèque, etc.)",
+    "columns": {
+      "id": "uuid primary key",
+      "name": "string not null unique",
+      "description": "text nullable",
+      "amount_default": "decimal(12,2) not null",
+      "is_recurring": "boolean default false",
+      "frequency": "enum('once','monthly','quarterly','yearly') nullable",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "student_fees",
+    "description": "Les frais assignés individuellement aux élèves (permet des montants personnalisés, exemptions ou arriérés)",
+    "columns": {
+      "id": "uuid primary key",
+      "student_id": "uuid foreign key -> students.id",
+      "fee_type_id": "uuid foreign key -> fee_types.id",
+      "academic_year_id": "uuid foreign key -> school_years.id",
+      "amount_assigned": "decimal(12,2) not null",
+      "due_date": "date nullable",
+      "status": "enum('pending','partial','paid','overdue') default 'pending'",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "payments",
+    "description": "Historique des paiements effectués par les élèves ou leurs parents",
+    "columns": {
+      "id": "uuid primary key",
+      "student_fee_id": "uuid foreign key -> student_fees.id",
+      "payment_date": "timestamp not null",
+      "amount": "decimal(12,2) not null",
+      "method": "enum('cash','bank_transfer','mobile_money','card') not null",
+      "provider": "string(50) nullable",
+      "transaction_ref": "string(100) nullable",
+      "received_by": "uuid foreign key -> users.id (ex: secrétaire)",
+      "status": "enum('successful','failed','pending') default 'successful'",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "refunds",
+    "description": "Enregistre les remboursements liés à des paiements",
+    "columns": {
+      "id": "uuid primary key",
+      "payment_id": "uuid foreign key -> payments.id",
+      "amount": "decimal(12,2) not null",
+      "reason": "text",
+      "processed_by": "uuid foreign key -> users.id",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "discounts",
+    "description": "Réductions, bourses ou exonérations appliquées aux frais d’un élève",
+    "columns": {
+      "id": "uuid primary key",
+      "student_fee_id": "uuid foreign key -> student_fees.id",
+      "type": "enum('scholarship','sibling_discount','exemption','other') not null",
+      "description": "text nullable",
+      "amount": "decimal(12,2) not null",
+      "approved_by": "uuid foreign key -> users.id",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "invoices",
+    "description": "Factures générées pour officialiser la dette ou les paiements d’un élève",
+    "columns": {
+      "id": "uuid primary key",
+      "student_id": "uuid foreign key -> students.id",
+      "invoice_number": "string(50) unique not null",
+      "total_amount": "decimal(12,2) not null",
+      "status": "enum('unpaid','partial','paid','cancelled') default 'unpaid'",
+      "issued_date": "date not null",
+      "due_date": "date nullable",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "invoice_items",
+    "description": "Détails des lignes de facture (liées aux frais ou paiements)",
+    "columns": {
+      "id": "uuid primary key",
+      "invoice_id": "uuid foreign key -> invoices.id",
+      "student_fee_id": "uuid foreign key -> student_fees.id",
+      "description": "string not null",
+      "amount": "decimal(12,2) not null"
+    }
+  },
+  {
+    "name": "timetables",
+    "description": "Emplois du temps réguliers des classes ou enseignants, variant selon l'année scolaire.",
+    "columns": {
+      "id": "uuid primary key",
+      "class_id": "uuid foreign key -> classes.id",
+      "teacher_id": "uuid foreign key -> users.id",
+      "subject_id": "uuid foreign key -> subjects.id",
+      "academic_year_id": "uuid foreign key -> school_years.id",
+      "day_of_week": "enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday') not null",
+      "start_time": "time not null",
+      "end_time": "time not null",
+      "room": "string(50) nullable",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "events",
+    "description": "Événements ponctuels (globaux ou relatifs à une classe, un groupe, ou tout le personnel).",
+    "columns": {
+      "id": "uuid primary key",
+      "title": "string(100) not null",
+      "description": "text nullable",
+      "event_type": "enum('exam','homework','cultural_day','health_day','ball','other') not null",
+      "start_date": "date not null",
+      "end_date": "date nullable",
+      "all_day": "boolean default true",
+      "class_id": "uuid foreign key -> classes.id nullable",
+      "created_by": "uuid foreign key -> users.id",
+      "academic_year_id": "uuid foreign key -> school_years.id",
+      "created_at": "timestamp",
+      "updated_at": "timestamp"
+    }
+  },
+  {
+    "name": "event_participants",
+    "description": "Lien entre les événements et les participants (élèves ou enseignants).",
+    "columns": {
+      "id": "uuid primary key",
+      "event_id": "uuid foreign key -> events.id",
+      "user_id": "uuid foreign key -> users.id",
+      "role": "enum('student','teacher','staff','other')",
+      "status": "enum('invited','confirmed','declined','absent') default 'invited'"
+    }
+  }
+]

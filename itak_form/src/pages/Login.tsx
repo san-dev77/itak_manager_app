@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import Button from "../components/ui/Button";
 import {
-  GraduationCap,
   ArrowLeft,
   Eye,
   EyeOff,
@@ -11,6 +10,7 @@ import {
   Lock,
   AlertCircle,
 } from "lucide-react";
+import logo from "../assets/logo itak.png";
 import type { LoginFormData, User } from "../types";
 import { apiService } from "../services/api";
 
@@ -81,19 +81,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
           {/* Header */}
           <div className="text-center mb-10">
             <div className="flex items-center justify-center space-x-4 mb-8">
-              <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl">
-                  <GraduationCap className="w-9 h-9 text-white" />
-                </div>
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
-              </div>
+              <img
+                src={logo}
+                alt="ITAK Academy"
+                className="w-16 h-16 object-contain"
+              />
               <div>
-                <span className="text-4xl font-black bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent">
-                  ITAK
-                </span>
-                <div className="text-sm text-blue-300 font-medium tracking-wider">
-                  ACADEMY
-                </div>
+                <span className="text-4xl font-black text-white">ITAK</span>
               </div>
             </div>
 
@@ -122,10 +116,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
               <div className="group">
                 <label
                   htmlFor="email"
-                  className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                  className="block text-sm font-semibold text-white/90 mb-3"
                 >
-                  <Zap className="w-4 h-4 mr-2 text-blue-400" />
-                  Adresse email
+                  <span className="flex items-center">
+                    <Zap className="w-4 h-4 mr-2 text-blue-400" />
+                    Adresse email
+                  </span>
                 </label>
                 <div className="relative">
                   <input
@@ -139,7 +135,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
                     required
                     disabled={isLoading}
                   />
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
               </div>
 
@@ -147,10 +143,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
               <div className="group">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-semibold text-white/90 mb-3 flex items-center"
+                  className="block text-sm font-semibold text-white/90 mb-3"
                 >
-                  <Lock className="w-4 h-4 mr-2 text-purple-400" />
-                  Mot de passe
+                  <span className="flex items-center">
+                    <Lock className="w-4 h-4 mr-2 text-blue-400" />
+                    Mot de passe
+                  </span>
                 </label>
                 <div className="relative">
                   <input
@@ -159,7 +157,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-4 focus:ring-purple-500/30 focus:border-purple-400 transition-all duration-300 backdrop-blur-sm pr-16"
+                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:ring-4 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-300 backdrop-blur-sm pr-16"
                     placeholder="••••••••"
                     required
                     disabled={isLoading}
@@ -172,7 +170,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
               </div>
 
@@ -185,7 +183,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
                       className="w-5 h-5 text-blue-600 border-white/30 rounded-lg focus:ring-2 focus:ring-blue-500/50 bg-white/10"
                       disabled={isLoading}
                     />
-                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
                   <span className="ml-3 text-sm text-white/70 group-hover:text-white transition-colors">
                     Se souvenir de moi
@@ -206,7 +204,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigate }) => {
                 variant="primary"
                 size="lg"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-2xl hover:shadow-blue-500/50 transform hover:-translate-y-1 transition-all duration-300 text-lg py-4 rounded-2xl border-0 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-2xl hover:shadow-blue-500/50 transform hover:-translate-y-1 transition-all duration-300 text-lg py-4 rounded-2xl border-0 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center">
