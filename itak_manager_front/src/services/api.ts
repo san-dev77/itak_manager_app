@@ -809,7 +809,7 @@ export interface WeeklyTimetable {
 class ApiService {
   private async makeRequest<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
     try {
       const url = `${API_BASE_URL}${endpoint}`;
@@ -819,12 +819,12 @@ class ApiService {
 
       console.log(
         "🔑 Token récupéré:",
-        accessToken ? "✅ Présent" : "❌ Absent"
+        accessToken ? "✅ Présent" : "❌ Absent",
       );
       if (accessToken) {
         console.log(
           "🔑 Token (premiers caractères):",
-          accessToken.substring(0, 20) + "..."
+          accessToken.substring(0, 20) + "...",
         );
       }
 
@@ -847,11 +847,11 @@ class ApiService {
       console.log(
         "📡 Statut de la réponse:",
         response.status,
-        response.statusText
+        response.statusText,
       );
       console.log(
         "📋 Headers de la réponse:",
-        Object.fromEntries(response.headers.entries())
+        Object.fromEntries(response.headers.entries()),
       );
 
       // Vérifier si la réponse a un contenu avant de parser le JSON
@@ -1016,7 +1016,7 @@ class ApiService {
   // Méthode pour mettre à jour un utilisateur
   async updateUser(
     id: string | number,
-    userData: Partial<UserRegistrationData>
+    userData: Partial<UserRegistrationData>,
   ): Promise<ApiResponse<User>> {
     return this.makeRequest<User>(`/users/${id}`, {
       method: "PUT",
@@ -1058,14 +1058,14 @@ class ApiService {
 
   // Méthode pour rafraîchir le token
   async refreshToken(
-    refreshToken: string
+    refreshToken: string,
   ): Promise<ApiResponse<{ access_token: string; refresh_token: string }>> {
     return this.makeRequest<{ access_token: string; refresh_token: string }>(
       "/auth/refresh",
       {
         method: "POST",
         body: JSON.stringify({ refresh_token: refreshToken }),
-      }
+      },
     );
   }
 
@@ -1078,7 +1078,7 @@ class ApiService {
 
   // Méthode pour créer un profil étudiant
   async createStudentProfile(
-    profileData: StudentProfileData
+    profileData: StudentProfileData,
   ): Promise<ApiResponse<StudentWithUser>> {
     console.log(profileData);
     return this.makeRequest<StudentWithUser>("/students", {
@@ -1089,7 +1089,7 @@ class ApiService {
 
   // Méthode pour récupérer tous les étudiants avec leurs données utilisateur
   async getAllStudents(
-    institutionId?: string
+    institutionId?: string,
   ): Promise<ApiResponse<StudentWithUser[]>> {
     const url = institutionId
       ? `/students?institutionId=${institutionId}`
@@ -1099,7 +1099,7 @@ class ApiService {
 
   // Méthode pour créer un profil enseignant
   async createTeacherProfile(
-    profileData: TeacherProfileData
+    profileData: TeacherProfileData,
   ): Promise<ApiResponse<TeacherWithUser>> {
     console.log(profileData);
     return this.makeRequest<TeacherWithUser>("/teachers", {
@@ -1110,7 +1110,7 @@ class ApiService {
 
   // Méthode pour récupérer tous les enseignants avec leurs données utilisateur
   async getAllTeachers(
-    institutionId?: string
+    institutionId?: string,
   ): Promise<ApiResponse<TeacherWithUser[]>> {
     const url = institutionId
       ? `/teachers?institutionId=${institutionId}`
@@ -1120,7 +1120,7 @@ class ApiService {
 
   // Méthode pour créer un profil personnel administratif
   async createStaffProfile(
-    profileData: StaffProfileData
+    profileData: StaffProfileData,
   ): Promise<ApiResponse<StaffWithUser>> {
     console.log(profileData);
     return this.makeRequest<StaffWithUser>("/staff", {
@@ -1137,7 +1137,7 @@ class ApiService {
   // Méthode pour mettre à jour un profil étudiant
   async updateStudentProfile(
     id: string,
-    profileData: Partial<StudentProfileData>
+    profileData: Partial<StudentProfileData>,
   ): Promise<ApiResponse<StudentWithUser>> {
     return this.makeRequest<StudentWithUser>(`/students/${id}`, {
       method: "PUT",
@@ -1148,7 +1148,7 @@ class ApiService {
   // Méthode pour mettre à jour un profil enseignant
   async updateTeacherProfile(
     id: string,
-    profileData: Partial<TeacherProfileData>
+    profileData: Partial<TeacherProfileData>,
   ): Promise<ApiResponse<TeacherWithUser>> {
     return this.makeRequest<TeacherWithUser>(`/teachers/${id}`, {
       method: "PUT",
@@ -1180,7 +1180,7 @@ class ApiService {
   // Méthode pour mettre à jour un profil personnel
   async updateStaffProfile(
     id: string,
-    profileData: Partial<StaffProfileData>
+    profileData: Partial<StaffProfileData>,
   ): Promise<ApiResponse<StaffWithUser>> {
     return this.makeRequest<StaffWithUser>(`/staff/${id}`, {
       method: "PUT",
@@ -1205,7 +1205,7 @@ class ApiService {
   // Méthode pour mettre à jour une classe
   async updateClass(
     id: string | number,
-    classData: Partial<ClassData>
+    classData: Partial<ClassData>,
   ): Promise<ApiResponse<Class>> {
     return this.makeRequest<Class>(`/classes/${id}`, {
       method: "PUT",
@@ -1222,7 +1222,7 @@ class ApiService {
 
   // Méthode pour récupérer les classes par catégorie
   async getClassesByCategory(
-    categoryId: number
+    categoryId: number,
   ): Promise<ApiResponse<Class[]>> {
     return this.makeRequest<Class[]>(`/classes/category/${categoryId}`);
   }
@@ -1245,7 +1245,7 @@ class ApiService {
 
   // Méthode pour récupérer toutes les catégories de classes
   async getAllClassCategories(
-    institutionId?: string
+    institutionId?: string,
   ): Promise<ApiResponse<ClassCategory[]>> {
     const url = institutionId
       ? `/class-categories?institutionId=${institutionId}`
@@ -1261,7 +1261,7 @@ class ApiService {
   // Méthode pour mettre à jour une catégorie de classe
   async updateClassCategory(
     id: number,
-    categoryData: { name: string; description?: string }
+    categoryData: { name: string; description?: string },
   ): Promise<ApiResponse<ClassCategory>> {
     return this.makeRequest<ClassCategory>(`/class-categories/${id}`, {
       method: "PUT",
@@ -1299,7 +1299,7 @@ class ApiService {
   // Méthode pour mettre à jour une matière
   async updateSubject(
     id: string | number,
-    subjectData: Partial<SubjectData>
+    subjectData: Partial<SubjectData>,
   ): Promise<ApiResponse<Subject>> {
     return this.makeRequest<Subject>(`/subjects/${id}`, {
       method: "PUT",
@@ -1317,7 +1317,7 @@ class ApiService {
   // Méthodes pour les affectations de configuration
   // Méthode pour créer une affectation de matière à une classe
   async createClassSubject(
-    classSubjectData: ClassSubjectData
+    classSubjectData: ClassSubjectData,
   ): Promise<ApiResponse<ClassSubject>> {
     console.log(classSubjectData);
     return this.makeRequest<ClassSubject>("/class-subjects", {
@@ -1333,7 +1333,7 @@ class ApiService {
 
   // Méthode pour créer une affectation d'étudiant à une classe
   async createStudentClass(
-    studentClassData: StudentClassData
+    studentClassData: StudentClassData,
   ): Promise<ApiResponse<StudentClass>> {
     console.log(studentClassData);
     return this.makeRequest<StudentClass>("/student-classes", {
@@ -1349,7 +1349,7 @@ class ApiService {
 
   // Méthode pour créer une affectation d'enseignant
   async createTeachingAssignment(
-    teachingAssignmentData: TeachingAssignmentData
+    teachingAssignmentData: TeachingAssignmentData,
   ): Promise<ApiResponse<TeachingAssignment>> {
     console.log(teachingAssignmentData);
     return this.makeRequest<TeachingAssignment>("/teaching-assignments", {
@@ -1390,7 +1390,7 @@ class ApiService {
 
   // Créer une année scolaire
   async createSchoolYear(
-    data: CreateSchoolYearDto
+    data: CreateSchoolYearDto,
   ): Promise<ApiResponse<SchoolYear>> {
     return this.makeRequest<SchoolYear>("/school-years", {
       method: "POST",
@@ -1411,7 +1411,7 @@ class ApiService {
   // Mettre à jour une année scolaire
   async updateSchoolYear(
     id: string,
-    data: UpdateSchoolYearDto
+    data: UpdateSchoolYearDto,
   ): Promise<ApiResponse<SchoolYear>> {
     return this.makeRequest<SchoolYear>(`/school-years/${id}`, {
       method: "PUT",
@@ -1448,7 +1448,7 @@ class ApiService {
 
   // Récupérer les trimestres d'une année scolaire
   async getTermsBySchoolYear(
-    schoolYearId: string
+    schoolYearId: string,
   ): Promise<ApiResponse<Term[]>> {
     return this.makeRequest<Term[]>(`/terms/school-years/${schoolYearId}`);
   }
@@ -1456,7 +1456,7 @@ class ApiService {
   // Mettre à jour un trimestre
   async updateTerm(
     id: string,
-    data: UpdateTermDto
+    data: UpdateTermDto,
   ): Promise<ApiResponse<Term>> {
     return this.makeRequest<Term>(`/terms/${id}`, {
       method: "PUT",
@@ -1475,7 +1475,7 @@ class ApiService {
 
   // Créer un emploi du temps
   async createTimetable(
-    data: CreateTimetableDto
+    data: CreateTimetableDto,
   ): Promise<ApiResponse<Timetable>> {
     return this.makeRequest<Timetable>("/timetables", {
       method: "POST",
@@ -1496,27 +1496,27 @@ class ApiService {
   // Récupérer les emplois du temps d'une classe pour une année scolaire
   async getTimetablesByClass(
     classId: string,
-    academicYearId: string
+    academicYearId: string,
   ): Promise<ApiResponse<Timetable[]>> {
     return this.makeRequest<Timetable[]>(
-      `/timetables/class/${classId}?academicYearId=${academicYearId}`
+      `/timetables/class/${classId}?academicYearId=${academicYearId}`,
     );
   }
 
   // Récupérer l'emploi du temps hebdomadaire d'une classe
   async getWeeklyTimetable(
     classId: string,
-    academicYearId: string
+    academicYearId: string,
   ): Promise<ApiResponse<WeeklyTimetable>> {
     return this.makeRequest<WeeklyTimetable>(
-      `/timetables/weekly/${classId}?academicYearId=${academicYearId}`
+      `/timetables/weekly/${classId}?academicYearId=${academicYearId}`,
     );
   }
 
   // Mettre à jour un emploi du temps
   async updateTimetable(
     id: string,
-    data: UpdateTimetableDto
+    data: UpdateTimetableDto,
   ): Promise<ApiResponse<Timetable>> {
     return this.makeRequest<Timetable>(`/timetables/${id}`, {
       method: "PATCH",
@@ -1553,7 +1553,7 @@ class ApiService {
 
   // Récupérer les événements d'une année scolaire
   async getEventsByAcademicYear(
-    academicYearId: string
+    academicYearId: string,
   ): Promise<ApiResponse<Event[]>> {
     return this.makeRequest<Event[]>(`/events/academic-year/${academicYearId}`);
   }
@@ -1566,17 +1566,17 @@ class ApiService {
   // Récupérer les événements d'un calendrier (par date)
   async getEventsByDateRange(
     startDate: string,
-    endDate: string
+    endDate: string,
   ): Promise<ApiResponse<EventCalendarDto[]>> {
     return this.makeRequest<EventCalendarDto[]>(
-      `/events/calendar?startDate=${startDate}&endDate=${endDate}`
+      `/events/calendar?startDate=${startDate}&endDate=${endDate}`,
     );
   }
 
   // Mettre à jour un événement
   async updateEvent(
     id: string,
-    data: UpdateEventDto
+    data: UpdateEventDto,
   ): Promise<ApiResponse<Event>> {
     return this.makeRequest<Event>(`/events/${id}`, {
       method: "PATCH",
@@ -1607,7 +1607,7 @@ class ApiService {
 
   async updateFeeType(
     id: string,
-    data: UpdateFeeTypeDto
+    data: UpdateFeeTypeDto,
   ): Promise<ApiResponse<FeeType>> {
     return this.makeRequest<FeeType>(`/fee-types/${id}`, {
       method: "PATCH",
@@ -1627,7 +1627,7 @@ class ApiService {
   }
 
   async createStudentFee(
-    data: CreateStudentFeeDto
+    data: CreateStudentFeeDto,
   ): Promise<ApiResponse<StudentFee>> {
     return this.makeRequest<StudentFee>("/student-fees", {
       method: "POST",
@@ -1637,7 +1637,7 @@ class ApiService {
 
   async updateStudentFee(
     id: string,
-    data: UpdateStudentFeeDto
+    data: UpdateStudentFeeDto,
   ): Promise<ApiResponse<StudentFee>> {
     return this.makeRequest<StudentFee>(`/student-fees/${id}`, {
       method: "PATCH",
@@ -1665,7 +1665,7 @@ class ApiService {
 
   async updatePayment(
     id: string,
-    data: UpdatePaymentDto
+    data: UpdatePaymentDto,
   ): Promise<ApiResponse<Payment>> {
     return this.makeRequest<Payment>(`/payments/${id}`, {
       method: "PUT",
@@ -1693,7 +1693,7 @@ class ApiService {
 
   async updateInvoice(
     id: string,
-    data: UpdateInvoiceDto
+    data: UpdateInvoiceDto,
   ): Promise<ApiResponse<Invoice>> {
     return this.makeRequest<Invoice>(`/invoices/${id}`, {
       method: "PUT",
@@ -1713,7 +1713,7 @@ class ApiService {
   }
 
   async createDiscount(
-    data: CreateDiscountDto
+    data: CreateDiscountDto,
   ): Promise<ApiResponse<Discount>> {
     return this.makeRequest<Discount>("/discounts", {
       method: "POST",
@@ -1723,7 +1723,7 @@ class ApiService {
 
   async updateDiscount(
     id: string,
-    data: UpdateDiscountDto
+    data: UpdateDiscountDto,
   ): Promise<ApiResponse<Discount>> {
     return this.makeRequest<Discount>(`/discounts/${id}`, {
       method: "PUT",
@@ -1751,7 +1751,7 @@ class ApiService {
 
   async updateRefund(
     id: string,
-    data: UpdateRefundDto
+    data: UpdateRefundDto,
   ): Promise<ApiResponse<Refund>> {
     return this.makeRequest<Refund>(`/refunds/${id}`, {
       method: "PUT",

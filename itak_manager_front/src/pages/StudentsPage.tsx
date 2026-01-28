@@ -1,35 +1,35 @@
-import { useState, useEffect, useCallback } from "react";
 import {
-  GraduationCap,
-  Users,
   Briefcase,
-  Plus,
+  Calendar,
+  GraduationCap,
   Mail,
   Phone,
-  Calendar,
+  Plus,
+  Users,
 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import AuthenticatedPage from "../components/layout/AuthenticatedPage";
-import PageHeader from "../components/ui/PageHeader";
-import DataTable from "../components/ui/DataTable";
-import ConfirmDialog from "../components/ui/ConfirmDialog";
-import { HeaderActionButton } from "../components/ui/ActionButton";
-import TableActions from "../components/ui/TableActions";
+import { StaffFormModal, StaffViewModal } from "../components/staff";
 import { StudentFormModal, StudentViewModal } from "../components/students";
 import { TeacherFormModal, TeacherViewModal } from "../components/teachers";
-import { StaffFormModal, StaffViewModal } from "../components/staff";
+import { HeaderActionButton } from "../components/ui/ActionButton";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
+import DataTable from "../components/ui/DataTable";
+import PageHeader from "../components/ui/PageHeader";
+import TableActions from "../components/ui/TableActions";
 import StudentCardGenerator from "../components/users/StudentCardGenerator";
-import { apiService } from "../services/api";
-import { useInstitution } from "../hooks/useInstitution";
 import type { Institution } from "../contexts/InstitutionContext";
-import type {
-  StudentWithUser,
-  StudentProfileData,
-  TeacherProfileData,
-  StaffProfileData,
-} from "../services/api";
+import { useInstitution } from "../hooks/useInstitution";
+import type { StaffFormData } from "../schemas/staff.schema";
 import type { StudentFormData } from "../schemas/student.schema";
 import type { TeacherFormData } from "../schemas/teacher.schema";
-import type { StaffFormData } from "../schemas/staff.schema";
+import type {
+  StaffProfileData,
+  StudentProfileData,
+  StudentWithUser,
+  TeacherProfileData,
+} from "../services/api";
+import { apiService } from "../services/api";
 
 // Types
 interface Student {
@@ -113,7 +113,7 @@ type TabType = "students" | "teachers" | "staff";
 const StudentsPage = () => {
   const { institutions } = useInstitution();
   const [activeInstitution, setActiveInstitution] = useState<string | null>(
-    null
+    null,
   );
   const [activeTab, setActiveTab] = useState<TabType>("students");
   const [loading, setLoading] = useState(true);
@@ -128,7 +128,7 @@ const StudentsPage = () => {
   const [showDelete, setShowDelete] = useState(false);
   const [showCard, setShowCard] = useState(false);
   const [selected, setSelected] = useState<Student | Teacher | Staff | null>(
-    null
+    null,
   );
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -137,7 +137,7 @@ const StudentsPage = () => {
     if (institutions.length > 0 && !activeInstitution) {
       // Par défaut, sélectionner ITAK s'il existe, sinon la première institution
       const itak = institutions.find(
-        (inst: Institution) => inst.code === "ITAK"
+        (inst: Institution) => inst.code === "ITAK",
       );
       setActiveInstitution(itak ? itak.id : institutions[0].id);
     }
@@ -149,7 +149,7 @@ const StudentsPage = () => {
     const institutionId = activeInstitution;
     console.log(
       "🔍 fetchData - institutionId utilisé pour filtrage:",
-      institutionId
+      institutionId,
     );
     const [s, t, st] = await Promise.allSettled([
       apiService.getAllStudents(institutionId),
@@ -218,14 +218,17 @@ const StudentsPage = () => {
       case "demi_boursier":
         return { label: "Demi-boursier", color: "bg-blue-100 text-blue-800" };
       case "quart_boursier":
-        return { label: "Quart-boursier", color: "bg-amber-100 text-amber-800" };
+        return {
+          label: "Quart-boursier",
+          color: "bg-amber-100 text-amber-800",
+        };
       default:
         return { label: "Non-boursier", color: "bg-slate-100 text-slate-800" };
     }
   };
 
   const normalizeScholarshipStatus = (
-    status?: string
+    status?: string,
   ): StudentFormData["scholarshipStatus"] => {
     switch (status) {
       case "boursier":
@@ -241,7 +244,7 @@ const StudentsPage = () => {
   // Handlers
   const handleCreateStudent = async (
     data: StudentFormData,
-    photo: File | null
+    photo: File | null,
   ) => {
     setActionLoading(true);
     try {
@@ -277,10 +280,10 @@ const StudentsPage = () => {
       if (!userId) {
         console.error(
           "Structure réponse inattendue:",
-          JSON.stringify(userRes, null, 2)
+          JSON.stringify(userRes, null, 2),
         );
         throw new Error(
-          "Erreur lors de la création de l'utilisateur - userId non trouvé"
+          "Erreur lors de la création de l'utilisateur - userId non trouvé",
         );
       }
 
@@ -310,7 +313,7 @@ const StudentsPage = () => {
     } catch (error) {
       console.error("Erreur création étudiant:", error);
       alert(
-        `Erreur: ${error instanceof Error ? error.message : "Erreur inconnue"}`
+        `Erreur: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
       );
     } finally {
       setActionLoading(false);
@@ -319,7 +322,7 @@ const StudentsPage = () => {
 
   const handleEditStudent = async (
     data: StudentFormData,
-    photo: File | null
+    photo: File | null,
   ) => {
     if (!selected) return;
     setActionLoading(true);
@@ -354,13 +357,13 @@ const StudentsPage = () => {
       };
       await apiService.updateStudentProfile(
         selected.id,
-        updateData as Parameters<typeof apiService.updateStudentProfile>[1]
+        updateData as Parameters<typeof apiService.updateStudentProfile>[1],
       );
       fetchData();
     } catch (error) {
       console.error("Erreur modification étudiant:", error);
       alert(
-        `Erreur: ${error instanceof Error ? error.message : "Erreur inconnue"}`
+        `Erreur: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
       );
     } finally {
       setActionLoading(false);
@@ -383,7 +386,7 @@ const StudentsPage = () => {
       // Vérifier si la création a échoué
       if (!userRes.success) {
         throw new Error(
-          userRes.error || "Erreur lors de la création de l'utilisateur"
+          userRes.error || "Erreur lors de la création de l'utilisateur",
         );
       }
 
@@ -395,7 +398,7 @@ const StudentsPage = () => {
 
       if (!userId) {
         throw new Error(
-          "Erreur lors de la création de l'utilisateur - userId non trouvé"
+          "Erreur lors de la création de l'utilisateur - userId non trouvé",
         );
       }
 
@@ -425,7 +428,7 @@ const StudentsPage = () => {
         undefined;
       console.log(
         "🏫 InstitutionId de l'enseignant créé:",
-        createdTeacherInstitutionId
+        createdTeacherInstitutionId,
       );
 
       setShowCreate(false);
@@ -435,19 +438,19 @@ const StudentsPage = () => {
         setLoading(true);
         try {
           const response = await apiService.getAllTeachers(
-            createdTeacherInstitutionId
+            createdTeacherInstitutionId,
           );
           const data = response?.success
             ? response.data
             : response?.data || response;
           console.log("📚 Teachers après création:", data);
           setTeachers(
-            Array.isArray(data) ? (data as unknown as Teacher[]) : []
+            Array.isArray(data) ? (data as unknown as Teacher[]) : [],
           );
         } catch (error) {
           console.error(
             "❌ Erreur récupération teachers après création:",
-            error
+            error,
           );
           // En cas d'erreur, recharger toutes les données
           fetchData();
@@ -520,13 +523,13 @@ const StudentsPage = () => {
       };
       await apiService.updateTeacherProfile(
         selected.id,
-        updateData as Parameters<typeof apiService.updateTeacherProfile>[1]
+        updateData as Parameters<typeof apiService.updateTeacherProfile>[1],
       );
       fetchData();
     } catch (error) {
       console.error("Erreur modification enseignant:", error);
       alert(
-        `Erreur: ${error instanceof Error ? error.message : "Erreur inconnue"}`
+        `Erreur: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
       );
     } finally {
       setActionLoading(false);
@@ -549,7 +552,7 @@ const StudentsPage = () => {
       // Vérifier si la création a échoué
       if (!userRes.success) {
         throw new Error(
-          userRes.error || "Erreur lors de la création de l'utilisateur"
+          userRes.error || "Erreur lors de la création de l'utilisateur",
         );
       }
 
@@ -561,7 +564,7 @@ const StudentsPage = () => {
 
       if (!userId) {
         throw new Error(
-          "Erreur lors de la création de l'utilisateur - userId non trouvé"
+          "Erreur lors de la création de l'utilisateur - userId non trouvé",
         );
       }
 
@@ -640,13 +643,13 @@ const StudentsPage = () => {
       };
       await apiService.updateStaffProfile(
         selected.id,
-        updateData as Parameters<typeof apiService.updateStaffProfile>[1]
+        updateData as Parameters<typeof apiService.updateStaffProfile>[1],
       );
       fetchData();
     } catch (error) {
       console.error("Erreur modification personnel:", error);
       alert(
-        `Erreur: ${error instanceof Error ? error.message : "Erreur inconnue"}`
+        `Erreur: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
       );
     } finally {
       setActionLoading(false);
@@ -764,7 +767,9 @@ const StudentsPage = () => {
       render: (s: Student) => {
         const status = formatScholarship(s.scholarshipStatus);
         return (
-          <span className={`px-2 py-1 rounded text-sm font-semibold ${status.color}`}>
+          <span
+            className={`px-2 py-1 rounded text-sm font-semibold ${status.color}`}
+          >
             {status.label}
           </span>
         );
@@ -959,8 +964,8 @@ const StudentsPage = () => {
                 activeTab === "students"
                   ? "Nouvel étudiant"
                   : activeTab === "teachers"
-                  ? "Nouvel enseignant"
-                  : "Nouveau personnel"
+                    ? "Nouvel enseignant"
+                    : "Nouveau personnel"
               }
             />
           }
@@ -1111,7 +1116,7 @@ const StudentsPage = () => {
                       matricule: (selected as Student).matricule || "",
                       enrollmentDate:
                         String(
-                          (selected as Student).enrollmentDate || ""
+                          (selected as Student).enrollmentDate || "",
                         ).split("T")[0] || "",
                       fatherName: (selected as Student).fatherName || "",
                       motherName: (selected as Student).motherName || "",
@@ -1122,7 +1127,7 @@ const StudentsPage = () => {
                         (selected as Student).emergencyContact || "",
                       notes: (selected as Student).notes || "",
                       scholarshipStatus: normalizeScholarshipStatus(
-                        (selected as Student).scholarshipStatus
+                        (selected as Student).scholarshipStatus,
                       ),
                       institutionId: (selected as Student).institutionId || "",
                     }
@@ -1185,7 +1190,7 @@ const StudentsPage = () => {
                       phone: (selected as Teacher).user?.phone || "",
                       hireDate:
                         String((selected as Teacher).hireDate || "").split(
-                          "T"
+                          "T",
                         )[0] || "",
                       diplomas: (selected as Teacher).diplomas || "",
                       emergencyContact:
@@ -1239,7 +1244,7 @@ const StudentsPage = () => {
                       phone: (selected as Staff).user?.phone || "",
                       hireDate:
                         String((selected as Staff).hireDate || "").split(
-                          "T"
+                          "T",
                         )[0] || "",
                       position: (selected as Staff).position || "",
                       emergencyContact:

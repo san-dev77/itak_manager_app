@@ -1,12 +1,12 @@
 /* eslint-disable prettier/prettier */
 import { PartialType } from '@nestjs/swagger';
 import {
-  IsString,
-  IsOptional,
-  IsUUID,
   IsDateString,
-  MinLength,
   IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MinLength,
 } from 'class-validator';
 import { UserResponseDto } from '../../user/dto/user.dto';
 
@@ -93,7 +93,11 @@ export class StudentResponseDto {
   address?: string;
   emergencyContact?: string;
   notes?: string;
-  scholarshipStatus?: 'boursier' | 'demi_boursier' | 'quart_boursier' | 'non_boursier';
+  scholarshipStatus?:
+    | 'boursier'
+    | 'demi_boursier'
+    | 'quart_boursier'
+    | 'non_boursier';
   institutionId?: string;
   institution?: {
     id: string;

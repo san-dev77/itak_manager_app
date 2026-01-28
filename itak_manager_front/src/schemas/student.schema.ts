@@ -8,14 +8,9 @@ export const studentSchema = z.object({
   enrollmentDate: z.string().min(1, "Date d'inscription requise"),
 
   scholarshipStatus: z
-    .enum([
-      "boursier",
-      "demi_boursier",
-      "quart_boursier",
-      "non_boursier",
-    ])
+    .enum(["boursier", "demi_boursier", "quart_boursier", "non_boursier"])
     .default("non_boursier"),
-  
+
   // Optional fields
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   phone: z.string().optional(),
@@ -23,7 +18,7 @@ export const studentSchema = z.object({
   birthDate: z.string().optional(),
   address: z.string().optional(),
   maritalStatus: z.string().optional(),
-  
+
   // Family (all optional)
   fatherName: z.string().optional(),
   motherName: z.string().optional(),
@@ -31,12 +26,14 @@ export const studentSchema = z.object({
   tutorPhone: z.string().optional(),
   emergencyContact: z.string().optional(),
   notes: z.string().optional(),
-  
+
   // Institution
-  institutionId: z.string().uuid("ID d'affectation invalide").refine(
-    (val) => val.length > 0,
-    { message: "Veuillez sélectionner une affectation" }
-  ),
+  institutionId: z
+    .string()
+    .uuid("ID d'affectation invalide")
+    .refine((val) => val.length > 0, {
+      message: "Veuillez sélectionner une affectation",
+    }),
 });
 
 export type StudentFormData = z.input<typeof studentSchema>;
@@ -61,4 +58,3 @@ export const studentDefaultValues: StudentFormData = {
   scholarshipStatus: "non_boursier",
   institutionId: "",
 };
-

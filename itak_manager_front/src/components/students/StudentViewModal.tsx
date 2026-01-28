@@ -1,13 +1,13 @@
 import {
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Users2,
   AlertCircle,
-  User,
-  Heart,
+  Calendar,
   CreditCard,
+  Heart,
+  Mail,
+  MapPin,
+  Phone,
+  User,
+  Users2,
 } from "lucide-react";
 import Modal from "../ui/Modal";
 
@@ -64,13 +64,25 @@ const StudentViewModal = ({
   const formatScholarship = (status?: string) => {
     switch (status) {
       case "boursier":
-        return { label: "Boursier", color: "bg-emerald-100 text-emerald-800 border-emerald-200" };
+        return {
+          label: "Boursier",
+          color: "bg-emerald-100 text-emerald-800 border-emerald-200",
+        };
       case "demi_boursier":
-        return { label: "Demi-boursier", color: "bg-blue-100 text-blue-800 border-blue-200" };
+        return {
+          label: "Demi-boursier",
+          color: "bg-blue-100 text-blue-800 border-blue-200",
+        };
       case "quart_boursier":
-        return { label: "Quart-boursier", color: "bg-amber-100 text-amber-800 border-amber-200" };
+        return {
+          label: "Quart-boursier",
+          color: "bg-amber-100 text-amber-800 border-amber-200",
+        };
       default:
-        return { label: "Non-boursier", color: "bg-slate-100 text-slate-800 border-slate-200" };
+        return {
+          label: "Non-boursier",
+          color: "bg-slate-100 text-slate-800 border-slate-200",
+        };
     }
   };
 

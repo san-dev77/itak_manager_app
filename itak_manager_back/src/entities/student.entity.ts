@@ -1,25 +1,25 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
-  JoinColumn,
-  Index,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { User } from './user.entity';
-import { Institution } from './institution.entity';
-import { StudentClass } from './student-class.entity';
-import { StudentParent } from './student-parent.entity';
-import { StudentPromotion } from './student-promotion.entity';
+import { AssessmentAttendance } from './assessment-attendance.entity';
 import { AssessmentResult } from './assessment-result.entity';
 import { GradeComplaint } from './grade-complaint.entity';
-import { StudentTransfer } from './student-transfer.entity';
-import { AssessmentAttendance } from './assessment-attendance.entity';
-import { StudentFee } from './student-fee.entity';
+import { Institution } from './institution.entity';
 import { Invoice } from './invoice.entity';
+import { StudentClass } from './student-class.entity';
+import { StudentFee } from './student-fee.entity';
+import { StudentParent } from './student-parent.entity';
+import { StudentPromotion } from './student-promotion.entity';
+import { StudentTransfer } from './student-transfer.entity';
+import { User } from './user.entity';
 
 @Entity('students')
 export class Student {
