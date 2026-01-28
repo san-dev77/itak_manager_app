@@ -1,18 +1,18 @@
 import {
-  Injectable,
   ConflictException,
-  NotFoundException,
   Inject,
+  Injectable,
+  NotFoundException,
   Optional,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../../entities/user.entity';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { CreateUserDto, UserResponseDto } from './dto/user.dto';
 import { Utils } from '../../utils/utils';
 import { EmailService } from '../email/email.service';
-import { ConfigService } from '@nestjs/config';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto, UserResponseDto } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -89,6 +89,7 @@ export class UserService {
       const savedUser = await this.userRepository.save(user);
       return this.mapToUserResponseDto(savedUser);
     } catch (error) {
+      console.error('Erreur lors de createUser:', error);
       if (error instanceof ConflictException) {
         throw error;
       }

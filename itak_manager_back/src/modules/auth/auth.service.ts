@@ -1,13 +1,14 @@
 import {
-  Injectable,
-  UnauthorizedException,
   ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
 import { RegisterDto } from './dto/register.dto';
-import * as bcrypt from 'bcrypt';
 
 export interface AuthResponse {
   user: any;
@@ -100,12 +101,15 @@ export class AuthService {
         access_token: accessToken,
       };
     } catch (error) {
+      console.error('Erreur dans AuthService.register:', error);
       if (error instanceof ConflictException) {
         throw error;
       }
       const errorMessage =
         error instanceof Error ? error.message : 'Erreur inconnue';
-      throw new Error(`Erreur lors de l'inscription: ${errorMessage}`);
+      throw new InternalServerErrorException(
+        `Erreur lors de l'inscription: ${errorMessage}`,
+      );
     }
   }
 

@@ -1,6 +1,8 @@
-import type { AuthFormData, LoginFormData, User, ApiResponse } from "../types";
+import type { ApiResponse, AuthFormData, LoginFormData, User } from "../types";
 
-const API_BASE_URL = "http://localhost:3000/api";
+// Backend routes are exposed at the root (e.g. /users, /auth)
+// Swagger lives at /api/docs but the API itself doesn't use the /api prefix.
+const API_BASE_URL = "http://localhost:3000/";
 
 class ApiService {
   private async request<T>(
@@ -8,7 +10,9 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const url = new URL(endpoint, API_BASE_URL).toString();
+
+      const response = await fetch(url, {
         headers: {
           "Content-Type": "application/json",
           ...options.headers,
@@ -38,9 +42,22 @@ class ApiService {
   }
 
   async register(userData: AuthFormData): Promise<ApiResponse<User>> {
+    // Map frontend snake_case fields to backend camelCase DTO (firstName, lastName, birthDate)
+    const payload = {
+      username: (userData as any).username,
+      email: (userData as any).email,
+      password: (userData as any).password,
+      firstName: (userData as any).first_name || (userData as any).firstName,
+      lastName: (userData as any).last_name || (userData as any).lastName,
+      gender: (userData as any).gender,
+      birthDate: (userData as any).birth_date || (userData as any).birthDate,
+      phone: (userData as any).phone,
+      role: (userData as any).role,
+    };
+
     return this.request<User>("/users", {
       method: "POST",
-      body: JSON.stringify(userData),
+      body: JSON.stringify(payload),
     });
   }
 

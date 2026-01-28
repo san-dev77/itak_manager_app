@@ -1,0 +1,38 @@
+﻿# Database Configuration
+# UPCD-ITAK Backend Configuration
+DB_URL=postgresql://itak_postgres:root@localhost:5432/itak_manager
+
+# Application
+APP_NAME=UPCD-ITAK
+APP_PORT=3000
+FRONTEND_URL=http://localhost:5173
+LOGIN_URL=http://localhost:5173/login
+SUPPORT_EMAIL=support@upcd-itak.com
+NODE_ENV=development
+  
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=itak_postgres
+DB_USERNAME_LOCALHOST=postgres
+DB_PASSWORD=root
+DB_NAME=itak_manager
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# SMTP Gmail
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=devtruc88@gmail.com
+SMTP_PASS=qhxo aeim rejk zzkz
+SMTP_FROM=noreply@upcd-itak.com
+
+# JWT
+JWT_SECRET=upcd-itak-super-secret-jwt-key-2025
+JWT_EXPIRES_IN=1d
+JWT_REFRESH_SECRET=upcd-itak-refresh-secret-2025
+JWT_REFRESH_EXPIRES_IN=7d
+APP_URL=http://localhost:3000
+APP_URL=http://localhost:3000

@@ -951,10 +951,53 @@ class ApiService {
 
   // Méthode pour créer un nouvel utilisateur
   async createUser(userData: UserRegistrationData): Promise<ApiResponse<User>> {
-    console.log(userData);
+    console.log("createUser payload (pre):", userData);
+
+    // Basic client-side validation to avoid obvious 400/500 calls
+    const errors: string[] = [];
+    if (!userData.firstName || userData.firstName.trim().length === 0) {
+      errors.push("Le prénom est requis");
+    }
+    if (!userData.lastName || userData.lastName.trim().length === 0) {
+      errors.push("Le nom est requis");
+    }
+    if (!userData.password || userData.password.length < 6) {
+      errors.push("Le mot de passe doit contenir au moins 6 caractères");
+    }
+
+    const allowedRoles = Object.values(USER_ROLES) as UserRole[];
+    const role =
+      userData.role && allowedRoles.includes(userData.role as UserRole)
+        ? (userData.role as UserRole)
+        : USER_ROLES.SCOLARITE;
+
+    if (errors.length > 0) {
+      return {
+        success: false,
+        error: errors.join(" - "),
+      };
+    }
+
+    // Build a clean payload matching backend DTO (camelCase keys)
+    const payload: Partial<UserRegistrationData> = {
+      username: userData.username?.trim() || undefined,
+      email: userData.email?.trim() || undefined,
+      password: userData.password,
+      firstName: userData.firstName.trim(),
+      lastName: userData.lastName.trim(),
+      gender: userData.gender || undefined,
+      birthDate: userData.birthDate || undefined,
+      phone: userData.phone || undefined,
+      role,
+      isActive:
+        typeof userData.isActive === "boolean" ? userData.isActive : undefined,
+    };
+
+    console.log("createUser payload (clean):", payload);
+
     return this.makeRequest<User>("/auth/register", {
       method: "POST",
-      body: JSON.stringify(userData),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -1731,21 +1774,21 @@ export const apiService = new ApiService();
 
 // Export des types pour utilisation dans d'autres composants
 export type {
-  UserRegistrationData,
-  User,
-  LoginResponse,
-  TeacherWithUser,
-  StaffWithUser,
-  ClassData,
+  ApiResponse,
   Class,
   ClassCategory,
-  SubjectData,
-  Subject,
-  ClassSubjectData,
+  ClassData,
   ClassSubject,
-  StudentClassData,
+  ClassSubjectData,
+  LoginResponse,
+  StaffWithUser,
   StudentClass,
-  TeachingAssignmentData,
+  StudentClassData,
+  Subject,
+  SubjectData,
+  TeacherWithUser,
   TeachingAssignment,
-  ApiResponse,
+  TeachingAssignmentData,
+  User,
+  UserRegistrationData,
 };
