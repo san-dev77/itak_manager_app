@@ -77,6 +77,7 @@ export interface StudentProfileData {
   enrollmentDate: string | Date;
   photo?: string;
   maritalStatus?: string;
+  scholarshipStatus?: string;
   fatherName?: string;
   motherName?: string;
   tutorName?: string;
@@ -367,6 +368,7 @@ export interface StudentWithUser {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  scholarshipStatus?: string;
   institutionId?: string;
   institution?: {
     id: string;

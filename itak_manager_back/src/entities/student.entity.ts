@@ -65,6 +65,13 @@ export class Student {
   @Column({ type: 'text', nullable: true })
   notes?: string;
 
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: 'non_boursier',
+  })
+  scholarshipStatus: string;
+
   @Column({ type: 'uuid', nullable: true })
   @Index()
   institutionId?: string;

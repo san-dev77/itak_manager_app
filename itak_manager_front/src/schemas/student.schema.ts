@@ -6,6 +6,15 @@ export const studentSchema = z.object({
   lastName: z.string().min(2, "Nom requis (min 2 car.)"),
   matricule: z.string().min(3, "Matricule requis"),
   enrollmentDate: z.string().min(1, "Date d'inscription requise"),
+
+  scholarshipStatus: z
+    .enum([
+      "boursier",
+      "demi_boursier",
+      "quart_boursier",
+      "non_boursier",
+    ])
+    .default("non_boursier"),
   
   // Optional fields
   email: z.string().email("Email invalide").optional().or(z.literal("")),
@@ -30,7 +39,7 @@ export const studentSchema = z.object({
   ),
 });
 
-export type StudentFormData = z.infer<typeof studentSchema>;
+export type StudentFormData = z.input<typeof studentSchema>;
 
 export const studentDefaultValues: StudentFormData = {
   firstName: "",
@@ -49,6 +58,7 @@ export const studentDefaultValues: StudentFormData = {
   tutorPhone: "",
   emergencyContact: "",
   notes: "",
+  scholarshipStatus: "non_boursier",
   institutionId: "",
 };
 

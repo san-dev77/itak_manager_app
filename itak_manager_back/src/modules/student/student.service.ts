@@ -1,7 +1,7 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
-  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,8 +9,8 @@ import { Student } from '../../entities/student.entity';
 import { User } from '../../entities/user.entity';
 import {
   CreateStudentDto,
-  UpdateStudentDto,
   StudentResponseDto,
+  UpdateStudentDto,
 } from './dto/student.dto';
 
 @Injectable()
@@ -275,6 +275,18 @@ export class StudentService {
       address: student.address,
       emergencyContact: student.emergencyContact,
       notes: student.notes,
+      scholarshipStatus: [
+        'boursier',
+        'demi_boursier',
+        'quart_boursier',
+        'non_boursier',
+      ].includes(student.scholarshipStatus)
+        ? (student.scholarshipStatus as
+            | 'boursier'
+            | 'demi_boursier'
+            | 'quart_boursier'
+            | 'non_boursier')
+        : undefined,
       institutionId: student.institutionId,
       institution: student.institution
         ? {

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { PartialType } from '@nestjs/swagger';
 import {
   IsString,
@@ -5,6 +6,7 @@ import {
   IsUUID,
   IsDateString,
   MinLength,
+  IsIn,
 } from 'class-validator';
 import { UserResponseDto } from '../../user/dto/user.dto';
 
@@ -59,6 +61,18 @@ export class CreateStudentDto {
   notes?: string;
 
   @IsOptional()
+  @IsString({ message: 'Le statut de bourse doit être une chaîne' })
+  @IsIn(['boursier', 'demi_boursier', 'quart_boursier', 'non_boursier'], {
+    message:
+      "Le statut de bourse doit être 'boursier', 'demi_boursier', 'quart_boursier' ou 'non_boursier'",
+  })
+  scholarshipStatus?:
+    | 'boursier'
+    | 'demi_boursier'
+    | 'quart_boursier'
+    | 'non_boursier';
+
+  @IsOptional()
   @IsUUID('4', { message: 'institutionId doit être un UUID valide' })
   institutionId?: string;
 }
@@ -79,6 +93,7 @@ export class StudentResponseDto {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  scholarshipStatus?: 'boursier' | 'demi_boursier' | 'quart_boursier' | 'non_boursier';
   institutionId?: string;
   institution?: {
     id: string;

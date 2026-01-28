@@ -44,6 +44,7 @@ interface Student {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  scholarshipStatus?: string;
   institutionId?: string;
   institution?: {
     id: string;
@@ -210,6 +211,33 @@ const StudentsPage = () => {
     });
   };
 
+  const formatScholarship = (status?: string) => {
+    switch (status) {
+      case "boursier":
+        return { label: "Boursier", color: "bg-emerald-100 text-emerald-800" };
+      case "demi_boursier":
+        return { label: "Demi-boursier", color: "bg-blue-100 text-blue-800" };
+      case "quart_boursier":
+        return { label: "Quart-boursier", color: "bg-amber-100 text-amber-800" };
+      default:
+        return { label: "Non-boursier", color: "bg-slate-100 text-slate-800" };
+    }
+  };
+
+  const normalizeScholarshipStatus = (
+    status?: string
+  ): StudentFormData["scholarshipStatus"] => {
+    switch (status) {
+      case "boursier":
+      case "demi_boursier":
+      case "quart_boursier":
+      case "non_boursier":
+        return status;
+      default:
+        return "non_boursier";
+    }
+  };
+
   // Handlers
   const handleCreateStudent = async (
     data: StudentFormData,
@@ -260,6 +288,7 @@ const StudentsPage = () => {
         userId: userId,
         matricule: data.matricule,
         enrollmentDate: data.enrollmentDate,
+        scholarshipStatus: data.scholarshipStatus || "non_boursier",
         fatherName: data.fatherName,
         motherName: data.motherName,
         tutorName: data.tutorName,
@@ -312,6 +341,7 @@ const StudentsPage = () => {
       const updateData = {
         matricule: data.matricule,
         enrollmentDate: data.enrollmentDate,
+        scholarshipStatus: data.scholarshipStatus || "non_boursier",
         fatherName: data.fatherName,
         motherName: data.motherName,
         tutorName: data.tutorName,
@@ -729,6 +759,18 @@ const StudentsPage = () => {
       ),
     },
     {
+      key: "scholarshipStatus",
+      header: "Statut",
+      render: (s: Student) => {
+        const status = formatScholarship(s.scholarshipStatus);
+        return (
+          <span className={`px-2 py-1 rounded text-sm font-semibold ${status.color}`}>
+            {status.label}
+          </span>
+        );
+      },
+    },
+    {
       key: "contact",
       header: "Contact",
       render: (s: Student) => (
@@ -1079,6 +1121,9 @@ const StudentsPage = () => {
                       emergencyContact:
                         (selected as Student).emergencyContact || "",
                       notes: (selected as Student).notes || "",
+                      scholarshipStatus: normalizeScholarshipStatus(
+                        (selected as Student).scholarshipStatus
+                      ),
                       institutionId: (selected as Student).institutionId || "",
                     }
                   : undefined

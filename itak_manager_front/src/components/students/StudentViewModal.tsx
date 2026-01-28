@@ -23,6 +23,7 @@ interface Student {
   address?: string;
   emergencyContact?: string;
   notes?: string;
+  scholarshipStatus?: string;
   user?: {
     firstName: string;
     lastName: string;
@@ -60,6 +61,19 @@ const StudentViewModal = ({
     });
   };
 
+  const formatScholarship = (status?: string) => {
+    switch (status) {
+      case "boursier":
+        return { label: "Boursier", color: "bg-emerald-100 text-emerald-800 border-emerald-200" };
+      case "demi_boursier":
+        return { label: "Demi-boursier", color: "bg-blue-100 text-blue-800 border-blue-200" };
+      case "quart_boursier":
+        return { label: "Quart-boursier", color: "bg-amber-100 text-amber-800 border-amber-200" };
+      default:
+        return { label: "Non-boursier", color: "bg-slate-100 text-slate-800 border-slate-200" };
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" size="2xl">
       <div className="space-y-4 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2">
@@ -92,6 +106,16 @@ const StudentViewModal = ({
                   {student.user.gender === "M" ? "Masculin" : "Féminin"}
                 </span>
               )}
+              {(() => {
+                const status = formatScholarship(student.scholarshipStatus);
+                return (
+                  <span
+                    className={`px-3 py-1 rounded-lg text-sm font-semibold border ${status.color}`}
+                  >
+                    {status.label}
+                  </span>
+                );
+              })()}
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-700 font-medium">
               <Calendar className="w-4 h-4 text-slate-600" />
@@ -114,6 +138,11 @@ const StudentViewModal = ({
               Informations de contact
             </h4>
             <div className="space-y-2">
+              <InfoCard
+                icon={CreditCard}
+                label="Statut de bourse"
+                value={formatScholarship(student.scholarshipStatus).label}
+              />
               <InfoCard icon={Mail} label="Email" value={student.user?.email} />
               <InfoCard
                 icon={Phone}

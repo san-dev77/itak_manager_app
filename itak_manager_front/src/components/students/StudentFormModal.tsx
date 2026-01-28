@@ -1,16 +1,17 @@
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import type { SubmitHandler } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import type { Institution } from "../../contexts/InstitutionContext";
+import { useInstitution } from "../../hooks/useInstitution";
 import {
-  studentSchema,
   studentDefaultValues,
+  studentSchema,
   type StudentFormData,
 } from "../../schemas/student.schema";
-import Modal from "../ui/Modal";
-import ImageUpload from "../ui/ImageUpload";
 import { FormInput, FormSelect } from "../form";
-import { useState, useEffect } from "react";
-import { useInstitution } from "../../hooks/useInstitution";
-import type { Institution } from "../../contexts/InstitutionContext";
+import ImageUpload from "../ui/ImageUpload";
+import Modal from "../ui/Modal";
 
 interface StudentFormModalProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ const StudentFormModal = ({
 }: StudentFormModalProps) => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(
-    initialPhoto || null
+    initialPhoto || null,
   );
   const [submitError, setSubmitError] = useState("");
 
@@ -82,9 +83,10 @@ const StudentFormModal = ({
       // Réinitialiser la photo preview si elle existe
       if (initialPhoto) {
         // Si la photo est une URL relative, la convertir en URL absolue
-        const photoUrl = initialPhoto.startsWith('http') || initialPhoto.startsWith('/')
-          ? initialPhoto
-          : `/${initialPhoto}`;
+        const photoUrl =
+          initialPhoto.startsWith("http") || initialPhoto.startsWith("/")
+            ? initialPhoto
+            : `/${initialPhoto}`;
         setPhotoPreview(photoUrl);
         setPhotoFile(null);
       } else {
@@ -105,7 +107,7 @@ const StudentFormModal = ({
     onClose();
   };
 
-  const handleFormSubmit = async (data: StudentFormData) => {
+  const handleFormSubmit: SubmitHandler<StudentFormData> = async (data) => {
     setSubmitError("");
     try {
       await onSubmit(data, photoFile);
@@ -119,6 +121,13 @@ const StudentFormModal = ({
   const genderOptions = [
     { value: "M", label: "Masculin" },
     { value: "F", label: "Féminin" },
+  ];
+
+  const scholarshipOptions = [
+    { value: "boursier", label: "Boursier" },
+    { value: "demi_boursier", label: "Demi-boursier" },
+    { value: "quart_boursier", label: "Quart-boursier" },
+    { value: "non_boursier", label: "Non-boursier" },
   ];
 
   const maritalOptions = [
@@ -193,6 +202,12 @@ const StudentFormModal = ({
                 type="date"
                 error={errors.enrollmentDate}
                 {...register("enrollmentDate")}
+              />
+              <FormSelect
+                label="Statut de bourse"
+                options={scholarshipOptions}
+                error={errors.scholarshipStatus}
+                {...register("scholarshipStatus")}
               />
               <div className="col-span-2">
                 <FormSelect
