@@ -93,11 +93,7 @@ export class StudentResponseDto {
   address?: string;
   emergencyContact?: string;
   notes?: string;
-  scholarshipStatus?:
-    | 'boursier'
-    | 'demi_boursier'
-    | 'quart_boursier'
-    | 'non_boursier';
+  scholarshipStatus?: string;
   institutionId?: string;
   institution?: {
     id: string;
