@@ -1,30 +1,30 @@
-import { useState, useEffect } from "react";
 import {
-  Users,
+  Calendar,
+  CheckCircle,
   Mail,
   Phone,
   Shield,
-  CheckCircle,
-  XCircle,
-  UserPlus,
-  Calendar,
   User as UserIcon,
+  UserPlus,
+  Users,
+  XCircle,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import AuthenticatedPage from "../components/layout/AuthenticatedPage";
-import PageHeader from "../components/ui/PageHeader";
+import { HeaderActionButton } from "../components/ui/ActionButton";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import DataTable from "../components/ui/DataTable";
 import Modal from "../components/ui/Modal";
-import ConfirmDialog from "../components/ui/ConfirmDialog";
-import { HeaderActionButton } from "../components/ui/ActionButton";
+import PageHeader from "../components/ui/PageHeader";
 import TableActions from "../components/ui/TableActions";
 import { UserFormModal } from "../components/users";
+import type { UserEditFormData, UserFormData } from "../schemas/user.schema";
 import {
   apiService,
   type User,
   USER_ROLE_LABELS,
   type UserRole,
 } from "../services/api";
-import type { UserFormData, UserEditFormData } from "../schemas/user.schema";
 
 const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -57,8 +57,8 @@ const UsersPage = () => {
               "scolarite",
               "finance",
               "qualite",
-            ].includes(u.role)
-          )
+            ].includes(u.role),
+          ),
         );
       }
     } catch (error) {
@@ -75,7 +75,7 @@ const UsersPage = () => {
       const response = await apiService.createUser(data);
       if (!response.success) {
         throw new Error(
-          response.error || "Erreur lors de la création du compte"
+          response.error || "Erreur lors de la création du compte",
         );
       }
       setShowCreate(false);
@@ -101,9 +101,24 @@ const UsersPage = () => {
       });
       if (!response.success) {
         throw new Error(
-          response.error || "Erreur lors de la modification du compte"
+          response.error || "Erreur lors de la modification du compte",
         );
       }
+
+      const newPassword = "newPassword" in data ? data.newPassword?.trim() : "";
+      if (newPassword) {
+        const passwordResponse = await apiService.updateUserPassword(
+          selected.id,
+          newPassword,
+        );
+        if (!passwordResponse.success) {
+          throw new Error(
+            passwordResponse.error ||
+              "Erreur lors de la modification du mot de passe",
+          );
+        }
+      }
+
       setShowEdit(false);
       setSelected(null);
       fetchUsers();
@@ -217,7 +232,7 @@ const UsersPage = () => {
       render: (u: User) => (
         <span
           className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full ${getRoleBadge(
-            u.role
+            u.role,
           )}`}
         >
           <Shield className="w-3 h-3" />
@@ -359,6 +374,14 @@ const UsersPage = () => {
             data={filteredUsers}
             columns={columns}
             searchPlaceholder="Rechercher..."
+            searchKeys={[
+              "firstName",
+              "lastName",
+              "email",
+              "username",
+              "phone",
+              "role",
+            ]}
             pageSize={10}
             emptyMessage="Aucun utilisateur"
           />
