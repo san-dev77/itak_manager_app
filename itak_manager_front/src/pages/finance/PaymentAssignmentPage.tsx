@@ -1,16 +1,27 @@
-import React, { useState, useEffect } from "react";
+import {
+    CheckCircle,
+    CheckSquare,
+    CreditCard,
+    FileText,
+    GraduationCap,
+    Receipt,
+    Search,
+    Square,
+    User as UserIcon,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthenticatedPage from "../../components/layout/AuthenticatedPage";
-import PageHeader from "../../components/ui/PageHeader";
 import Breadcrumb from "../../components/ui/Breadcrumb";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
+import PageHeader from "../../components/ui/PageHeader";
 import {
-  apiService,
-  type FeeType,
-  type StudentClass,
-  type User,
-  type StaffWithUser,
+    apiService,
+    type FeeType,
+    type StaffWithUser,
+    type StudentClass,
+    type User,
 } from "../../services/api";
 
 interface AcademicYear {
@@ -18,17 +29,6 @@ interface AcademicYear {
   name: string;
   isActive: boolean;
 }
-import {
-  Search,
-  User as UserIcon,
-  CheckSquare,
-  Square,
-  CreditCard,
-  CheckCircle,
-  GraduationCap,
-  FileText,
-  Receipt,
-} from "lucide-react";
 
 interface StudentFee {
   id: string;
@@ -45,6 +45,7 @@ interface StudentFee {
     id: string;
     userId: string;
     matricule: string;
+    tutorPhone?: string;
   };
   feeType: {
     id: string;
@@ -98,6 +99,7 @@ const PaymentAssignmentPage: React.FC = () => {
     paymentDate: new Date().toISOString().split("T")[0],
     academicYearId: "",
   });
+  const [bulkDisplayAmount, setBulkDisplayAmount] = useState("");
 
   // État pour le formulaire (non utilisé pour le moment)
   // const [formData, setFormData] = useState({
@@ -112,6 +114,22 @@ const PaymentAssignmentPage: React.FC = () => {
   // Fonctions utilitaires pour le formatage des montants
   const formatAmount = (amount: number): string => {
     return amount.toLocaleString("fr-FR");
+  };
+
+  const formatAmountInput = (amount: number): string => {
+    if (!amount) return "";
+    return amount.toLocaleString("fr-FR");
+  };
+
+  const parseAmount = (value: string): number => {
+    const cleanValue = value.replace(/[\s.]/g, "");
+    return parseInt(cleanValue, 10) || 0;
+  };
+
+  const handleBulkAmountChange = (value: string) => {
+    const numericValue = parseAmount(value);
+    setBulkFormData({ ...bulkFormData, amount: numericValue });
+    setBulkDisplayAmount(formatAmountInput(numericValue));
   };
 
   // Fonctions pour le nouveau workflow
@@ -150,21 +168,30 @@ const PaymentAssignmentPage: React.FC = () => {
       const remainingAmount =
         (Number(studentFee.amountAssigned) || 0) - actualAmountPaid;
 
+      const feeTypeName =
+        feeTypes.find((ft) => ft.id === studentFee.feeTypeId)?.name || "";
+      const academicYearName = studentFee.academicYear?.name || "";
+      const tutorPhone = studentFee.student.tutorPhone || "";
+      const search = studentFeeSearchTerm.toLowerCase();
+
       return (
         studentFee.feeTypeId === selectedFeeType &&
         remainingAmount > 0 &&
-        (studentUser.firstName
-          .toLowerCase()
-          .includes(studentFeeSearchTerm.toLowerCase()) ||
-          studentUser.lastName
-            .toLowerCase()
-            .includes(studentFeeSearchTerm.toLowerCase()) ||
-          studentFee.student.matricule
-            .toLowerCase()
-            .includes(studentFeeSearchTerm.toLowerCase()) ||
-          getStudentClass(studentFee.student.id)
-            .toLowerCase()
-            .includes(studentFeeSearchTerm.toLowerCase()))
+        [
+          studentUser.firstName,
+          studentUser.lastName,
+          studentFee.student.matricule,
+          studentUser.phone,
+          tutorPhone,
+          getStudentClass(studentFee.student.id),
+          feeTypeName,
+          academicYearName,
+          formatAmount(remainingAmount),
+        ]
+          .filter(Boolean)
+          .some((value) =>
+            String(value ?? "").toLowerCase().includes(search)
+          )
       );
     });
   };
@@ -934,17 +961,12 @@ const PaymentAssignmentPage: React.FC = () => {
                         Montant du paiement (FCFA)
                       </label>
                       <input
-                        type="number"
-                        value={bulkFormData.amount}
-                        onChange={(e) =>
-                          setBulkFormData({
-                            ...bulkFormData,
-                            amount: Number(e.target.value),
-                          })
-                        }
+                        type="text"
+                        value={bulkDisplayAmount}
+                        onChange={(e) => handleBulkAmountChange(e.target.value)}
+                        placeholder="Ex: 50 000"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                         required
-                        min="1"
                       />
                     </div>
 
@@ -1072,6 +1094,7 @@ const PaymentAssignmentPage: React.FC = () => {
                           paymentDate: new Date().toISOString().split("T")[0],
                           academicYearId: "",
                         });
+                        setBulkDisplayAmount("");
                       }}
                       variant="outline"
                     >

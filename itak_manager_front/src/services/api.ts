@@ -383,6 +383,7 @@ export interface StudentWithUser {
     email: string;
     firstName: string;
     lastName: string;
+    phone?: string;
     role: string;
   };
 }
@@ -1021,6 +1022,17 @@ class ApiService {
     return this.makeRequest<User>(`/users/${id}`, {
       method: "PUT",
       body: JSON.stringify(userData),
+    });
+  }
+
+  // Méthode pour mettre à jour le mot de passe d'un utilisateur
+  async updateUserPassword(
+    id: string | number,
+    newPassword: string,
+  ): Promise<ApiResponse<{ message: string }>> {
+    return this.makeRequest<{ message: string }>(`/users/${id}/password`, {
+      method: "PUT",
+      body: JSON.stringify({ newPassword }),
     });
   }
 
@@ -1668,7 +1680,7 @@ class ApiService {
     data: UpdatePaymentDto,
   ): Promise<ApiResponse<Payment>> {
     return this.makeRequest<Payment>(`/payments/${id}`, {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify(data),
     });
   }

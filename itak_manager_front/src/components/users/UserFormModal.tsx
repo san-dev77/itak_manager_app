@@ -1,16 +1,16 @@
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
-  userSchema,
-  userEditSchema,
-  userDefaultValues,
   roleOptions,
-  type UserFormData,
+  userDefaultValues,
+  userEditSchema,
+  userSchema,
   type UserEditFormData,
+  type UserFormData,
 } from "../../schemas/user.schema";
-import Modal from "../ui/Modal";
 import { FormInput, FormSelect } from "../form";
-import { useState, useEffect, useRef } from "react";
+import Modal from "../ui/Modal";
 
 type UserFormModalProps =
   | {
@@ -77,6 +77,7 @@ const UserFormModal = ({
         email: editData.email || "",
         phone: editData.phone || "",
         role: editData.role || "scolarite",
+        newPassword: "",
       });
       previousEmailRef.current = initialData?.email;
     }
@@ -93,9 +94,13 @@ const UserFormModal = ({
     setSubmitError("");
     try {
       if (mode === "create") {
-        await (onSubmit as (data: UserFormData) => Promise<void>)(data as UserFormData);
+        await (onSubmit as (data: UserFormData) => Promise<void>)(
+          data as UserFormData,
+        );
       } else {
-        await (onSubmit as (data: UserEditFormData) => Promise<void>)(data as UserEditFormData);
+        await (onSubmit as (data: UserEditFormData) => Promise<void>)(
+          data as UserEditFormData,
+        );
       }
       handleClose();
     } catch (error: unknown) {
@@ -153,6 +158,17 @@ const UserFormModal = ({
             placeholder="••••••••"
             error={mode === "create" ? (errors as any).password : undefined}
             {...register("password" as any)}
+          />
+        )}
+
+        {/* Password (only on edit) */}
+        {mode === "edit" && (
+          <FormInput
+            label="Nouveau mot de passe (optionnel)"
+            type="password"
+            placeholder="Laisser vide pour conserver"
+            error={(errors as any).newPassword}
+            {...register("newPassword" as any)}
           />
         )}
 

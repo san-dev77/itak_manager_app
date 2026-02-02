@@ -1,16 +1,16 @@
-import React, { useState, useMemo } from "react";
 import {
+  Calendar,
   ChevronDown,
   ChevronRight,
   CreditCard,
-  Calendar,
-  TrendingUp,
-  FileText,
   DollarSign,
-  Receipt,
-  User,
+  FileText,
   GraduationCap,
+  Receipt,
+  TrendingUp,
+  User,
 } from "lucide-react";
+import React, { useMemo, useState } from "react";
 import Button from "../ui/Button";
 
 interface Payment {
@@ -72,6 +72,8 @@ interface PaymentsTableProps {
   studentClasses: StudentClass[];
   feeTypes: FeeType[];
   onViewInvoice?: (payment: Payment) => void;
+  onEditPayment?: (payment: Payment) => void;
+  onDeletePayment?: (payment: Payment) => void;
 }
 
 interface GroupedPayment {
@@ -94,9 +96,11 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
   studentClasses,
   feeTypes,
   onViewInvoice,
+  onEditPayment,
+  onDeletePayment,
 }) => {
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const toggleStudentExpansion = (studentId: string) => {
@@ -115,7 +119,7 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
 
   const getStudentClass = (studentId: string): string => {
     const studentClass = studentClasses.find(
-      (sc) => sc.studentId === studentId && !sc.endDate
+      (sc) => sc.studentId === studentId && !sc.endDate,
     );
     if (!studentClass?.class) return "Non assigné";
 
@@ -446,7 +450,7 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                                           <span className="text-sm font-semibold text-gray-900">
                                             {getFeeTypeName(
                                               payment.studentFee?.feeTypeId ||
-                                                ""
+                                                "",
                                             )}
                                           </span>
                                         </div>
@@ -480,7 +484,7 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                                           <Calendar className="w-4 h-4 text-gray-600" />
                                           <span className="text-sm text-gray-700">
                                             {new Date(
-                                              payment.paymentDate
+                                              payment.paymentDate,
                                             ).toLocaleDateString("fr-FR")}
                                           </span>
                                         </div>
@@ -503,25 +507,52 @@ const PaymentsTable: React.FC<PaymentsTableProps> = ({
                                       <td className="px-4 py-3 text-center">
                                         <span
                                           className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(
-                                            payment.status
+                                            payment.status,
                                           )}`}
                                         >
                                           {getStatusText(payment.status)}
                                         </span>
                                       </td>
                                       <td className="px-4 py-3 text-center">
-                                        {onViewInvoice && (
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={(e) => {
-                                              e?.stopPropagation();
-                                              onViewInvoice(payment);
-                                            }}
-                                          >
-                                            Facture
-                                          </Button>
-                                        )}
+                                        <div className="flex items-center justify-center gap-2">
+                                          {onViewInvoice && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={(e) => {
+                                                e?.stopPropagation();
+                                                onViewInvoice(payment);
+                                              }}
+                                            >
+                                              Facture
+                                            </Button>
+                                          )}
+                                          {onEditPayment && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={(e) => {
+                                                e?.stopPropagation();
+                                                onEditPayment(payment);
+                                              }}
+                                            >
+                                              Modifier
+                                            </Button>
+                                          )}
+                                          {onDeletePayment && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="text-red-600 border-red-200 hover:bg-red-50"
+                                              onClick={(e) => {
+                                                e?.stopPropagation();
+                                                onDeletePayment(payment);
+                                              }}
+                                            >
+                                              Supprimer
+                                            </Button>
+                                          )}
+                                        </div>
                                       </td>
                                     </tr>
                                   ))}

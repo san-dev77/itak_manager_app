@@ -1,5 +1,5 @@
-import { useState, useMemo, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
 
 interface Column<T> {
   key: string;
@@ -35,18 +35,21 @@ function DataTable<T extends { id: string }>({
   // Filter data
   const filteredData = useMemo(() => {
     if (!searchTerm || searchKeys.length === 0) return data;
-    
+
+    const normalizedSearch = searchTerm.toLowerCase();
+
     return data.filter((item) =>
       searchKeys.some((key) => {
         const value = item[key];
+        if (value === null || value === undefined) return false;
         if (typeof value === "string") {
-          return value.toLowerCase().includes(searchTerm.toLowerCase());
+          return value.toLowerCase().includes(normalizedSearch);
         }
-        if (typeof value === "object" && value !== null) {
-          return JSON.stringify(value).toLowerCase().includes(searchTerm.toLowerCase());
+        if (typeof value === "object") {
+          return JSON.stringify(value).toLowerCase().includes(normalizedSearch);
         }
-        return false;
-      })
+        return String(value).toLowerCase().includes(normalizedSearch);
+      }),
     );
   }, [data, searchTerm, searchKeys]);
 
@@ -103,7 +106,10 @@ function DataTable<T extends { id: string }>({
             <tbody className="divide-y divide-slate-100">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-5 py-20 text-center">
+                  <td
+                    colSpan={columns.length}
+                    className="px-5 py-20 text-center"
+                  >
                     <div className="text-slate-500">
                       {emptyIcon && <div className="mb-4">{emptyIcon}</div>}
                       <p className="text-base font-medium">{emptyMessage}</p>
@@ -112,7 +118,10 @@ function DataTable<T extends { id: string }>({
                 </tr>
               ) : (
                 paginatedData.map((item) => (
-                  <tr key={item.id} className="hover:bg-blue-50/50 transition-colors">
+                  <tr
+                    key={item.id}
+                    className="hover:bg-blue-50/50 transition-colors"
+                  >
                     {columns.map((col) => (
                       <td key={col.key} className="px-5 py-4">
                         {col.render(item)}
@@ -129,7 +138,8 @@ function DataTable<T extends { id: string }>({
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 bg-slate-50/50">
             <p className="text-sm text-slate-500">
-              {startIndex + 1} - {Math.min(startIndex + pageSize, filteredData.length)} sur{" "}
+              {startIndex + 1} -{" "}
+              {Math.min(startIndex + pageSize, filteredData.length)} sur{" "}
               {filteredData.length}
             </p>
             <div className="flex items-center gap-1">
@@ -140,7 +150,7 @@ function DataTable<T extends { id: string }>({
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              
+
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let page: number;
                 if (totalPages <= 5) {
@@ -168,7 +178,9 @@ function DataTable<T extends { id: string }>({
               })}
 
               <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -183,4 +195,3 @@ function DataTable<T extends { id: string }>({
 }
 
 export default DataTable;
-

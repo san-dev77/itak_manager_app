@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import AuthenticatedPage from "../../components/layout/AuthenticatedPage";
-import PageHeader from "../../components/ui/PageHeader";
-import Breadcrumb from "../../components/ui/Breadcrumb";
-import { HeaderActionButton } from "../../components/ui/ActionButton";
-import Button from "../../components/ui/Button";
 import { GraduationCap, Plus } from "lucide-react";
-import Input from "../../components/ui/Input";
-import FormModal from "../../components/ui/FormModal";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import StudentFeesTable from "../../components/finance/StudentFeesTable";
 import StudentPaymentModal from "../../components/finance/StudentPaymentModal";
+import AuthenticatedPage from "../../components/layout/AuthenticatedPage";
+import { HeaderActionButton } from "../../components/ui/ActionButton";
+import Breadcrumb from "../../components/ui/Breadcrumb";
+import Button from "../../components/ui/Button";
+import FormModal from "../../components/ui/FormModal";
+import Input from "../../components/ui/Input";
+import PageHeader from "../../components/ui/PageHeader";
 import {
-  apiService,
-  type Payment,
-  type StudentClass,
-  type User,
-  type StudentWithUser,
+    apiService,
+    type Payment,
+    type StudentClass,
+    type StudentWithUser,
+    type User,
 } from "../../services/api";
 
 interface StudentFee {
@@ -428,6 +428,18 @@ const StudentFeesPage: React.FC = () => {
   };
 
   // Filtrer les frais
+  const normalizeValue = (value?: string | number | null) =>
+    String(value ?? "").toLowerCase();
+
+  const getStudentClassName = (studentId: string) => {
+    const studentClass = studentClasses.find(
+      (sc) => sc.studentId === studentId && !sc.endDate
+    );
+    return studentClass?.class?.name || "";
+  };
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
   const filteredStudentFees = studentFees.filter((studentFee) => {
     // Vérifications de sécurité pour éviter les erreurs
     const student = studentFee.student;
@@ -438,11 +450,28 @@ const StudentFeesPage: React.FC = () => {
       return false;
     }
 
+    const fullStudent = fullStudents.find((s) => s.id === student.id);
+    const studentPhone = fullStudent?.user?.phone || "";
+    const className = getStudentClassName(student.id);
+    const academicYearName = studentFee.academicYear?.name || "";
+
     const matchesSearch =
-      student.matricule?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      false ||
-      feeType.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      false;
+      normalizedSearch.length === 0 ||
+      [
+        student.firstName,
+        student.lastName,
+        student.matricule,
+        studentPhone,
+        className,
+        feeType.name,
+        academicYearName,
+        studentFee.status,
+        studentFee.amountAssigned,
+        studentFee.amountPaid,
+        studentFee.dueDate,
+      ]
+        .map(normalizeValue)
+        .some((value) => value.includes(normalizedSearch));
 
     const matchesStatus =
       statusFilter === "all" || studentFee.status === statusFilter;
