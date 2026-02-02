@@ -1,26 +1,26 @@
-import React, { useState, useEffect } from "react";
+import {
+  ArrowRight,
+  Calendar,
+  CheckCircle,
+  CheckSquare,
+  DollarSign,
+  FileText,
+  GraduationCap,
+  Search,
+  Square,
+  User as UserIcon,
+  Users,
+  X,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthenticatedPage from "../../components/layout/AuthenticatedPage";
-import PageHeader from "../../components/ui/PageHeader";
 import Breadcrumb from "../../components/ui/Breadcrumb";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import Modal from "../../components/ui/Modal";
+import PageHeader from "../../components/ui/PageHeader";
 import { apiService, type StudentFee } from "../../services/api";
-import { User as UserIcon } from "lucide-react";
-import {
-  DollarSign,
-  Calendar,
-  Search,
-  CheckSquare,
-  Square,
-  Users,
-  GraduationCap,
-  FileText,
-  ArrowRight,
-  CheckCircle,
-  X,
-} from "lucide-react";
 
 interface Student {
   id: string;
@@ -44,6 +44,7 @@ interface Student {
     email: string;
     firstName: string;
     lastName: string;
+    phone?: string;
     role: string;
   };
 }
@@ -107,7 +108,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
 
   // États pour la sélection multiple
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [isBulkMode, setIsBulkMode] = useState(false);
 
@@ -115,25 +116,43 @@ const StudentFeeAssignmentPage: React.FC = () => {
   const [formData, setFormData] = useState({
     dueDate: "",
   });
+  const [assignedAmount, setAssignedAmount] = useState(0);
+  const [displayAssignedAmount, setDisplayAssignedAmount] = useState("");
 
   // Fonctions utilitaires pour le formatage des montants
   const formatAmount = (amount: number): string => {
     return amount.toLocaleString("fr-FR");
   };
 
+  const formatAmountInput = (amount: number): string => {
+    if (!amount) return "";
+    return amount.toLocaleString("fr-FR");
+  };
+
+  const parseAmount = (value: string): number => {
+    const cleanValue = value.replace(/[\s.]/g, "");
+    return parseInt(cleanValue, 10) || 0;
+  };
+
+  const handleAssignedAmountChange = (value: string) => {
+    const numericValue = parseAmount(value);
+    setAssignedAmount(numericValue);
+    setDisplayAssignedAmount(formatAmountInput(numericValue));
+  };
+
   // Fonction helper pour obtenir la classe d'un étudiant
-  const getStudentClass = (studentId: string, userId?: string) => {
+  const getStudentClass = (studentId: string, userId?: string): string => {
     console.log(
       "🔍 Recherche classe pour studentId:",
       studentId,
       "userId:",
-      userId
+      userId,
     );
     console.log("📚 Toutes les classes d'étudiants:", studentClasses);
 
     // Essayer d'abord par studentId
     let studentClass = studentClasses.find(
-      (sc) => sc.studentId === studentId && !sc.endDate
+      (sc) => sc.studentId === studentId && !sc.endDate,
     );
 
     console.log("🔍 Recherche par studentId:", studentClass);
@@ -141,7 +160,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
     // Si pas trouvé et qu'on a un userId, essayer par userId
     if (!studentClass && userId) {
       studentClass = studentClasses.find(
-        (sc) => sc.student.userId === userId && !sc.endDate
+        (sc) => sc.student.userId === userId && !sc.endDate,
       );
       console.log("🔍 Recherche par userId:", studentClass);
     }
@@ -153,7 +172,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
     }
 
     console.log("🎯 Classe finale trouvée:", studentClass);
-    return studentClass?.class || null;
+    return studentClass?.class?.name || "Non assigné";
   };
 
   useEffect(() => {
@@ -188,7 +207,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
       } else {
         console.error(
           "Erreur lors du chargement des étudiants:",
-          response.error
+          response.error,
         );
         setStudents([]);
       }
@@ -208,14 +227,14 @@ const StudentFeeAssignmentPage: React.FC = () => {
       } else {
         console.error(
           "Erreur lors du chargement des classes d'étudiants:",
-          response.error
+          response.error,
         );
         setStudentClasses([]);
       }
     } catch (error) {
       console.error(
         "Erreur lors du chargement des classes d'étudiants:",
-        error
+        error,
       );
       setStudentClasses([]);
     }
@@ -230,7 +249,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
       } else {
         console.error(
           "Erreur lors du chargement des frais étudiants:",
-          response.error
+          response.error,
         );
         setStudentFees([]);
       }
@@ -248,7 +267,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
       } else {
         console.error(
           "Erreur lors du chargement des types de frais:",
-          response.error
+          response.error,
         );
         setFeeTypes([]);
       }
@@ -267,7 +286,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
       } else {
         console.error(
           "Erreur lors du chargement des années scolaires:",
-          response.error
+          response.error,
         );
         setAcademicYears([]);
       }
@@ -308,7 +327,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
           .includes(studentSearchTerm.toLowerCase()) ||
         student.matricule
           .toLowerCase()
-          .includes(studentSearchTerm.toLowerCase())
+          .includes(studentSearchTerm.toLowerCase()),
     );
     setSelectedStudents(new Set(filtered.map((s) => s.id)));
   };
@@ -323,6 +342,9 @@ const StudentFeeAssignmentPage: React.FC = () => {
     console.log("🎯 Type de montant:", typeof feeType.amountDefault);
     setSelectedFeeType(feeType);
     setFeeTypeSearchTerm("");
+    const defaultAmount = Number(feeType.amountDefault) || 0;
+    setAssignedAmount(defaultAmount);
+    setDisplayAssignedAmount(formatAmountInput(defaultAmount));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -330,7 +352,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
 
     if (!selectedStudent || !selectedFeeType || !selectedAcademicYear) {
       setErrorMessage(
-        "Veuillez sélectionner un étudiant, un type de frais et une année scolaire."
+        "Veuillez sélectionner un étudiant, un type de frais et une année scolaire.",
       );
       return;
     }
@@ -339,12 +361,9 @@ const StudentFeeAssignmentPage: React.FC = () => {
       setIsSubmitting(true);
 
       // Vérifier que le montant par défaut est valide
-      if (
-        !selectedFeeType.amountDefault ||
-        selectedFeeType.amountDefault <= 0
-      ) {
+      if (assignedAmount <= 0) {
         setErrorMessage(
-          "Erreur: Le type de frais sélectionné n'a pas de montant valide."
+          "Erreur: Le type de frais sélectionné n'a pas de montant valide.",
         );
         setIsSubmitting(false);
         return;
@@ -354,7 +373,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
         studentId: selectedStudent.id,
         feeTypeId: selectedFeeType.id,
         academicYearId: selectedAcademicYear.id,
-        amountAssigned: Number(selectedFeeType.amountDefault),
+        amountAssigned: Number(assignedAmount),
         dueDate: formData.dueDate,
       };
 
@@ -363,11 +382,11 @@ const StudentFeeAssignmentPage: React.FC = () => {
       console.log("📤 Type de montant:", typeof selectedFeeType.amountDefault);
       console.log(
         "📤 Montant converti:",
-        Number(selectedFeeType.amountDefault)
+        Number(selectedFeeType.amountDefault),
       );
       console.log(
         "📤 Type du montant converti:",
-        typeof Number(selectedFeeType.amountDefault)
+        typeof Number(selectedFeeType.amountDefault),
       );
       const response = await apiService.createStudentFee(data);
 
@@ -380,7 +399,9 @@ const StudentFeeAssignmentPage: React.FC = () => {
         }, 1500);
       } else {
         console.error("Erreur lors de la création:", response.error);
-        setErrorMessage("Erreur lors de l'attribution du frais. Veuillez réessayer.");
+        setErrorMessage(
+          "Erreur lors de l'attribution du frais. Veuillez réessayer.",
+        );
       }
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
@@ -400,7 +421,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
       !selectedAcademicYear
     ) {
       setErrorMessage(
-        "Veuillez sélectionner au moins un étudiant, un type de frais et une année scolaire."
+        "Veuillez sélectionner au moins un étudiant, un type de frais et une année scolaire.",
       );
       return;
     }
@@ -414,12 +435,9 @@ const StudentFeeAssignmentPage: React.FC = () => {
       setIsSubmitting(true);
 
       // Vérifier que le montant par défaut est valide
-      if (
-        !selectedFeeType.amountDefault ||
-        selectedFeeType.amountDefault <= 0
-      ) {
+      if (assignedAmount <= 0) {
         setErrorMessage(
-          "Erreur: Le type de frais sélectionné n'a pas de montant valide."
+          "Erreur: Le type de frais sélectionné n'a pas de montant valide.",
         );
         setIsSubmitting(false);
         return;
@@ -431,7 +449,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
           studentId: studentId,
           feeTypeId: selectedFeeType.id,
           academicYearId: selectedAcademicYear.id,
-          amountAssigned: Number(selectedFeeType.amountDefault),
+          amountAssigned: Number(assignedAmount),
           dueDate: formData.dueDate,
         };
         return apiService.createStudentFee(data);
@@ -443,14 +461,14 @@ const StudentFeeAssignmentPage: React.FC = () => {
 
       if (successful.length === responses.length) {
         setSuccessMessage(
-          `Frais attribués avec succès à ${successful.length} étudiant(s) !`
+          `Frais attribués avec succès à ${successful.length} étudiant(s) !`,
         );
         setTimeout(() => {
           window.location.reload();
         }, 1500);
       } else {
         setSuccessMessage(
-          `${successful.length} attribution(s) réussie(s), ${failed.length} échouée(s).`
+          `${successful.length} attribution(s) réussie(s), ${failed.length} échouée(s).`,
         );
         if (failed.length < responses.length) {
           setTimeout(() => {
@@ -470,20 +488,17 @@ const StudentFeeAssignmentPage: React.FC = () => {
     // Afficher tous les étudiants, même ceux qui ont déjà des frais
 
     // Appliquer le filtre de recherche
+    const search = studentSearchTerm.toLowerCase();
+    const className = getStudentClass(student.id, student.userId) || "";
     return (
-      student.user.firstName
-        .toLowerCase()
-        .includes(studentSearchTerm.toLowerCase()) ||
-      student.user.lastName
-        .toLowerCase()
-        .includes(studentSearchTerm.toLowerCase()) ||
-      student.matricule
-        .toLowerCase()
-        .includes(studentSearchTerm.toLowerCase()) ||
+      student.user.firstName.toLowerCase().includes(search) ||
+      student.user.lastName.toLowerCase().includes(search) ||
+      student.matricule.toLowerCase().includes(search) ||
       (student.user.email &&
-        student.user.email
-          .toLowerCase()
-          .includes(studentSearchTerm.toLowerCase()))
+        student.user.email.toLowerCase().includes(search)) ||
+      (student.user.phone &&
+        student.user.phone.toLowerCase().includes(search)) ||
+      className.toLowerCase().includes(search)
     );
   });
 
@@ -493,7 +508,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
       (feeType.description &&
         feeType.description
           .toLowerCase()
-          .includes(feeTypeSearchTerm.toLowerCase()))
+          .includes(feeTypeSearchTerm.toLowerCase())),
   );
 
   const breadcrumbItems = [
@@ -597,8 +612,8 @@ const StudentFeeAssignmentPage: React.FC = () => {
                             <GraduationCap className="w-3 h-3 inline mr-1" />
                             {getStudentClass(
                               selectedStudent.id,
-                              selectedStudent.userId
-                            )?.name || "Non assigné"}
+                              selectedStudent.userId,
+                            )}
                           </span>
                         </div>
                       </div>
@@ -746,8 +761,10 @@ const StudentFeeAssignmentPage: React.FC = () => {
                                   </span>
                                   <span className="flex items-center">
                                     <GraduationCap className="w-3 h-3 mr-1" />
-                                    {getStudentClass(student.id, student.userId)
-                                      ?.name || "Non assigné"}
+                                    {getStudentClass(
+                                      student.id,
+                                      student.userId,
+                                    )}
                                   </span>
                                 </div>
                               </div>
@@ -918,34 +935,41 @@ const StudentFeeAssignmentPage: React.FC = () => {
                     4. Détails du frais
                   </h2>
 
-                <div className="grid grid-cols-1 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Montant (FCFA)
-                    </label>
-                    <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
-                      {formatAmount(selectedFeeType.amountDefault)} FCFA
+                  <div className="grid grid-cols-1 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Montant (FCFA)
+                      </label>
+                      <input
+                        type="text"
+                        value={displayAssignedAmount}
+                        onChange={(e) =>
+                          handleAssignedAmountChange(e.target.value)
+                        }
+                        placeholder="Ex: 50 000"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Montant attribué (modifiable)
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Montant par défaut du type de frais sélectionné
-                    </p>
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date d'échéance
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.dueDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, dueDate: e.target.value })
-                      }
-                      className="w-full bg-gray-700 text-white px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date d'échéance
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.dueDate}
+                        onChange={(e) =>
+                          setFormData({ ...formData, dueDate: e.target.value })
+                        }
+                        className="w-full bg-gray-700 text-white px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
                 </Card>
               )}
 
@@ -1018,10 +1042,7 @@ const StudentFeeAssignmentPage: React.FC = () => {
                 {errorMessage}
               </p>
               <div className="flex justify-end">
-                <Button
-                  onClick={() => setErrorMessage(null)}
-                  variant="primary"
-                >
+                <Button onClick={() => setErrorMessage(null)} variant="primary">
                   OK
                 </Button>
               </div>

@@ -1,19 +1,23 @@
-import React, { useState, useEffect } from "react";
+import { CreditCard, Plus } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import PaymentsTable from "../../components/finance/PaymentsTable";
 import AuthenticatedPage from "../../components/layout/AuthenticatedPage";
-import PageHeader from "../../components/ui/PageHeader";
-import Breadcrumb from "../../components/ui/Breadcrumb";
 import { HeaderActionButton } from "../../components/ui/ActionButton";
-import {
-  apiService,
-  type Payment as ApiPayment,
-  type StudentWithUser,
-  type StudentClass,
-} from "../../services/api";
+import Breadcrumb from "../../components/ui/Breadcrumb";
+import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import InvoiceModal from "../../components/ui/InvoiceModal";
-import PaymentsTable from "../../components/finance/PaymentsTable";
-import { CreditCard, Plus } from "lucide-react";
+import Modal from "../../components/ui/Modal";
+import PageHeader from "../../components/ui/PageHeader";
+import {
+    apiService,
+    type Payment as ApiPayment,
+    type StudentClass,
+    type StudentFee,
+    type StudentWithUser,
+    type User,
+} from "../../services/api";
 
 // Utiliser le type Payment de l'API
 type Payment = ApiPayment;
@@ -46,10 +50,26 @@ const PaymentsPage: React.FC = () => {
   >([]);
   const [studentClasses, setStudentClasses] = useState<StudentClass[]>([]);
   const [fullStudents, setFullStudents] = useState<StudentWithUser[]>([]);
+  const [studentFees, setStudentFees] = useState<StudentFee[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedFeeType, setSelectedFeeType] = useState("all");
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [editDisplayAmount, setEditDisplayAmount] = useState("");
+  const [editFormData, setEditFormData] = useState({
+    studentFeeId: "",
+    paymentDate: "",
+    amount: 0,
+    method: "cash" as "cash" | "bank_transfer" | "mobile_money" | "card",
+    provider: "",
+    transactionRef: "",
+    receivedBy: "",
+    status: "successful" as "successful" | "failed" | "pending",
+  });
 
   // États pour la modal de facture
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
@@ -69,6 +89,8 @@ const PaymentsPage: React.FC = () => {
         loadFeeTypes(),
         loadStudentClasses(),
         loadStudents(),
+        loadStudentFees(),
+        loadUsers(),
       ]);
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
@@ -130,6 +152,34 @@ const PaymentsPage: React.FC = () => {
     }
   };
 
+  const loadStudentFees = async () => {
+    try {
+      const response = await apiService.getAllStudentFees();
+      if (response.success && response.data) {
+        setStudentFees(response.data);
+      } else {
+        setStudentFees([]);
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des frais étudiants:", error);
+      setStudentFees([]);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const response = await apiService.getAllUsers();
+      if (response.success && response.data) {
+        setUsers(response.data);
+      } else {
+        setUsers([]);
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des utilisateurs:", error);
+      setUsers([]);
+    }
+  };
+
   const loadStudentClasses = async () => {
     try {
       const response = await apiService.getAllStudentClasses();
@@ -156,6 +206,34 @@ const PaymentsPage: React.FC = () => {
   const getFeeTypeName = (feeTypeId: string) => {
     const feeType = feeTypes.find((ft) => ft.id === feeTypeId);
     return feeType ? feeType.name : "Type inconnu";
+  };
+
+  const getStudentClassName = (studentId: string) => {
+    const studentClass = studentClasses.find(
+      (sc) => sc.studentId === studentId && !sc.endDate
+    );
+    return studentClass?.class?.name || "";
+  };
+
+  const formatAmount = (amount: number | string | undefined | null): string => {
+    if (amount === undefined || amount === null || amount === "") {
+      return "";
+    }
+    const numericAmount =
+      typeof amount === "string" ? parseFloat(amount) : amount;
+    if (!numericAmount) return "";
+    return numericAmount.toLocaleString("fr-FR");
+  };
+
+  const parseAmount = (value: string): number => {
+    const cleanValue = value.replace(/[\s.]/g, "");
+    return parseInt(cleanValue, 10) || 0;
+  };
+
+  const handleAmountChange = (value: string) => {
+    const numericValue = parseAmount(value);
+    setEditFormData({ ...editFormData, amount: numericValue });
+    setEditDisplayAmount(formatAmount(numericValue));
   };
 
   // Fonction helper pour obtenir les infos de l'étudiant qui a payé
@@ -217,7 +295,80 @@ const PaymentsPage: React.FC = () => {
     setSelectedPaymentForInvoice(null);
   };
 
+  const getStudentFeeLabel = (fee: StudentFee) => {
+    const student = fullStudents.find((s) => s.id === fee.studentId);
+    const feeTypeName = fee.feeType?.name || getFeeTypeName(fee.feeTypeId);
+    const academicYearName = fee.academicYear?.name || "";
+    const studentName = student
+      ? `${student.user.firstName} ${student.user.lastName}`
+      : "Étudiant";
+    const matricule = student?.matricule ? ` (${student.matricule})` : "";
+    return `${studentName}${matricule} - ${feeTypeName} ${academicYearName}`.trim();
+  };
+
+  const handleEditPayment = (payment: Payment) => {
+    setEditingPayment(payment);
+    setEditFormData({
+      studentFeeId: payment.studentFeeId,
+      paymentDate: payment.paymentDate?.split("T")[0] || "",
+      amount: Number(payment.amount) || 0,
+      method: payment.method,
+      provider: payment.provider || "",
+      transactionRef: payment.transactionRef || "",
+      receivedBy: payment.receivedBy,
+      status: payment.status,
+    });
+    setEditDisplayAmount(formatAmount(payment.amount));
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdatePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPayment) return;
+
+    try {
+      const response = await apiService.updatePayment(editingPayment.id, {
+        studentFeeId: editFormData.studentFeeId,
+        paymentDate: editFormData.paymentDate,
+        amount: editFormData.amount,
+        method: editFormData.method,
+        provider: editFormData.provider || undefined,
+        transactionRef: editFormData.transactionRef || undefined,
+        receivedBy: editFormData.receivedBy,
+        status: editFormData.status,
+      });
+
+      if (response.success) {
+        await loadPayments();
+        setIsEditModalOpen(false);
+        setEditingPayment(null);
+      } else {
+        alert(response.error || "Erreur lors de la mise à jour du paiement");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du paiement:", error);
+      alert("Erreur lors de la mise à jour du paiement");
+    }
+  };
+
+  const handleDeletePayment = async (payment: Payment) => {
+    if (!window.confirm("Supprimer ce paiement ?")) return;
+
+    try {
+      const response = await apiService.deletePayment(payment.id);
+      if (response.success) {
+        await loadPayments();
+      } else {
+        alert(response.error || "Erreur lors de la suppression du paiement");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression du paiement:", error);
+      alert("Erreur lors de la suppression du paiement");
+    }
+  };
+
   // Filtrer les paiements
+  const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredPayments = payments.filter((payment) => {
     // Vérifications de sécurité pour éviter les erreurs
     if (!payment.studentFee) {
@@ -231,12 +382,38 @@ const PaymentsPage: React.FC = () => {
       payment.studentFee.feeTypeId === selectedFeeType;
 
     // Filtrage par recherche
+    const studentInfo = getStudentInfo(payment.studentFee.studentId);
+    const className = getStudentClassName(payment.studentFee.studentId);
+    const student = fullStudents.find(
+      (s) => s.id === payment.studentFee?.studentId
+    );
+    const phone = student?.user?.phone || "";
+    const yearName = payment.studentFee?.academicYear?.name || "";
+    const feeTypeName = getFeeTypeName(payment.studentFee.feeTypeId);
+
     const matchesSearch =
-      (payment.transactionRef &&
-        payment.transactionRef
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())) ||
-      payment.studentFeeId.toLowerCase().includes(searchTerm.toLowerCase());
+      normalizedSearch.length === 0 ||
+      [
+        payment.transactionRef,
+        payment.studentFeeId,
+        payment.method,
+        payment.status,
+        payment.paymentDate,
+        String(payment.amount),
+        feeTypeName,
+        yearName,
+        studentInfo.name,
+        studentInfo.matricule,
+        className,
+        phone,
+        payment.receivedByUser
+          ? `${payment.receivedByUser.firstName} ${payment.receivedByUser.lastName}`
+          : "",
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          String(value ?? "").toLowerCase().includes(normalizedSearch)
+        );
 
     // Filtrage par statut
     const matchesStatus =
@@ -334,6 +511,8 @@ const PaymentsPage: React.FC = () => {
             studentClasses={studentClasses}
             feeTypes={feeTypes.map((ft) => ({ id: ft.id, name: ft.name }))}
             onViewInvoice={handleOpenInvoice}
+            onEditPayment={handleEditPayment}
+            onDeletePayment={handleDeletePayment}
           />
         )}
       </div>
@@ -376,6 +555,201 @@ const PaymentsPage: React.FC = () => {
           }}
         />
       )}
+
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingPayment(null);
+        }}
+        title="Modifier le paiement"
+        size="lg"
+      >
+        <form onSubmit={handleUpdatePayment} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Frais étudiant
+            </label>
+            <select
+              value={editFormData.studentFeeId}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  studentFeeId: e.target.value,
+                })
+              }
+              className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Sélectionner un frais</option>
+              {studentFees.map((fee) => (
+                <option key={fee.id} value={fee.id}>
+                  {getStudentFeeLabel(fee)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date de paiement
+              </label>
+              <input
+                type="date"
+                value={editFormData.paymentDate}
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    paymentDate: e.target.value,
+                  })
+                }
+                className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Montant (FCFA)
+              </label>
+              <input
+                type="text"
+                value={editDisplayAmount}
+                onChange={(e) => handleAmountChange(e.target.value)}
+                placeholder="Ex: 50 000"
+                className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Méthode
+              </label>
+              <select
+                value={editFormData.method}
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    method: e.target.value as
+                      | "cash"
+                      | "bank_transfer"
+                      | "mobile_money"
+                      | "card",
+                  })
+                }
+                className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="cash">Espèces</option>
+                <option value="bank_transfer">Virement bancaire</option>
+                <option value="mobile_money">Mobile Money</option>
+                <option value="card">Carte bancaire</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Statut
+              </label>
+              <select
+                value={editFormData.status}
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    status: e.target.value as
+                      | "successful"
+                      | "failed"
+                      | "pending",
+                  })
+                }
+                className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="successful">Réussi</option>
+                <option value="failed">Échoué</option>
+                <option value="pending">En attente</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Reçu par
+              </label>
+              <select
+                value={editFormData.receivedBy}
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    receivedBy: e.target.value,
+                  })
+                }
+                className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Sélectionner un utilisateur</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.firstName} {user.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Référence (optionnel)
+              </label>
+              <input
+                type="text"
+                value={editFormData.transactionRef}
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    transactionRef: e.target.value,
+                  })
+                }
+                placeholder="Ex: TXN-123"
+                className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fournisseur (optionnel)
+            </label>
+            <input
+              type="text"
+              value={editFormData.provider}
+              onChange={(e) =>
+                setEditFormData({
+                  ...editFormData,
+                  provider: e.target.value,
+                })
+              }
+              placeholder="Ex: Orange Money"
+              className="w-full text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setEditingPayment(null);
+              }}
+            >
+              Annuler
+            </Button>
+            <Button type="submit">Mettre à jour</Button>
+          </div>
+        </form>
+      </Modal>
     </AuthenticatedPage>
   );
 };
