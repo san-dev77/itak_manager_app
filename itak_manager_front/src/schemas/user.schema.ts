@@ -9,9 +9,16 @@ export const userSchema = z.object({
   role: z.enum(["super_admin", "admin", "scolarite", "finance", "qualite"]),
 });
 
-export const userEditSchema = userSchema.omit({ password: true, email: true }).extend({
-  email: z.string().email("Email invalide").optional(),
-});
+export const userEditSchema = userSchema
+  .omit({ password: true, email: true })
+  .extend({
+    email: z.string().email("Email invalide").optional(),
+    newPassword: z
+      .string()
+      .min(6, "Mot de passe min 6 car.")
+      .optional()
+      .or(z.literal("")),
+  });
 
 export type UserFormData = z.infer<typeof userSchema>;
 export type UserEditFormData = z.infer<typeof userEditSchema>;
@@ -32,4 +39,3 @@ export const roleOptions = [
   { value: "admin", label: "Administrateur" },
   { value: "super_admin", label: "Président / DG" },
 ];
-
