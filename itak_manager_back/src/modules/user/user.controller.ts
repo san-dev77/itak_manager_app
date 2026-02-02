@@ -12,7 +12,11 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import type { UserResponseDto } from './dto/user.dto';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import {
+  CreateUserDto,
+  UpdatePasswordDto,
+  UpdateUserDto,
+} from './dto/user.dto';
 
 @Controller('users')
 export class UserController {
@@ -49,6 +53,15 @@ export class UserController {
     @Body(ValidationPipe) updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     return this.userService.updateUser(id, updateUserDto);
+  }
+
+  @Put(':id/password')
+  async updateUserPassword(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updatePasswordDto: UpdatePasswordDto,
+  ): Promise<{ message: string }> {
+    await this.userService.updatePassword(id, updatePasswordDto.newPassword);
+    return { message: 'Mot de passe mis à jour' };
   }
 
   @Delete(':id')

@@ -1,10 +1,11 @@
 import {
-  IsEmail,
-  IsString,
-  IsOptional,
-  IsEnum,
   IsBoolean,
   IsDateString,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MinLength,
 } from 'class-validator';
 import { UserRole } from '../../../entities/user.entity';
 
@@ -105,4 +106,10 @@ export class UserResponseDto {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export class UpdatePasswordDto {
+  @IsString({ message: 'Le mot de passe doit être une chaîne' })
+  @MinLength(6, { message: 'Mot de passe min 6 car.' })
+  newPassword: string;
 }
